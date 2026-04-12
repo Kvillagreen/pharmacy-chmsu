@@ -1,0 +1,38 @@
+<section class="space-y-6 p-4 sm:p-6">
+  <div>
+    <h2 class="text-2xl font-bold text-slate-900">Super Admin Dashboard</h2>
+    <p class="mt-1 text-sm text-slate-500">System-wide overview of companies, users, and admin approvals.</p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="rounded-3xl bg-white p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-slate-500">Companies</p><p class="mt-3 text-3xl font-semibold text-slate-950">{{data.data?.summary?.companies ?? 0}}</p></div>
+    <div class="rounded-3xl bg-white p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-slate-500">Active Branches</p><p class="mt-3 text-3xl font-semibold text-slate-950">{{data.data?.summary?.active_branches ?? 0}}</p></div>
+    <div class="rounded-3xl bg-white p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-slate-500">Users</p><p class="mt-3 text-3xl font-semibold text-slate-950">{{data.data?.summary?.users ?? 0}}</p></div>
+    <div class="rounded-3xl bg-white p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-slate-500">Active Users</p><p class="mt-3 text-3xl font-semibold text-slate-950">{{data.data?.summary?.active_users ?? 0}}</p></div>
+    <div class="rounded-3xl bg-amber-50 p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-amber-700">Pending Admins</p><p class="mt-3 text-3xl font-semibold text-amber-900">{{data.data?.summary?.pending_admins ?? 0}}</p></div>
+    <div class="rounded-3xl bg-emerald-50 p-5 shadow-sm"><p class="text-sm uppercase tracking-[0.18em] text-emerald-700">Transactions Today</p><p class="mt-3 text-3xl font-semibold text-emerald-900">{{data.data?.summary?.transactions_today ?? 0}}</p></div>
+  </div>
+
+  <div class="rounded-3xl bg-white p-5 shadow-sm">
+    <div>
+      <h3 class="text-lg font-semibold">Recent Company Admins</h3>
+      <p class="text-sm text-slate-500">Newest admins registered across all companies.</p>
+    </div>
+    <div class="mt-5 space-y-3">
+      @for(admin of data.data?.recent_admins ?? []; track admin.user_id){
+      <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="font-semibold text-slate-950">{{admin.full_name}}</p>
+            <p class="mt-1 text-sm text-slate-500">{{admin.email}} · {{admin.company_name || 'No company'}} · {{admin.branch_name || 'No branch'}}</p>
+          </div>
+          <div class="space-y-1 text-sm text-slate-500">
+            <p>Status: {{admin.status}}</p>
+            <p>IP: {{admin.last_login_ip || 'N/A'}}</p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>

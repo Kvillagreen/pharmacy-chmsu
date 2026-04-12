@@ -1,0 +1,245 @@
+<div
+  class="sticky top-0 z-40 flex h-16 w-full items-center justify-between gap-3 border-b border-gray-200 bg-white/95 px-3 shadow-sm backdrop-blur sm:px-4 lg:px-6">
+  <div class="flex min-w-0 flex-1 items-center gap-3">
+    <button
+      class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-slate-700 lg:hidden"
+      (click)="extras.toggleSidebar()" aria-label="Open sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="12" y2="12"></line>
+        <line x1="4" x2="20" y1="6" y2="6"></line>
+        <line x1="4" x2="20" y1="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <button
+      class="hidden size-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-slate-700 transition hover:bg-slate-50 lg:inline-flex"
+      (click)="extras.toggleSidebarCollapse()"
+      [attr.aria-label]="extras.isSidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
+      <svg *ngIf="!extras.isSidebarCollapsed()" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+      <svg *ngIf="extras.isSidebarCollapsed()" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m9 18 6-6-6-6"></path>
+      </svg>
+    </button>
+
+    <div class="min-w-0 flex-1 max-w-xl">
+      <div class="px-1 py-1">
+        <div class="mb-0.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <ion-icon name="location-outline"></ion-icon>
+          <span>@if(checker('branches')){ Branch Scope }@else{ Assigned Branch }</span>
+        </div>
+
+        <div *ngIf="checker('branches')" class="min-w-0">
+          <select (change)="saveBranch($event.target)" [(ngModel)]="branchNumber" name="branch"
+            class="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-semibold text-slate-800 outline-none">
+            <option value="0">All Branches</option>
+            @for(branch of branchList; track $index){
+            <option [value]="branch.branchId">{{branch.branchName}}</option>
+            }
+          </select>
+        </div>
+
+        <div *ngIf="!checker('branches')" class="truncate text-sm font-semibold text-slate-800">
+          {{currentBranchName()}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex shrink-0 items-center gap-3">
+    <div class="relative">
+      <button (click)="toggleNotifications()"
+        class="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-slate-700 transition hover:bg-slate-50">
+        <ion-icon name="notifications-outline" class="text-2xl"></ion-icon>
+        @if(unreadCount > 0){
+        <span
+          class="absolute -top-1 -right-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          {{unreadCount > 9 ? '9+' : unreadCount}}
+        </span>
+        }
+      </button>
+
+      @if(isNotificationOpen()){
+      <div
+        class="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-1.5rem))] rounded-2xl border border-gray-200 bg-white p-3 shadow-xl">
+        <div class="mb-3 flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">Notifications</p>
+            <p class="text-xs text-slate-500">Same-branch activity updates</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              *ngIf="notifications.length && unreadCount > 0"
+              (click)="markAllNotificationsAsRead()"
+              class="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100">
+              Mark all read
+            </button>
+            <div class="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
+              {{unreadCount}} unread
+            </div>
+          </div>
+        </div>
+
+        <div class="max-h-80 space-y-2 overflow-y-auto pr-1">
+          @for(notification of notifications; track $index){
+          <button
+            type="button"
+            (click)="toggleNotificationReadState(notification)"
+            [ngClass]="isNotificationRead(notification) ? 'border-gray-200 bg-white opacity-80' : 'border-emerald-200 bg-emerald-50/50'"
+            class="w-full rounded-xl border p-3 text-left transition hover:bg-slate-50">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-slate-800">{{notification.title}}</p>
+                  <span
+                    [ngClass]="isNotificationRead(notification) ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-700'"
+                    class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                    {{isNotificationRead(notification) ? 'Read' : 'Unread'}}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs text-slate-600">{{notification.message}}</p>
+                <p class="mt-2 text-[11px] text-slate-500">{{extras.timeAgo(notification.created_at)}}</p>
+              </div>
+              <div
+                [ngClass]="notification.type === 'transaction' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'"
+                class="rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                {{notification.type}}
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <span
+                [ngClass]="isNotificationRead(notification) ? 'text-amber-600' : 'text-emerald-700'"
+                class="text-[11px] font-semibold">
+                {{isNotificationRead(notification) ? 'Mark as unread' : 'Mark as read'}}
+              </span>
+            </div>
+          </button>
+          }
+
+          @if(!notifications.length){
+          <div
+            class="rounded-xl border border-dashed border-gray-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
+            No new notifications for this branch scope.
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="relative inline-block">
+      <button (click)="toggleProfileMenu()"
+        class="flex h-11 items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 transition hover:bg-slate-50">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 font-bold text-primary">
+          {{extras.toTitleCaseSafe(userData.data.first_name[0])}}
+        </div>
+
+        <div class="hidden min-w-0 text-left md:block">
+          <p class="truncate text-sm font-semibold text-slate-800">
+            {{extras.toTitleCaseSafe(userData.data.first_name + ' ' + userData.data.last_name)}}
+          </p>
+        </div>
+
+        <ion-icon [name]="isProfileOpen() ? 'chevron-up-outline' : 'chevron-down-outline'"
+          class="hidden text-slate-500 md:block"></ion-icon>
+      </button>
+
+      @if(isProfileOpen()){
+      <div
+        class="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl">
+        <div class="mb-2 rounded-xl bg-slate-50 px-3 py-3">
+          <p class="truncate text-sm font-semibold text-slate-800">
+            {{extras.toTitleCaseSafe(userData.data.first_name + ' ' + userData.data.last_name)}}
+          </p>
+          <p class="truncate text-xs text-slate-500">{{userData.data.email}}</p>
+        </div>
+        <button (click)="openProfile()"
+          class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-100">
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Profile</span>
+        </button>
+        @if(checker('settings')){
+        <button (click)="goToSettings()"
+          class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-100">
+          <ion-icon name="settings-outline"></ion-icon>
+          <span>Settings</span>
+        </button>
+        }
+        <button (click)="isLogout.set(true); isProfileOpen.set(false)"
+          class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50">
+          <ion-icon name="log-out-outline"></ion-icon>
+          <span>Logout</span>
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if(isOpen()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <div class="mb-5 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Profile</p>
+        <h2 class="text-xl font-bold text-slate-900">Account Overview</h2>
+      </div>
+      <button (click)="isOpen.set(false)" class="rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-600">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
+        <div
+          class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-xl font-bold text-primary">
+          {{extras.toTitleCaseSafe(userData.data.first_name[0])}}
+        </div>
+        <div class="min-w-0">
+          <p class="truncate text-lg font-semibold text-slate-900">
+            {{extras.toTitleCaseSafe(userData.data.first_name + ' ' + userData.data.last_name)}}
+          </p>
+          <p class="truncate text-sm text-slate-500">{{userData.data.email}}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="rounded-xl border border-gray-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Branch</p>
+          <p class="mt-2 text-sm font-semibold text-slate-800">{{currentBranchName()}}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</p>
+          <p class="mt-2 text-sm font-semibold text-slate-800">{{extras.toTitleCaseSafe(userData.data.role)}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if (isLogout()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm">
+  <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+    <div class="mb-4 flex justify-center">
+      <ion-icon name="log-out-outline" class="text-4xl text-red-500"></ion-icon>
+    </div>
+    <h2 class="mb-2 text-lg font-semibold text-slate-900">Confirm Logout</h2>
+    <p class="mb-6 text-sm text-gray-500">
+      Are you sure you want to logout?
+    </p>
+    <div class="flex flex-col justify-center gap-3 sm:flex-row">
+      <button (click)="isLogout.set(false)" class="rounded-xl bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200">
+        Cancel
+      </button>
+      <button (click)="logout()" class="rounded-xl bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600">
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
+}

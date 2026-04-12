@@ -1,1 +1,0 @@
-import{i}from"./chunk-KS4SNQ2X.js";i();var y=(s,n,f)=>typeof f=="function"?f(s,n):typeof f=="string"?s[f]===n[f]:Array.isArray(n)?n.includes(s):s===n,A=(s,n,f)=>s===void 0?!1:Array.isArray(s)?s.some(t=>y(t,n,f)):y(s,n,f);export{y as a,A as b};

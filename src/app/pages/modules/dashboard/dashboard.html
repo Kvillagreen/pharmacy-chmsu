@@ -1,0 +1,347 @@
+<main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+  <div class="space-y-5 sm:space-y-6 ">
+    <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="max-w-3xl">
+        <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl xl:text-4xl">Multi-Branch Dashboard</h1>
+        <p class="mt-2 text-sm text-slate-600 sm:text-base">
+          {{dashboardData.data.analysis.headline}}
+        </p>
+      </div>
+
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Scope: <span class="font-semibold">{{dashboardData.data.scope.label}}</span>
+        </div>
+        <select
+          class="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 outline-none sm:w-auto"
+          [value]="selectedDays" (change)="changeDays($event)">
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 w-full">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Revenue</p>
+        <h2 class="mt-3 break-words text-2xl font-bold text-slate-900 sm:text-3xl">Php
+          {{extras.formatCurrency(dashboardData.data.summary.total_revenue)}}</h2>
+        <p class="mt-2 text-xs font-semibold"
+          [ngClass]="isPositive(dashboardData.data.summary.revenue_change_pct) ? 'text-emerald-600' : 'text-red-600'">
+          {{isPositive(dashboardData.data.summary.revenue_change_pct) ? '+' :
+          ''}}{{dashboardData.data.summary.revenue_change_pct}}% vs previous period
+        </p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Transactions</p>
+        <h2 class="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{{dashboardData.data.summary.transaction_count}}
+        </h2>
+        <p class="mt-2 text-xs font-semibold"
+          [ngClass]="isPositive(dashboardData.data.summary.transaction_change_pct) ? 'text-emerald-600' : 'text-red-600'">
+          {{isPositive(dashboardData.data.summary.transaction_change_pct) ? '+' :
+          ''}}{{dashboardData.data.summary.transaction_change_pct}}% vs previous period
+        </p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Average Sale</p>
+        <h2 class="mt-3 break-words text-2xl font-bold text-slate-900 sm:text-3xl">Php
+          {{extras.formatCurrency(dashboardData.data.summary.average_sale)}}</h2>
+        <p class="mt-2 text-xs text-slate-500">Average amount per completed transaction</p>
+      </article>
+
+      <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-amber-700">Inventory Watch</p>
+        <h2 class="mt-3 text-2xl font-bold text-amber-900 sm:text-3xl">{{dashboardData.data.summary.low_stock_count}}
+        </h2>
+        <p class="mt-2 text-xs text-amber-700">
+          {{dashboardData.data.summary.out_of_stock_count}} items are already out of stock
+        </p>
+      </article>
+
+      <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-rose-700">FEFO Alerts</p>
+        <h2 class="mt-3 text-2xl font-bold text-rose-900 sm:text-3xl">{{dashboardData.data.summary.expiring_30_count}}
+        </h2>
+        <p class="mt-2 text-xs text-rose-700">
+          {{dashboardData.data.summary.expired_count}} batches are already expired
+        </p>
+      </article>
+    </section>
+
+    <section class="w-full rounded-3xl grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <article class="rounded-3xl h-full  border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Revenue Trend</h3>
+            <p class="text-sm text-slate-500">Daily sales performance for the selected period.</p>
+          </div>
+          <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            {{dashboardData.data.charts.daily_revenue.length}} day points
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex h-full items-end gap-2 overflow-x-auto rounded-2xl bg-slate-50 p-3 sm:h-72 sm:p-4">
+            @for(point of dashboardData.data.charts.daily_revenue; track point.date){
+            <div class="flex min-w-14 flex-1 flex-col items-center justify-end gap-2 sm:min-w-12">
+              <div class="text-center text-[10px] font-semibold text-slate-500">Php
+                {{extras.formatCurrency(point.total_revenue)}}</div>
+              <div
+                class="w-full rounded-t-xl bg-linear-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
+                [style.height.%]="getBarHeight(point.total_revenue)">
+              </div>
+              <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
+            </div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Business Notes</h3>
+          <p class="text-sm text-slate-500">Quick analysis generated from your live operational data.</p>
+        </div>
+
+        <div class="mt-5 space-y-3 w-full">
+          @for(note of dashboardData.data.analysis.highlights; track $index){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            {{note}}
+          </div>
+          }
+          @if(!dashboardData.data.analysis.highlights.length){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            Dashboard insights will appear once enough sales and inventory data are available.
+          </div>
+          }
+        </div>
+
+        <div class="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Inventory Value</p>
+          <p class="mt-2 break-words text-2xl font-bold sm:text-3xl">Php
+            {{extras.formatCurrency(dashboardData.data.summary.inventory_value)}}</p>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Branch Performance Table</h3>
+            <p class="text-sm text-slate-500">Month-to-date comparison of branch revenue and transaction volume.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 hidden overflow-x-auto md:block">
+          <table class="min-w-full text-left text-sm">
+            <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th class="px-3 py-3">Branch</th>
+                <th class="px-3 py-3 text-right">Revenue</th>
+                <th class="px-3 py-3 text-right">Transactions</th>
+                <th class="px-3 py-3">Visual</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(branch of dashboardData.data.tables.branch_table; track branch.branch_id){
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-3 font-semibold text-slate-800">{{branch.branch_name}}</td>
+                <td class="px-3 py-3 text-right text-slate-700">Php {{extras.formatCurrency(branch.total_revenue)}}</td>
+                <td class="px-3 py-3 text-right text-slate-700">{{branch.transaction_count}}</td>
+                <td class="px-3 py-3">
+                  <div class="h-3 w-full rounded-full bg-slate-100">
+                    <div class="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-400"
+                      [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(dashboardData.data.tables.branch_table, 'total_revenue'))">
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              }
+              @if(!dashboardData.data.tables.branch_table.length){
+              <tr>
+                <td colspan="4" class="px-3 py-6 text-center text-slate-500">No branch comparison data available yet.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-5 space-y-3 md:hidden">
+          @for(branch of dashboardData.data.tables.branch_table; track branch.branch_id){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{branch.branch_name}}</p>
+                <p class="mt-1 text-xs text-slate-500">{{branch.transaction_count}} transactions</p>
+              </div>
+              <p class="text-right text-sm font-semibold text-slate-800">Php {{extras.formatCurrency(branch.total_revenue)}}</p>
+            </div>
+            <div class="mt-3 h-3 w-full rounded-full bg-slate-200">
+              <div class="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-400"
+                [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(dashboardData.data.tables.branch_table, 'total_revenue'))">
+              </div>
+            </div>
+          </div>
+          }
+          @if(!dashboardData.data.tables.branch_table.length){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            No branch comparison data available yet.
+          </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Payment Mix</h3>
+          <p class="text-sm text-slate-500">How customers are paying during the selected range.</p>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          @for(method of dashboardData.data.charts.payment_mix; track method.payment_method){
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span class="font-medium text-slate-700">{{method.payment_method}}</span>
+              <span class="text-slate-500">Php {{extras.formatCurrency(method.total_revenue)}} |
+                {{method.transaction_count}} txns</span>
+            </div>
+            <div class="h-3 w-full rounded-full bg-slate-100">
+              <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+                [style.width.%]="getPercentWidth(method.total_revenue, getMaxByKey(dashboardData.data.charts.payment_mix, 'total_revenue'))">
+              </div>
+            </div>
+          </div>
+          }
+          @if(!dashboardData.data.charts.payment_mix.length){
+          <p class="text-sm text-slate-500">No payment data available yet.</p>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Category Movement</h3>
+          <p class="text-sm text-slate-500">Product categories with the highest quantity sold.</p>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          @for(category of dashboardData.data.charts.category_mix; track category.category){
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span class="font-medium text-slate-700">{{extras.toTitleCaseSafe(category.category)}}</span>
+              <span class="text-slate-500">{{category.quantity_sold}} units | {{category.transaction_count}} txns</span>
+            </div>
+            <div class="h-3 w-full rounded-full bg-slate-100">
+              <div class="h-3 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-400"
+                [style.width.%]="getPercentWidth(category.quantity_sold, getMaxByKey(dashboardData.data.charts.category_mix, 'quantity_sold'))">
+              </div>
+            </div>
+          </div>
+          }
+          @if(!dashboardData.data.charts.category_mix.length){
+          <p class="text-sm text-slate-500">No category movement data available yet.</p>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Top-Selling Medicines</h3>
+            <p class="text-sm text-slate-500">Products leading the sales mix for the selected period.</p>
+          </div>
+        </div>
+
+        <div class="mt-5 hidden overflow-x-auto md:block">
+          <table class="min-w-full text-left text-sm">
+            <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th class="px-3 py-3">Medicine</th>
+                <th class="px-3 py-3">Category</th>
+                <th class="px-3 py-3 text-right">Units Sold</th>
+                <th class="px-3 py-3 text-right">Orders</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(medicine of dashboardData.data.tables.top_medicines; track medicine.medicine_id){
+              <tr class="border-b border-slate-100">
+                <td class="px-3 py-3">
+                  <p class="font-semibold text-slate-800">{{extras.toTitleCaseSafe(medicine.medicine_name)}}</p>
+                  <p class="text-xs text-slate-500">{{extras.toTitleCaseSafe(medicine.generic_name)}}</p>
+                </td>
+                <td class="px-3 py-3 text-slate-600">{{extras.toTitleCaseSafe(medicine.category)}}</td>
+                <td class="px-3 py-3 text-right font-semibold text-slate-800">{{medicine.quantity_sold}}</td>
+                <td class="px-3 py-3 text-right text-slate-600">{{medicine.transactions_count}}</td>
+              </tr>
+              }
+              @if(!dashboardData.data.tables.top_medicines.length){
+              <tr>
+                <td colspan="4" class="px-3 py-6 text-center text-slate-500">No medicine sales data available yet.
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-5 space-y-3 md:hidden">
+          @for(medicine of dashboardData.data.tables.top_medicines; track medicine.medicine_id){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{extras.toTitleCaseSafe(medicine.medicine_name)}}</p>
+                <p class="text-xs text-slate-500">{{extras.toTitleCaseSafe(medicine.generic_name)}}</p>
+              </div>
+              <p class="text-sm font-semibold text-slate-800">{{medicine.quantity_sold}} sold</p>
+            </div>
+            <div class="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
+              <span>{{extras.toTitleCaseSafe(medicine.category)}}</span>
+              <span>{{medicine.transactions_count}} orders</span>
+            </div>
+          </div>
+          }
+          @if(!dashboardData.data.tables.top_medicines.length){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            No medicine sales data available yet.
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section>
+      <article class="w-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Recent Transactions</h3>
+          <p class="text-sm text-slate-500">Latest completed sales in the current dashboard scope.</p>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          @for(transaction of dashboardData.data.tables.recent_transactions; track transaction.transaction_id){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{transaction.branch_name || 'Unknown Branch'}}</p>
+                <p class="text-xs text-slate-500">{{transaction.cashier_name || 'Unknown Cashier'}} |
+                  {{transaction.payment_method}}</p>
+              </div>
+              <div class="text-left sm:text-right">
+                <p class="font-semibold text-emerald-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
+                <p class="text-xs text-slate-500">{{extras.timeAgo(transaction.created_at)}}</p>
+              </div>
+            </div>
+          </div>
+          }
+          @if(!dashboardData.data.tables.recent_transactions.length){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+            No transactions recorded yet.
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+  </div>
+</main>

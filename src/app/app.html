@@ -1,0 +1,27 @@
+@if(user.token && !isAdminRoute()){
+<div class="w-full min-h-screen flex bg-body">
+  <div
+    class="hidden shrink-0 transition-all duration-300 ease-in-out lg:block"
+    [ngClass]="extras.isSidebarCollapsed() ? 'w-20' : 'w-64'">
+  </div>
+  <app-navbar></app-navbar>
+
+  <!-- Main Content -->
+  <div class="flex-1 min-w-0 flex flex-col">
+    <div class="sticky top-0 w-full z-30">
+      <app-header>
+      </app-header>
+    </div>
+
+    <main class="flex-1 min-w-0 overflow-x-hidden">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+} @else {
+<router-outlet></router-outlet>
+}
+
+@if(extras.load()){
+<app-loading></app-loading>
+}

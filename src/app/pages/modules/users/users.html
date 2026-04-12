@@ -1,0 +1,563 @@
+<main class="flex-1 overflow-auto p-4 sm:p-6">
+  <div class="space-y-6">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Users &amp; Roles</h1>
+        <p class="mt-1 text-sm text-muted-foreground sm:text-base">
+          Manage user accounts, roles, and permissions across all branches.
+        </p>
+      </div>
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <button
+          (click)="openExportUserModal()"
+          class="inline-flex h-10 items-center justify-center gap-x-2 rounded-md px-4 font-semibold hover:bg-gray-300">
+          <ion-icon name="download-outline"></ion-icon>
+          <span>Export</span>
+        </button>
+        <button
+          (click)="openCreateUserModal()"
+          class="inline-flex h-10 items-center justify-center gap-x-2 rounded-md bg-primary px-4 font-semibold text-gray-50 hover:bg-primary/90">
+          <ion-icon name="person-add-outline"></ion-icon>
+          <span>Add New User</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+        <p class="text-sm font-medium text-muted-foreground">Total Users</p>
+        <p class="text-3xl font-bold">{{this.userData.userData?.stats.total_users ? this.userData.userData?.stats.total_users : 0}}</p>
+      </div>
+      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+        <p class="text-sm font-medium text-muted-foreground">Active Users</p>
+        <p class="text-3xl font-bold text-amber-600">{{this.userData.userData?.stats.active ? this.userData.userData?.stats.active : 0}}</p>
+      </div>
+      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+        <p class="text-sm font-medium text-muted-foreground">Administrators</p>
+        <p class="text-3xl font-bold text-destructive">{{this.userData.userData?.stats.admin ? this.userData.userData?.stats.admin : 0}}</p>
+      </div>
+      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-primary p-4 text-white shadow-sm">
+        <p class="text-sm font-medium">Branch Manager</p>
+        <p class="text-3xl font-bold">{{this.userData.userData?.stats.manager ? this.userData.userData?.stats.manager : 0}}</p>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-gray-300 bg-white shadow-sm">
+      <div class="flex flex-col gap-3 bg-muted/20 px-3 py-3 sm:px-4 lg:flex-row lg:items-center">
+        <div
+          class="flex h-12 w-full items-center gap-x-2 rounded-md bg-gray-100 px-2 focus-within:outline-2 focus-within:outline-green-700 lg:max-w-xl">
+          <ion-icon name="search-outline" class="size-4"></ion-icon>
+          <input (input)="changeText($event)" class="h-full w-full bg-transparent outline-none"
+            placeholder="Search by name, email, branch...">
+        </div>
+
+        <div class="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center lg:ml-auto">
+          <span>
+            Showing {{this.userData.userData.meta?.current_page}} of {{this.userData.userData.meta?.last_page}} page
+          </span>
+          <div class="flex items-center justify-end gap-2 text-lg">
+            <button type="button" (click)="prev()" class="rounded-md p-1 hover:bg-gray-200">
+              <ion-icon name="chevron-back-outline"></ion-icon>
+            </button>
+            <button type="button" (click)="next()" class="rounded-md p-1 hover:bg-gray-200">
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-300 p-3 sm:p-4">
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+          <div
+            class="flex min-h-[28rem] w-full flex-col rounded-xl border border-gray-300 bg-gray-50 shadow-sm"
+            *ngFor="let item of getRows(); let i = index" [ngClass]="i === 6 ? 'rounded-b-md' : 'rounded-none'">
+            <div class="flex h-full flex-col p-6" *ngIf="item">
+              <div class="flex-1">
+                <div class="mb-4 flex items-start justify-between gap-3">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <div
+                      class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-gray-50">
+                      {{extras.toUpperCaseSafe((item?.first_name ? item?.first_name[0] : '') + (item?.last_name ? item?.last_name[0] : ''))}}
+                    </div>
+
+                    <div class="min-w-0">
+                      <h3 class="w-full truncate text-left text-lg font-bold">
+                        {{extras.toTitleCaseSafe((item?.first_name ? item?.first_name : '') + ' ' + (item?.last_name ? item?.last_name : ''))}}
+                      </h3>
+                      <p class="truncate text-sm text-muted-foreground">
+                        {{item?.email ? item?.email : ''}}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="relative">
+                    <button *ngIf="item" (click)="toggleDropdown(item)"
+                      class="inline-flex h-8 w-8 cursor-pointer items-center justify-center text-xl font-medium text-gray-700 hover:text-gray-900">
+                      <ion-icon name="ellipsis-horizontal"></ion-icon>
+                    </button>
+
+                    <div *ngIf="activeDropdown === item"
+                      class="absolute right-0 top-4 z-50 mt-2 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+                      <button (click)="openPermissionsModal(item)"
+                        class="w-full px-4 py-2 text-left text-xs hover:bg-gray-100">
+                        Change Permissions
+                      </button>
+                      <button (click)="openBranchModal(item)"
+                        class="w-full px-4 py-2 text-left text-xs hover:bg-gray-100">
+                        Transfer Branch
+                      </button>
+                      <div class="w-full border-b border-gray-200"></div>
+                      @if(item?.status != 'approved'){
+                      <button (click)="openStatusModal(item, 'approved')"
+                        class="w-full px-4 py-2 text-left text-xs hover:bg-gray-100">
+                        Approve User
+                      </button>
+                      }
+                      @if(item?.status != 'rejected'){
+                      <button (click)="openStatusModal(item, 'rejected')"
+                        class="w-full px-4 py-2 text-left text-xs hover:bg-gray-100">
+                        Reject User
+                      </button>
+                      }
+                      @if(item?.status != 'pending'){
+                      <button (click)="openStatusModal(item, 'pending')"
+                        class="w-full px-4 py-2 text-left text-xs hover:bg-gray-100">
+                        Hold User
+                      </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-4 flex flex-wrap gap-2">
+                  <div
+                    class="flex items-center gap-1 rounded-lg border border-gray-300 bg-primary px-2.5 py-0.5 text-xs text-gray-50">
+                    <ion-icon name="shield-outline"></ion-icon>
+                    {{extras.toTitleCaseSafe(item?.role)}}
+                  </div>
+                  <div
+                    class="flex items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-900">
+                    {{extras.toTitleCaseSafe(item?.status)}}
+                  </div>
+                </div>
+
+                <div class="mb-4 space-y-2">
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ion-icon name="business-outline" class="text-xl"></ion-icon>
+                    <span class="truncate">{{extras.toTitleCaseSafe(item?.branch_name)}}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ion-icon name="location-outline" class="text-xl"></ion-icon>
+                    <span class="truncate">{{extras.toTitleCaseSafe(item?.branch_address)}}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ion-icon name="mail-outline" class="text-xl"></ion-icon>
+                    <span class="truncate">{{item?.email}}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ion-icon name="home-outline" class="text-xl"></ion-icon>
+                    <span class="truncate">{{extras.toTitleCaseSafe(item?.address ? item?.address : 'No address added')}}</span>
+                  </div>
+                </div>
+
+                <div class="mb-4 flex w-full flex-col items-start justify-center">
+                  <p class="mb-2 text-xs font-medium">PERMISSIONS:</p>
+                  <div class="flex flex-wrap gap-1">
+                    @for(data of item.permissions; track $index){
+                    <div class="rounded-lg border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs text-gray-900">
+                      {{extras.toTitleCaseSafe(data?.permission_name)}}
+                    </div>
+                    }
+                    @if(!item.permissions?.length){
+                    <div class="rounded-lg border border-dashed border-gray-300 px-2.5 py-0.5 text-xs text-gray-500">
+                      No permissions assigned
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-auto flex flex-col gap-2 pt-4">
+                <div class="border-t border-gray-300 pt-4">
+                  <div class="flex items-center justify-between gap-2 text-xs">
+                    <span class="flex items-center gap-x-2">
+                      <ion-icon name="calendar-number-outline" class="text-lg"></ion-icon>
+                      Last login:
+                    </span>
+                    <span class="text-right font-medium">
+                      {{ (item?.login_at ? extras.formatDateWithTime(item?.login_at) : 'Not yet logged in') }}
+                    </span>
+                  </div>
+                </div>
+                <div class="mt-2 flex w-full flex-col gap-2 sm:flex-row">
+                  <button (click)="openEditModal(item)"
+                    class="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-green-100 px-3 text-sm font-medium text-green-600 hover:bg-green-50 hover:text-green-700">
+                    <ion-icon name="create-outline"></ion-icon>
+                    Edit
+                  </button>
+
+                  <button (click)="openDeleteModal(item)"
+                    class="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-gray-100 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-700">
+                    <ion-icon name="trash-outline"></ion-icon>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-full rounded-xl border border-dashed border-gray-200 bg-white/70" *ngIf="!item"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+@if(isExportUser()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute right-4 top-4 text-gray-500 hover:text-red-500" (click)="closeExportUserModal()">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Export User CSV</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Select only the necessary user fields to include in the report.</p>
+      </div>
+    </div>
+
+    <div class="grid max-h-[28rem] grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2">
+      @for(column of exportUserConfig.columns; track column.key){
+      <label class="flex items-center gap-3 rounded-xl border border-gray-300 bg-white p-4 text-sm text-gray-800">
+        <input type="checkbox" [(ngModel)]="column.checked" class="h-4 w-4">
+        <span>{{column.label}}</span>
+      </label>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="closeExportUserModal()" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="exportUsersCsv()" class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto">
+        Generate CSV
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isCreateUser()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute right-4 top-4 text-gray-500 hover:text-red-500" (click)="isCreateUser.set(false); resetCreateUserForm();">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Create New User</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Create a user and assign them to an available branch under your company.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 overflow-y-auto p-4 sm:grid-cols-2">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">First Name</label>
+        <input [(ngModel)]="createUserForm.first_name" type="text"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Last Name</label>
+        <input [(ngModel)]="createUserForm.last_name" type="text"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2 sm:col-span-2">
+        <label class="text-sm font-medium">Email</label>
+        <input [(ngModel)]="createUserForm.email" type="email"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Role</label>
+        <select [(ngModel)]="createUserForm.role"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+          <option value="user">User</option>
+          <option value="inventory">Inventory</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Branch</label>
+        <select class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary"
+          (change)="getCreateUserBranch($event)">
+          <option value="" disabled [selected]="!createUserForm.branch_id">Select a branch</option>
+          @for(branch of branchData.data; track branch.branchId){
+          <option [value]="branch.branchId" [selected]="createUserForm.branch_id == branch.branchId">
+            {{branch.branchName}}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Password</label>
+        <input [(ngModel)]="createUserForm.password" type="password"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Confirm Password</label>
+        <input [(ngModel)]="createUserForm.password_confirmation" type="password"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2 sm:col-span-2">
+        <label class="text-sm font-medium">Address</label>
+        <textarea [(ngModel)]="createUserForm.address" rows="4"
+          class="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-primary"></textarea>
+      </div>
+
+      <div class="flex flex-col gap-2 sm:col-span-2">
+        <div>
+          <label class="text-sm font-medium">Permissions</label>
+          <p class="text-xs text-gray-500">Select the permissions to assign during user creation.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          @for(permission of permissionData.data; track permission.permission_id){
+          <button type="button" (click)="toggleCreatePermission(permission.permission_id)"
+            [ngClass]="isCreatePermissionSelected(permission.permission_id) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-800'"
+            class="flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-left transition">
+            <div>
+              <p class="font-semibold">{{extras.toTitleCaseSafe(permission.permission_name)}}</p>
+              <p class="mt-1 text-xs" [ngClass]="isCreatePermissionSelected(permission.permission_id) ? 'text-gray-100' : 'text-gray-500'">
+                {{permission.description ? permission.description : 'No description provided'}}
+              </p>
+            </div>
+            <div
+              [ngClass]="isCreatePermissionSelected(permission.permission_id) ? 'border-white bg-white text-primary' : 'border-gray-300 bg-gray-100 text-transparent'"
+              class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs">
+              <ion-icon name="checkmark-outline" class="text-sm font-bold"></ion-icon>
+            </div>
+          </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isCreateUser.set(false); resetCreateUserForm();" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="createUser()" class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto">
+        Create User
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isUpdateStatus()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-red-500" (click)="isUpdateStatus.set(false);">
+         <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Update User Status</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Select the new status for the user below.</p>
+      </div>
+    </div>
+
+    <div class="flex w-full flex-col overflow-y-auto p-4">
+      Are you sure you want to update the status of
+      <span class="font-semibold">{{extras.toTitleCaseSafe((selectedUser?.first_name || '') + ' ' + (selectedUser?.last_name || ''))}}</span>
+      to
+      <span class="font-semibold">{{statusForm.status}}</span>?
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isUpdateStatus.set(false)" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="updateUserStatus(statusForm.user_id, statusForm.status)"
+        class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isUpdateBranch()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-red-500" (click)="isUpdateBranch.set(false);">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Transfer User to Other Branch</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Select the new branch for the user below.</p>
+      </div>
+    </div>
+
+    <div class="flex w-full flex-col gap-y-2 overflow-y-auto p-4">
+      <label>Transfer to branch:</label>
+      <select class="w-full rounded-lg border border-gray-300 p-2 outline-none" (change)="getUserNewBranch($event)">
+        <option value="" disabled [selected]="!branchForm.branch_id">Select a branch</option>
+        @for(branch of branchData.data; track $index){
+        <option [value]="branch.branchId" [selected]="branchForm.branch_id == branch.branchId">
+          {{branch.branchName}}
+        </option>
+        }
+      </select>
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isUpdateBranch.set(false)" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="updateUserBranch(branchForm.user_id, branchForm.branch_id)"
+        class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto"
+        [disabled]="!branchForm.branch_id">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isUpdatePermissions()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-red-500" (click)="isUpdatePermissions.set(false);">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Update User Permissions</h2>
+        <p class="text-sm text-gray-500 sm:text-base">
+          Toggle permissions for {{extras.toTitleCaseSafe((selectedUser?.first_name || '') + ' ' + (selectedUser?.last_name || ''))}}.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid max-h-[28rem] grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2">
+      @for(permission of permissionData.data; track permission.permission_id){
+      <button type="button" (click)="togglePermission(permission.permission_id)"
+        [ngClass]="isPermissionSelected(permission.permission_id) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-800'"
+        class="flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-left transition">
+        <div>
+          <p class="font-semibold">{{extras.toTitleCaseSafe(permission.permission_name)}}</p>
+          <p class="mt-1 text-xs" [ngClass]="isPermissionSelected(permission.permission_id) ? 'text-gray-100' : 'text-gray-500'">
+            {{permission.description ? permission.description : 'No description provided'}}
+          </p>
+        </div>
+        <div
+          [ngClass]="isPermissionSelected(permission.permission_id) ? 'border-white bg-white text-primary' : 'border-gray-300 bg-gray-100 text-transparent'"
+          class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs">
+          <ion-icon name="checkmark-outline" class="text-sm font-bold"></ion-icon>
+        </div>
+      </button>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isUpdatePermissions.set(false)" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="updateUserPermissions()" class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto">
+        Save Permissions
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isUpdateUser()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-red-500" (click)="isUpdateUser.set(false);">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Update User Details</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Only address, first name, last name, and email can be updated.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 overflow-y-auto p-4 sm:grid-cols-2">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">First Name</label>
+        <input [(ngModel)]="editUserForm.first_name" type="text"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Last Name</label>
+        <input [(ngModel)]="editUserForm.last_name" type="text"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2 sm:col-span-2">
+        <label class="text-sm font-medium">Email</label>
+        <input [(ngModel)]="editUserForm.email" type="email"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+      </div>
+      <div class="flex flex-col gap-2 sm:col-span-2">
+        <label class="text-sm font-medium">Address</label>
+        <textarea [(ngModel)]="editUserForm.address" rows="4"
+          class="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-primary"></textarea>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isUpdateUser.set(false)" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="updateUserProfile()" class="w-full rounded-lg bg-blue-500 px-4 py-2 text-white sm:w-auto">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isDeleteUser()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 z-10 w-full rounded-t-2xl bg-white p-4">
+      <button class="absolute top-4 right-4 text-gray-500 hover:text-red-500" (click)="isDeleteUser.set(false);">
+         <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <h2 class="text-lg font-bold sm:text-xl">Delete User</h2>
+        <p class="text-sm text-gray-500 sm:text-base">Please confirm before removing this user from the active list.</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3 overflow-y-auto p-4">
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        You are about to delete
+        <span class="font-semibold">{{deleteForm.full_name}}</span>.
+        The user will no longer appear in the active user list.
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse justify-end gap-2 border-t border-gray-300 bg-gray-50 p-4 sm:flex-row">
+      <button (click)="isDeleteUser.set(false)" class="w-full rounded-lg bg-gray-200 px-4 py-2 sm:w-auto">
+        Cancel
+      </button>
+      <button (click)="deleteUser(deleteForm.user_id)" class="w-full rounded-lg bg-red-500 px-4 py-2 text-white sm:w-auto">
+        Delete User
+      </button>
+    </div>
+  </div>
+</div>
+}

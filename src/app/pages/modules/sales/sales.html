@@ -1,0 +1,361 @@
+<main class="w-full overflow-x-hidden">
+  <div class="flex w-full flex-col gap-4 p-4 sm:p-6 xl:flex-row">
+    <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-300 bg-card bg-gray-50">
+      <div class="flex flex-col gap-3 border-b border-gray-300 bg-gray-100 p-4">
+        <div class="flex h-10 w-full items-center gap-x-2 rounded-md bg-gray-200 px-2 focus-within:outline-2 focus-within:outline-green-700">
+          <ion-icon name="search-outline" class="size-4"></ion-icon>
+          <input (input)="changeText($event)" class="h-full w-full bg-transparent outline-none"
+            placeholder="Search by ID, generic, or brand name...">
+        </div>
+        <div class="grid max-h-28 grid-cols-2 gap-2 overflow-y-auto p-1 text-xs sm:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-9">
+          @if(salesData.selectedCategory==''){
+          <div (click)="filter(''); salesData.selectedCategory=''"
+            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-green-800 bg-primary px-2.5 py-1 font-semibold text-gray-50">
+            <p>All</p>
+          </div>
+          }@else{
+          <div (click)="filter(''); salesData.selectedCategory=''"
+            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-gray-800 bg-gray-50 px-2.5 py-1 font-semibold text-gray-900">
+            <p>All</p>
+          </div>
+          }
+          @for(data of salesData.categoryData; track $index){
+          @if(salesData.selectedCategory === data){
+          <div (click)="filter(`search=${data}`); salesData.selectedCategory = data"
+            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-green-800 bg-primary px-2.5 py-1 font-semibold text-gray-50">
+            <p>{{data}}</p>
+          </div>
+          }@else{
+          <div (click)="filter(`search=${data}`); salesData.selectedCategory=data"
+            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-gray-800 bg-gray-50 px-2.5 py-1 font-semibold text-gray-900">
+            <p>{{extras.toTitleCaseSafe(data)}}</p>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-auto p-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div class="col-span-full mb-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              class="flex h-10 w-full items-center justify-center rounded-sm bg-primary px-4 text-gray-50 drop-shadow-xs drop-shadow-gray-700 sm:w-14"
+              (click)="prev()">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <div class="text-center text-lg font-bold text-gray-900 sm:text-xl">
+              LIST OF MEDICINES
+            </div>
+            <button
+              class="flex h-10 w-full items-center justify-center rounded-sm bg-primary px-4 text-gray-50 drop-shadow-xs drop-shadow-gray-700 sm:w-14"
+              (click)="next()">
+              <ion-icon name="arrow-forward-outline"></ion-icon>
+            </button>
+          </div>
+
+          @for(data of medicineData.data.data; track $index){
+          <div
+            class="flex min-h-40 h-full cursor-pointer flex-col rounded-xl bg-gray-100 p-4 drop-shadow-xs drop-shadow-gray-700 hover:bg-gray-200">
+            <div class="flex w-full items-center justify-between gap-x-1">
+              <span class="w-full rounded-sm bg-muted py-0.5 text-left text-[10px] font-bold uppercase"
+                name="category">{{data.category ? data.category :' '}}</span>
+
+              @if(data.needs_protection){
+              <div
+                class="inline-flex h-5 w-9 items-center justify-center rounded-md border border-transparent bg-blue-600 text-xs font-semibold text-white">
+                <span>Rx</span>
+              </div>
+              }
+              @if(data.is_dangerous){
+              <div
+                class="inline-flex h-5 w-9 items-center justify-center rounded-md border border-transparent bg-red-600 px-1.5 py-0 font-semibold text-white shadow">
+                <ion-icon name="warning-outline"></ion-icon>
+              </div>
+              }
+            </div>
+
+            <h4 class="text-sm font-semibold transition-colors group-hover:text-primary">
+              {{extras.toTitleCaseSafe(data.medicine_name)}}
+              {{data.dosage+' '+data.unit}}
+            </h4>
+            <div class="mt-1 text-xs text-muted-foreground">{{extras.toTitleCaseSafe(data.type)}}</div>
+
+            <div class="mt-auto flex items-end justify-between gap-3 pt-3">
+              <div>
+                <span class="block text-xs text-muted-foreground">Stocks: {{getStock(data.medicine_id)}}</span>
+                <span class="font-bold text-primary">{{'Php '+data.price}}</span>
+              </div>
+              @if(data.medicine_id){
+              <button (click)="updateTransaction(data, 'addSale')" [disabled]="getStock(data.medicine_id)<=0"
+                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-full bg-primary text-sm font-bold text-gray-50 drop-shadow-xs drop-shadow-gray-900 hover:bg-gray-50 hover:text-gray-700 disabled:bg-gray-400 disabled:text-gray-500">
+                <ion-icon name="add-outline"></ion-icon>
+              </button>
+              }
+            </div>
+          </div>
+          }
+
+          @for(data of getRows(); track $index){
+          <div class="min-h-40 h-full rounded-xl bg-gray-100 p-4 drop-shadow-xs drop-shadow-gray-700">
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-card xl:max-w-104">
+      <div
+        class="flex items-center justify-between border-b border-border bg-primary p-4 text-gray-50 text-primary-foreground">
+        <div class="flex items-center gap-2">
+          <ion-icon name="cart-outline" class="text-2xl"></ion-icon>
+          <h3 class="font-semibold tracking-tight">Current Order</h3>
+        </div>
+        <div class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold">
+          {{(medicineData.salesData.length)}} Items
+        </div>
+      </div>
+
+      <div class="flex max-h-96 flex-col overflow-y-auto p-4 xl:max-h-99">
+        @if(!medicineData.salesData.length) {
+        <div class="flex h-99 flex-col items-center justify-center space-y-3 text-muted-foreground">
+          <ion-icon name="cart-outline" class="text-7xl"></ion-icon>
+          <p>Scan or tap items to start</p>
+        </div>
+        }@else{
+        <div class="flex flex-col space-y-2 h-99 overflow-y-auto">
+          @for(data of medicineData.salesData; track $index){
+          <div class="flex w-full flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary text-xl font-bold uppercase text-gray-50">
+                <p>{{data.medicine_name[0]}}</p>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold">{{ extras.toTitleCaseSafe(data.medicine_name) }}</p>
+                <p class="text-sm font-light">
+                  {{ extras.toTitleCaseSafe(data.generic_name)+' '+data.dosage+' '+data.unit }}
+                </p>
+                <p class="text-xs text-gray-500">
+                  Php {{extras.formatCurrency(data.price) }} x {{ data.quantity }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2">
+              <button (click)="updateTransaction(data, 'minusSale')"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40">
+                <ion-icon name="remove-outline"></ion-icon>
+              </button>
+              <input type="number" min="0" [value]="data.quantity" (change)="onManualQtyChange($event, data)"
+                class="w-14 rounded-md border py-1 text-center text-sm outline-none" />
+              <button (click)="updateTransaction(data, 'addSale')"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
+                <ion-icon name="add-outline"></ion-icon>
+              </button>
+              <button (click)="updateTransaction(data, 'trash')"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <div class="relative inset-0 flex flex-col space-y-4 border-t border-border bg-muted/30 p-4">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div (click)="isDiscount.set(true); salesData.selectedDiscount='DISC'"
+            [ngClass]="salesData.selectedDiscount === 'DISC' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
+            <div class="text-xl font-semibold">%</div>
+            <span>DISCOUNT</span>
+          </div>
+
+          <div (click)="isDiscount.set(true); salesData.selectedDiscount='SCPWD'; customDiscountPrice(null)"
+            [ngClass]="salesData.selectedDiscount === 'SCPWD' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
+            <ion-icon name="people-outline" class="text-xl font-semibold"></ion-icon>
+            <span>SC/PWD</span>
+          </div>
+
+          <div (click)=" salesData.selectedDiscount=''; customDiscountPrice(null); "
+            [ngClass]="salesData.selectedDiscount === '' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
+            <ion-icon name="checkbox-outline" class="text-xl font-semibold"></ion-icon>
+            <span>No Discount</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 text-sm">
+          <div class="flex justify-between text-muted-foreground">
+            <span>Subtotal</span>
+            <span>Php {{extras.formatCurrency(getSubTotalPrice())}}</span>
+          </div>
+          <div class="flex justify-between text-muted-foreground">
+            <span>Discount</span>
+            <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
+          </div>
+          <div class="flex justify-between border-t border-border pt-2 text-lg font-bold">
+            <span>Total</span>
+            <span class="text-primary">Php {{extras.formatCurrency(getTotalPrice())}}</span>
+          </div>
+        </div>
+
+        <button (click)="isPay.set(true)"
+          class="inline-flex h-12 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-lg font-medium text-gray-50 hover:bg-primary/80 disabled:bg-primary/60"
+          [disabled]="this.getTotalPrice() <= 0">Pay {{this.getTotalPrice() | currency:'PHP'}}</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+@if(isDiscount()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3 backdrop-blur-sm sm:px-4">
+  <div class="flex h-full max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 w-full rounded-t-2xl bg-white p-4">
+      <button (click)="isDiscount.set(false)" class="absolute top-4 right-4 text-gray-500 hover:text-red-500">
+        X
+      </button>
+      @if(this.salesData.selectedDiscount === 'DISC') {
+      <h2 class="text-lg font-bold">Apply Custom Discount</h2>
+      <p class="text-sm text-gray-600">Enter the discount amount you want to apply to the current order.</p>
+      }@else{
+      <h2 class="text-lg font-bold">Apply SC/PWD Discount</h2>
+      <p class="text-sm text-gray-600">Enter the Senior Citizen or PWD ID number to apply the discount to the current
+        order.</p>
+      }
+    </div>
+
+    <form class="flex h-full w-full flex-col gap-y-3 overflow-y-auto p-4">
+      @if(this.salesData.selectedDiscount === 'SCPWD') {
+      <p class="flex w-full flex-col gap-3 border-b border-gray-300 pb-8 text-gray-800">
+        <label class="font-bold">SC/PWD ID Number *</label>
+        <input [value]="salesModel.scpwd_id_number" (input)="salesModel.scpwd_id_number = $event.target.value"
+          type="text" class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs focus:outline-green-700"
+          placeholder="Input Senior Citizen or PWD id number eg. 12345678">
+        <span class="text-xs">Required for verification and reporting</span>
+      </p>
+      }
+
+      @if(this.salesData.selectedDiscount === 'DISC') {
+      <p class="flex w-full flex-col gap-3 pb-3 text-gray-800">
+        <label class="font-bold">Custom Discount (Less Amount)</label>
+        <input [value]="salesModel.discount" type="number" min="0" max="100"
+          (input)="customDiscountPrice($event)" name="customDiscount"
+          class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs focus:outline-green-700"
+          placeholder="Input custom discount amount eg. 200">
+      </p>
+      }
+
+      <div
+        class="flex h-40 w-full flex-col justify-center rounded-md border-b border-gray-300 bg-gray-200 p-4 text-gray-800">
+        <p class="w-full pb-4 text-lg font-bold">Review the amount to be paid:</p>
+        <div class="flex w-full justify-between font-medium">
+          <span>Sub Total: </span>
+          <span>Php {{extras.formatCurrency(getSubTotalPrice())}}</span>
+        </div>
+        <div class="flex w-full justify-between pb-1 italic text-red-400">
+          <span>Discount: </span>
+          <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
+        </div>
+        <div class="flex w-full justify-between border-t border-gray-300 pt-1">
+          <span class="font-bold">Total:</span>
+          <span class="w-full text-right font-bold">
+            Php {{extras.formatCurrency(getTotalPrice())}}</span>
+        </div>
+      </div>
+
+      <input type="submit" #clicker hidden>
+    </form>
+
+    <div class="mt-2 flex flex-col-reverse gap-2 rounded-b-2xl bg-gray-50 p-4 sm:flex-row sm:justify-end">
+      <button (click)="isDiscount.set(false); this.salesModel.discount_type='';salesData.selectedDiscount=''"
+        class="rounded-lg bg-gray-200 px-4 py-2">
+        Cancel
+      </button>
+      <button class="rounded-lg bg-blue-500 px-4 py-2 text-white disabled:bg-blue-300" (click)="saveDiscount()">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isPay()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3 backdrop-blur-sm sm:px-4">
+  <div class="flex h-full max-h-[75vh] w-full max-w-md flex-col rounded-2xl bg-gray-100 shadow-xl">
+    <div class="sticky top-0 w-full rounded-t-2xl bg-white p-4">
+      <button (click)="isPay.set(false)" class="absolute top-4 right-4 text-gray-500 hover:text-red-500">
+        X
+      </button>
+      <h2 class="text-lg font-bold">Complete Payment</h2>
+      <p class="text-sm text-gray-600">Complete the payment for the current order.</p>
+    </div>
+
+    <form class="flex h-full w-full flex-col gap-y-3 overflow-y-auto p-4">
+      <div class="flex flex-col gap-y-2">
+        <label class="font-bold">Select Payment Method:</label>
+        <ul class="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
+          @for(data of paymentMethodList; track $index){
+          <li>
+            <input [(ngModel)]="salesModel.payment_method" type="radio" [id]="data.type | lowercase" name="hosting"
+              [value]="data.type" class="hidden peer">
+            <label [for]="data.type | lowercase"
+              class="inline-flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-300 bg-white p-4 transition-all duration-200 hover:border-gray-400 hover:bg-gray-300 peer-checked:border-gray-900 peer-checked:bg-gray-900 peer-checked:text-white">
+              <div class="flex w-full items-center justify-center text-base font-semibold">
+                <ion-icon [name]="data.icon" class="mr-2 text-xl"></ion-icon>
+                <span>{{data.type}}</span>
+              </div>
+            </label>
+          </li>}
+        </ul>
+      </div>
+
+      <div class="mt-2 flex flex-col justify-center space-y-2 border-b border-gray-300 pb-3">
+        <label class="font-bold">Amount Received:</label>
+        <input type="number" min="0" [value]="salesModel.used_amount"
+          (input)="salesModel.used_amount = extras.convertNumber($event.target.value)"
+          class="h-12 w-full rounded-md border border-gray-300 px-3 focus:outline-green-700"
+          placeholder="Input amount received from customer">
+      </div>
+
+      <div class="flex w-full justify-between font-medium">
+        <span>Sub Total: </span>
+        <span>Php {{extras.formatCurrency(getSubTotalPrice())}}</span>
+      </div>
+      <div class="flex w-full justify-between italic text-red-400">
+        <span>Discount: </span>
+        <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
+      </div>
+
+      <div class="flex w-full justify-between border-t border-gray-300 pt-1 font-medium">
+        <span>Total:</span>
+        <span class="w-full text-right">
+          Php {{extras.formatCurrency(getTotalPrice())}}</span>
+      </div>
+
+      <div class="flex w-full justify-between pb-1">
+        <span>Amount Received: </span>
+        <span>Php {{extras.formatCurrency(this.salesModel.used_amount ? this.salesModel.used_amount : 0)}}</span>
+      </div>
+      <div class="flex w-full justify-between border-t border-gray-300 pt-1">
+        <span class="font-semibold">Change:</span>
+        <span class="w-full text-right font-bold">
+          Php {{extras.formatCurrency(extras.computeChange(getTotalPrice(), this.salesModel.used_amount?
+          this.salesModel.used_amount : 0))}}</span>
+      </div>
+
+      <input type="submit" #clicker hidden>
+    </form>
+
+    <div class="mt-2 flex flex-col-reverse gap-2 rounded-b-2xl bg-gray-50 p-4 sm:flex-row sm:justify-end">
+      <button (click)=" isPay.set(false)" class="rounded-lg bg-gray-200 px-4 py-2">
+        Cancel
+      </button>
+      <button class="rounded-lg bg-blue-500 px-4 py-2 text-white" (click)="pay()">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}

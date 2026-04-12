@@ -1,0 +1,117 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import "tailwindcss";
+@import "ngx-toastr/toastr";
+
+:host ::ng-deep ion-icon {
+  @apply  relative z-1
+}
+
+.inputClass{
+  @apply h-11 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500
+}
+
+:root {
+  --font-size: 16px;
+
+  --body: #f8fafc;
+  --navbar: #ffffff;
+  --navbar-border:#e2e8f0;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #047857;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #eef2ff;
+  --muted-foreground: #475569;
+  --accent: #d1fae5;
+  --accent-foreground: #064e3b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: transparent;
+  --input-background: #f8fafc;
+  --switch-background: #cbd5e1;
+  --ring: #047857;
+  --radius: 0.75rem;
+
+  /* 📊 Charts */
+  --chart-1: #166534;
+  --chart-2: #22c55e;
+  --chart-3: #14b8a6;
+  --chart-4: #0ea5e9;
+  --chart-5: #6366f1;
+
+  /* 📌 Sidebar */
+  --sidebar: #F6F9FC;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #166534;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #166534;
+}
+
+.ngx-toastr.extras-toast-base {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  min-width: 320px !important;
+  max-width: 360px !important;
+  min-height: 68px !important;
+  width: auto !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16) !important;
+  overflow-wrap: anywhere !important;
+}
+
+.ngx-toastr.extras-toast-base .toast-message {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.ngx-toastr.extras-toast-success {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.ngx-toastr.extras-toast-danger {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.ngx-toastr.extras-toast-warning {
+  background: #fef3c7 !important;
+  color: #78350f !important;
+}
+
+.ngx-toastr.extras-toast-info {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+.toast-container .ngx-toastr {
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16) !important;
+}
+
+/* 🎯 Tailwind Theme Mapping */
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+
+  --color-body: var(--body);
+  --color-navbar: var(--navbar);
+  --color-navbar-border: var(--navbar-border);
+  --radius: var(--radius);
+}

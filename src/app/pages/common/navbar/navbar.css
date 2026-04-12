@@ -1,0 +1,25 @@
+.navbar-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  color: inherit;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navbar-button:hover {
+  background-color: #e5e7eb;
+}
+
+.navbar-button.active {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.navbar-button.active:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}

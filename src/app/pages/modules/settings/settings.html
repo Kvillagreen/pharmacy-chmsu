@@ -1,0 +1,354 @@
+<div class="min-h-full bg-slate-100 p-6">
+  <div class="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row">
+    <aside class="w-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:w-72 lg:self-start">
+      <div class="mb-4">
+        <h1 class="text-2xl font-bold text-slate-950">Settings</h1>
+        <p class="mt-1 text-sm text-slate-500">Manage branch details, notifications, and account security.</p>
+      </div>
+
+      <div class="space-y-2">
+        <button
+          type="button"
+          (click)="setSelected='general'"
+          [ngClass]="setSelected === 'general' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition">
+          <span>General</span>
+          <ion-icon name="person-circle-outline" class="text-lg"></ion-icon>
+        </button>
+        <button
+          type="button"
+          (click)="setSelected='branch'"
+          [ngClass]="setSelected === 'branch' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition">
+          <span>Manage Branch</span>
+          <ion-icon name="business-outline" class="text-lg"></ion-icon>
+        </button>
+        <button
+          type="button"
+          (click)="setSelected='notif'"
+          [ngClass]="setSelected === 'notif' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition">
+          <span>Notifications</span>
+          <ion-icon name="notifications-outline" class="text-lg"></ion-icon>
+        </button>
+        <button
+          type="button"
+          (click)="setSelected='security'"
+          [ngClass]="setSelected === 'security' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+          class="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition">
+          <span>Security</span>
+          <ion-icon name="shield-checkmark-outline" class="text-lg"></ion-icon>
+        </button>
+      </div>
+    </aside>
+
+    <section class="flex-1 space-y-3">
+      @if(isLoading){
+      <div class="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+        <p class="text-sm text-slate-500">Loading settings...</p>
+      </div>
+      } @else if(setSelected === 'general') {
+      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-6 py-5">
+          <h2 class="text-xl font-bold text-slate-950">Personal Profile</h2>
+          <p class="mt-1 text-sm text-slate-500">Update your name, email, and address used in your account.</p>
+        </div>
+
+        <div class="grid gap-5 p-6 md:grid-cols-2">
+          <label class="flex flex-col gap-2 text-sm text-slate-600">
+            <span class="font-medium text-slate-800">First Name</span>
+            <input [(ngModel)]="settingsData.profile.first_name" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="First name">
+          </label>
+          <label class="flex flex-col gap-2 text-sm text-slate-600">
+            <span class="font-medium text-slate-800">Last Name</span>
+            <input [(ngModel)]="settingsData.profile.last_name" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="Last name">
+          </label>
+          <label class="flex flex-col gap-2 text-sm text-slate-600 md:col-span-2">
+            <span class="font-medium text-slate-800">Email</span>
+            <input [(ngModel)]="settingsData.profile.email" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="email" placeholder="Email address">
+          </label>
+          <label class="flex flex-col gap-2 text-sm text-slate-600 md:col-span-2">
+            <span class="font-medium text-slate-800">Address</span>
+            <textarea [(ngModel)]="settingsData.profile.address" [ngModelOptions]="{standalone: true}" class="min-h-32 rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500" rows="4" placeholder="Address"></textarea>
+          </label>
+        </div>
+
+        <div class="flex justify-end border-t border-slate-200 px-6 py-4">
+          <button (click)="isSaveProfileEdit.set(true)" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+            Save Profile Changes
+          </button>
+        </div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-6 py-5">
+          <h2 class="text-xl font-bold text-slate-950">Company Profile</h2>
+          <p class="mt-1 text-sm text-slate-500">Update the company information shown across the system.</p>
+        </div>
+
+        <div class="grid gap-5 p-6 md:grid-cols-2">
+          <label class="flex flex-col gap-2 text-sm text-slate-600">
+            <span class="font-medium text-slate-800">Company Name</span>
+            <input [(ngModel)]="settingsData.profile.company_name" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="Company name">
+          </label>
+          <label class="flex flex-col gap-2 text-sm text-slate-600">
+            <span class="font-medium text-slate-800">Company Email</span>
+            <input [(ngModel)]="settingsData.profile.company_email" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="email" placeholder="Company email">
+          </label>
+          <label class="flex flex-col gap-2 text-sm text-slate-600 md:col-span-2">
+            <span class="font-medium text-slate-800">TIN Number</span>
+            <input [(ngModel)]="settingsData.profile.tin_number" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="TIN number">
+          </label>
+        </div>
+
+        <div class="flex justify-end border-t border-slate-200 px-6 py-4">
+          <button (click)="isSaveCompanyEdit.set(true)" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+            Save Company Changes
+          </button>
+        </div>
+      </div>
+      } @else if(setSelected === 'branch') {
+      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-950">Manage Branch</h2>
+            <p class="mt-1 text-sm text-slate-500">View, edit, and add all branches under this company.</p>
+          </div>
+          <button (click)="openBranchEditor()" class="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+            Add Branch
+          </button>
+        </div>
+
+        <div class="p-6">
+          @if((branchData.data?.length ?? 0) === 0){
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+            <p class="text-sm text-slate-500">No active branches found for this company yet.</p>
+          </div>
+          } @else {
+          <div class="space-y-4">
+            @for(branch of branchData.data; track branch.branch_id ?? branch.branchId){
+            <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
+              <div class="min-w-0">
+                <h3 class="text-base font-semibold text-slate-950">{{ extras.toTitleCaseSafe(branch.branch_name || branch.branchName) }}</h3>
+                <p class="mt-1 text-sm text-slate-500">{{ extras.toTitleCaseSafe(branch.branch_address) || 'No address provided' }}</p>
+                <p class="mt-2 text-sm text-slate-600">{{ branch.branch_contact || 'No contact provided' }}</p>
+              </div>
+              <div class="flex gap-2">
+                <button (click)="openBranchEditor(branch)" class="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                  Edit
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+      } @else if(setSelected === 'notif') {
+      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-6 py-5">
+          <h2 class="text-xl font-bold text-slate-950">Notification Preferences</h2>
+          <p class="mt-1 text-sm text-slate-500">Choose which system alerts should be delivered to this account.</p>
+        </div>
+
+        <div class="grid gap-3 p-6">
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">Transaction updates</span>
+            <input [(ngModel)]="settingsData.notifications.notify_transactions" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">User registration alerts</span>
+            <input [(ngModel)]="settingsData.notifications.notify_user_registrations" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">Low stock alerts</span>
+            <input [(ngModel)]="settingsData.notifications.notify_low_stock" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">Expiry alerts</span>
+            <input [(ngModel)]="settingsData.notifications.notify_expiry_alerts" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">Security alerts</span>
+            <input [(ngModel)]="settingsData.notifications.notify_security_alerts" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+          <label class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span class="text-sm font-medium text-slate-800">Browser notifications</span>
+            <input [(ngModel)]="settingsData.notifications.notify_browser" [ngModelOptions]="{standalone: true}" type="checkbox" class="h-4 w-4">
+          </label>
+        </div>
+
+        <div class="flex justify-end border-t border-slate-200 px-6 py-4">
+          <button (click)="saveNotifications()" [disabled]="isSavingNotifications" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
+            {{ isSavingNotifications ? 'Saving...' : 'Save Preferences' }}
+          </button>
+        </div>
+      </div>
+      } @else {
+      <div class="space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 px-6 py-5">
+            <h2 class="text-xl font-bold text-slate-950">Security Overview</h2>
+            <p class="mt-1 text-sm text-slate-500">Review account activity and update your password.</p>
+          </div>
+
+          <div class="grid gap-4 p-6 md:grid-cols-2">
+            <div class="rounded-2xl bg-slate-50 p-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Role</p>
+              <p class="mt-2 text-lg font-semibold text-slate-950">{{ settingsData.access.role || 'N/A' }}</p>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Status</p>
+              <p class="mt-2 text-lg font-semibold text-slate-950">{{ settingsData.access.status || 'N/A' }}</p>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Last Login IP</p>
+              <p class="mt-2 text-sm font-semibold text-slate-950">{{ settingsData.security.last_login_ip || 'Unknown' }}</p>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Password Changed</p>
+              <p class="mt-2 text-sm font-semibold text-slate-950">{{ settingsData.security.last_password_changed_at || 'Not available' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 px-6 py-5">
+            <h2 class="text-xl font-bold text-slate-950">Change Password</h2>
+          </div>
+
+          <div class="grid gap-5 p-6">
+            <label class="flex flex-col gap-2 text-sm text-slate-600">
+              <span class="font-medium text-slate-800">Current Password</span>
+              <input [(ngModel)]="passwordForm.current_password" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="password" placeholder="Current password">
+            </label>
+            <label class="flex flex-col gap-2 text-sm text-slate-600">
+              <span class="font-medium text-slate-800">New Password</span>
+              <input [(ngModel)]="passwordForm.new_password" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="password" placeholder="New password">
+            </label>
+            <label class="flex flex-col gap-2 text-sm text-slate-600">
+              <span class="font-medium text-slate-800">Confirm New Password</span>
+              <input [(ngModel)]="passwordForm.new_password_confirmation" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="password" placeholder="Confirm new password">
+            </label>
+          </div>
+
+          <div class="flex flex-col gap-3 border-t border-slate-200 px-6 py-4 md:flex-row md:justify-end">
+            <button (click)="revokeOtherSessions()" [disabled]="isRevokingSessions" class="rounded-2xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+              {{ isRevokingSessions ? 'Revoking...' : 'Revoke Other Sessions' }}
+            </button>
+            <button (click)="changePassword()" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Update Password
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </section>
+  </div>
+</div>
+
+@if(isEditBranch() || isCreateBranch()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-lg rounded-3xl bg-white shadow-2xl">
+    <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+      <div>
+        <h2 class="text-xl font-bold text-slate-950">{{ isEditBranch() ? 'Edit Branch' : 'Create Branch' }}</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ isEditBranch() ? 'Update the selected branch details.' : 'Add a new branch for this company.' }}
+        </p>
+      </div>
+      <button (click)="isEditBranch.set(false); isCreateBranch.set(false)" class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+        X
+      </button>
+    </div>
+
+    <div class="grid gap-4 p-6">
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Branch Name</span>
+        <input [(ngModel)]="branchData.selectedBranch.branch_name" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="Branch name">
+      </label>
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Branch Address</span>
+        <input [(ngModel)]="branchData.selectedBranch.branch_address" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="Branch address">
+      </label>
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Branch Contact</span>
+        <input [(ngModel)]="branchData.selectedBranch.branch_contact" [ngModelOptions]="{standalone: true}" class="h-11 rounded-2xl border border-slate-300 px-4 outline-none transition focus:border-slate-500" type="text" placeholder="Branch contact">
+      </label>
+    </div>
+
+    <div class="flex flex-wrap justify-end gap-3 border-t border-slate-200 px-6 py-4">
+      <button (click)="isEditBranch.set(false); isCreateBranch.set(false)" class="rounded-2xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+        Cancel
+      </button>
+      @if(isEditBranch()){
+      <button (click)="isDeleteBranch.set(true)" class="rounded-2xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700">
+        Delete
+      </button>
+      <button (click)="isSaveBranchEdit.set(true)" class="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+        Save Changes
+      </button>
+      } @else {
+      <button (click)="isSaveBranchCreate.set(true)" class="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Create Branch
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}
+
+@if(isDeleteBranch() || isSaveProfileEdit() || isSaveBranchEdit() || isSaveCompanyEdit() || isSaveBranchCreate()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm">
+  <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+    <h2 class="text-lg font-bold text-slate-950">
+      @if(isDeleteBranch()){Delete Branch}
+      @else if(isSaveProfileEdit()){Save Profile Changes}
+      @else if(isSaveCompanyEdit()){Save Company Changes}
+      @else if(isSaveBranchEdit()){Save Branch Changes}
+      @else {Create Branch}
+    </h2>
+
+    <p class="mt-3 text-sm leading-6 text-slate-500">
+      @if(isDeleteBranch()){
+      Delete <span class="font-semibold text-slate-800">{{ branchData.selectedBranch.branch_name }}</span>? This branch will be marked as deleted.
+      } @else if(isSaveProfileEdit()){
+      Save your updated profile details for <span class="font-semibold text-slate-800">{{ settingsData.profile.first_name }} {{ settingsData.profile.last_name }}</span>?
+      } @else if(isSaveCompanyEdit()){
+      Save the updated company details for {{ settingsData.profile.company_name || 'this company' }}?
+      } @else if(isSaveBranchEdit()){
+      Save the updates for {{ branchData.selectedBranch.branch_name || 'this branch' }}?
+      } @else {
+      Create the new branch <span class="font-semibold text-slate-800">{{ branchData.selectedBranch.branch_name || 'entry' }}</span>?
+      }
+    </p>
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button (click)="isDeleteBranch.set(false); isSaveProfileEdit.set(false); isSaveBranchEdit.set(false); isSaveCompanyEdit.set(false); isSaveBranchCreate.set(false)" class="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+        Cancel
+      </button>
+      @if(isDeleteBranch()){
+      <button (click)="deleteBranch()" class="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700">
+        Delete
+      </button>
+      } @else if(isSaveProfileEdit()){
+      <button (click)="updateProfile()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+        Save
+      </button>
+      } @else if(isSaveCompanyEdit()){
+      <button (click)="updateCompany()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+        Save
+      </button>
+      } @else if(isSaveBranchEdit()){
+      <button (click)="updateBranch()" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+        Save
+      </button>
+      } @else {
+      <button (click)="createBranch()" class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Create
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}

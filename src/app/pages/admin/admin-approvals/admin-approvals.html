@@ -1,0 +1,37 @@
+<section class="space-y-6 p-4 sm:p-6">
+  <div>
+    <h2 class="text-2xl font-bold">Admin Approvals</h2>
+    <p class="text-sm text-slate-500">Approve or reject company administrators across the platform.</p>
+  </div>
+  <div class="space-y-4">
+    @for(admin of paginatedApprovals; track admin.user_id){
+    <div class="rounded-3xl bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-950">{{admin.first_name}} {{admin.last_name}}</h3>
+          <p class="mt-2 text-sm text-slate-500">{{admin.email}}</p>
+          <p class="mt-1 text-sm text-slate-500">{{admin.company_name || 'No company'}} · {{admin.branch_name || 'No branch'}}</p>
+          <p class="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">Registered IP: {{admin.registered_ip || 'N/A'}} · {{extras.formatDateWithTime(admin.created_at)}}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button (click)="updateStatus(admin.user_id, 'rejected')" class="rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100">Reject</button>
+          <button (click)="updateStatus(admin.user_id, 'approved')" class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500">Approve</button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+  @if(totalApprovalPages > 1){
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white px-4 py-4 shadow-sm">
+    <p class="text-sm text-slate-500">Showing page {{currentPage}} of {{totalApprovalPages}}</p>
+    <div class="flex flex-wrap items-center gap-2">
+      <button (click)="setApprovalPage(currentPage - 1)" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100" [disabled]="currentPage === 1">Previous</button>
+      @for(page of approvalPageNumbers; track page){
+      <button (click)="setApprovalPage(page)" class="rounded-2xl px-4 py-2 text-sm transition" [class.bg-slate-950]="page === currentPage" [class.text-white]="page === currentPage" [class.text-slate-700]="page !== currentPage" [class.bg-slate-50]="page !== currentPage">{{page}}</button>
+      }
+      <button (click)="setApprovalPage(currentPage + 1)" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100" [disabled]="currentPage === totalApprovalPages">Next</button>
+    </div>
+  </div>
+  }
+</section>

@@ -1,0 +1,21 @@
+<fieldset [formGroupName]="groupName" [ngClass]="fieldsetClass">
+  <div [ngClass]="gridClass">
+    @for (field of fields; track $index) {
+    <div [ngClass]="field.wrapperClass || 'col-span-' + (field.colSpan || 1)">
+      @if(field.type != "select"){
+      <input *ngIf="field.type !== 'select'" [type]="field.type || 'text'" [id]="field.name"
+        [formControlName]="field.name" [placeholder]="field.placeholder"
+        [ngClass]="field.inputClass || 'px-3 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400'" />
+
+      }@else {
+
+      <!-- Select field -->
+      <select [id]="field.name" [formControlName]="field.name"
+        [ngClass]="field.inputClass || 'px-3 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400'">
+        <option *ngFor="let opt of field.options" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+
+      }
+    </div>}
+  </div>
+</fieldset>

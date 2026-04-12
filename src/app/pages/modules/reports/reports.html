@@ -1,0 +1,576 @@
+<main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+  <div class="space-y-5 sm:space-y-6">
+    <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="max-w-3xl">
+        <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Analytics and Export Center</h1>
+        <p class="mt-2 text-sm text-slate-600 sm:text-base">
+          {{reportData.data.analysis.headline}}
+        </p>
+      </div>
+
+      <div class="flex w-full flex-col gap-2 lg:w-auto">
+
+        <div class="flex flex-col gap-2 sm:flex-row px-2">
+          <div
+            class="h-11 rounded-xl border flex justify-center items-center border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500">
+            <select class="outline-none bg-transparent text-sm" [value]="selectedDays" (change)="changeDays($event)">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </div>
+          <button (click)="printReport()"
+            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Print
+          </button>
+          <button (click)="exportCsv('recent_transactions')"
+            class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
+            Export CSV
+          </button>
+          <button (click)="openBirModal()"
+            class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">
+            Philippines BIR Tax Declaration
+          </button>
+        </div>
+      </div>
+    </section>
+
+    @if(birReportData?.data; as birReport){
+    <section class="rounded-3xl border border-[#d6c3a1] bg-[#fffaf0] p-4 shadow-sm sm:p-6">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">BIR Annual Tax Declaration</p>
+          <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">BIR Form {{birReport.form_no ?
+            birReport.form_no: 'N/A'}}</h2>
+          <p class="mt-2 max-w-2xl text-sm text-slate-500">
+            Receipt-style annual declaration summary for {{birReport.taxpayer_name}}.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <button (click)="clearBirReport()"
+            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Close Panel
+          </button>
+          <button (click)="openBirModal()"
+            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Open Generator
+          </button>
+          <button (click)="printBirReport()"
+            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Print
+          </button>
+          <button (click)="downloadBirPdf()"
+            class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-5 rounded-2xl border border-[#d6c3a1] bg-white/70 p-4 sm:p-6">
+        <div class="mx-auto max-w-2xl font-mono text-sm text-slate-800">
+          <div class="text-center">
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-500">BIR Form {{birReport.form_no ?
+              birReport.form_no : 'N/A'}}</p>
+            <h3 class="mt-2 text-2xl font-bold">Generated</h3>
+          </div>
+
+          <div class="my-5 border-t border-dashed border-slate-400"></div>
+
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Taxpayer:</span>
+              <span class="font-bold text-slate-900">{{birReport.taxpayer_name}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">TIN:</span>
+              <span class="font-bold text-slate-900">{{birReport.tin_number || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Taxable Year:</span>
+              <span class="font-bold text-slate-900">{{birReport.taxable_year}}</span>
+            </div>
+          </div>
+
+          <div class="my-5 border-t border-dashed border-slate-400"></div>
+
+          <div class="space-y-3">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Sales/Receipts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_sales_receipts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Sales Discounts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.sales_discounts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Net Sales/Receipts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.net_sales_receipts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Cost of Sales:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.cost_of_sales)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Income:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_income)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Deductions:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.deductions)}}</span>
+            </div>
+            <div class="my-4 border-t border-dashed border-slate-400"></div>
+            <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
+              <span class="font-semibold">Taxable Net Income:</span>
+              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.taxable_net_income)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
+              <span class="font-semibold">INCOME TAX DUE ({{birReport.income_tax_rate * 100}}%):</span>
+              <span class="text-lg font-bold text-emerald-700">Php
+                {{extras.formatCurrency(birReport.income_tax_due)}}</span>
+            </div>
+          </div>
+
+          <div class="my-5 border-t border-dashed border-slate-400"></div>
+
+          <div class="space-y-2">
+            <p class="text-xs uppercase tracking-[0.25em] text-slate-500">Compliance Notes</p>
+            @for(note of birReport.data_notes; track $index){
+            <p class="text-xs leading-relaxed text-slate-600">{{note}}</p>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+    }
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Revenue</p>
+        <h2 class="mt-3 wrap-break-word text-2xl font-bold text-slate-900 sm:text-3xl">Php
+          {{extras.formatCurrency(reportData.data.summary.total_revenue)}}</h2>
+        <p class="mt-2 text-xs font-semibold"
+          [ngClass]="isPositive(reportData.data.summary.revenue_change_pct) ? 'text-emerald-600' : 'text-red-600'">
+          {{isPositive(reportData.data.summary.revenue_change_pct) ? '+' :
+          ''}}{{reportData.data.summary.revenue_change_pct}}% vs previous period
+        </p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Transactions</p>
+        <h2 class="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{{reportData.data.summary.transaction_count}}
+        </h2>
+        <p class="mt-2 text-xs text-slate-500">Average sale Php
+          {{extras.formatCurrency(reportData.data.summary.average_sale)}}</p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Discounts</p>
+        <h2 class="mt-3 wrap-break-word text-2xl font-bold text-slate-900 sm:text-3xl">Php
+          {{extras.formatCurrency(reportData.data.summary.total_discount)}}</h2>
+        <p class="mt-2 text-xs text-slate-500">Recorded discounts in selected period</p>
+      </article>
+
+      <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-amber-700">Low Stock</p>
+        <h2 class="mt-3 text-2xl font-bold text-amber-900 sm:text-3xl">{{reportData.data.summary.low_stock_count}}</h2>
+        <p class="mt-2 text-xs text-amber-700">Needs replenishment follow-up</p>
+      </article>
+
+      <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-rose-700">Expiring Soon</p>
+        <h2 class="mt-3 text-2xl font-bold text-rose-900 sm:text-3xl">{{reportData.data.summary.expiring_30_count}}</h2>
+        <p class="mt-2 text-xs text-rose-700">Batches expiring within 30 days</p>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Revenue Trend</h3>
+            <p class="text-sm text-slate-500">Daily sales activity for the selected period.</p>
+          </div>
+          <button (click)="exportCsv('branch_performance')"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export Branch CSV
+          </button>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex h-56 items-end gap-2 overflow-x-auto rounded-2xl bg-slate-50 p-3 sm:h-72 sm:p-4">
+            @for(point of reportData.data.charts.daily_revenue; track point.date){
+            <div class="flex min-w-14 flex-1 flex-col items-center justify-end gap-2 sm:min-w-12">
+              <div class="text-center text-[10px] font-semibold text-slate-500">Php
+                {{extras.formatCurrency(point.total_revenue)}}</div>
+              <div
+                class="w-full rounded-t-xl bg-linear-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
+                [style.height.%]="getBarHeight(point.total_revenue)">
+              </div>
+              <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
+            </div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Report Notes</h3>
+          <p class="text-sm text-slate-500">Generated from your live transaction and inventory data.</p>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          @for(note of reportData.data.analysis.highlights; track $index){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            {{note}}
+          </div>
+          }
+        </div>
+
+        <div class="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Inventory Value</p>
+          <p class="mt-2 text-2xl font-bold sm:text-3xl">Php
+            {{extras.formatCurrency(reportData.data.summary.inventory_value)}}</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Branch Performance</h3>
+            <p class="text-sm text-slate-500">Revenue and transactions by branch.</p>
+          </div>
+          <button (click)="exportCsv('branch_performance')"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          @for(branch of reportData.data.tables.branch_performance; track branch.branch_id){
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span class="font-medium text-slate-700">{{branch.branch_name}}</span>
+              <span class="text-slate-500">Php {{extras.formatCurrency(branch.total_revenue)}} |
+                {{branch.transaction_count}} txns</span>
+            </div>
+            <div class="h-3 w-full rounded-full bg-slate-100">
+              <div class="h-3 rounded-full bg-linear-to-r from-sky-500 to-cyan-400"
+                [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(reportData.data.tables.branch_performance, 'total_revenue'))">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Payment Mix</h3>
+          <p class="text-sm text-slate-500">How customers paid in the selected window.</p>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          @for(method of reportData.data.charts.payment_mix; track method.payment_method){
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span class="font-medium text-slate-700">{{method.payment_method}}</span>
+              <span class="text-slate-500">Php {{extras.formatCurrency(method.total_revenue)}} |
+                {{method.transaction_count}} txns</span>
+            </div>
+            <div class="h-3 w-full rounded-full bg-slate-100">
+              <div class="h-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400"
+                [style.width.%]="getPercentWidth(method.total_revenue, getMaxByKey(reportData.data.charts.payment_mix, 'total_revenue'))">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Category Movement</h3>
+          <p class="text-sm text-slate-500">Most active product categories for the selected period.</p>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          @for(category of reportData.data.charts.category_mix; track category.category){
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <span class="font-medium text-slate-700">{{extras.toTitleCaseSafe(category.category)}}</span>
+              <span class="text-slate-500">{{category.quantity_sold}} units | {{category.transaction_count}} txns</span>
+            </div>
+            <div class="h-3 w-full rounded-full bg-slate-100">
+              <div class="h-3 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-400"
+                [style.width.%]="getPercentWidth(category.quantity_sold, getMaxByKey(reportData.data.charts.category_mix, 'quantity_sold'))">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Top-Selling Medicines</h3>
+            <p class="text-sm text-slate-500">Highest-moving items in the selected report.</p>
+          </div>
+          <button (click)="exportCsv('top_medicines')"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          @for(item of reportData.data.tables.top_medicines; track item.medicine_id){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{extras.toTitleCaseSafe(item.medicine_name)}}</p>
+                <p class="text-xs text-slate-500">{{extras.toTitleCaseSafe(item.generic_name)}} |
+                  {{extras.toTitleCaseSafe(item.category)}}</p>
+              </div>
+              <div class="text-right">
+                <p class="font-semibold text-slate-800">{{item.quantity_sold}} sold</p>
+                <p class="text-xs text-slate-500">{{item.transactions_count}} orders</p>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Inventory Watch</h3>
+            <p class="text-sm text-slate-500">Items needing replenishment or expiry review.</p>
+          </div>
+          <button (click)="exportCsv('inventory_watch')"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          @for(item of reportData.data.tables.inventory_watch; track item.medicine_id + '-' + item.branch_name){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{extras.toTitleCaseSafe(item.medicine_name)}}</p>
+                <p class="text-xs text-slate-500">{{item.branch_name}} | {{extras.toTitleCaseSafe(item.generic_name)}}
+                </p>
+              </div>
+              <span class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                [ngClass]="item.status === 'Out of Stock' ? 'bg-red-100 text-red-700' : item.status === 'Low Stock' ? 'bg-amber-100 text-amber-700' : item.status === 'Expiring Soon' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'">
+                {{item.status}}
+              </span>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
+              <span>Stocks: {{item.stocks}}</span>
+              <span>Reorder: {{item.reorder_level}}</span>
+              <span>Expiry: {{item.expiry_date ? extras.formatDate(item.expiry_date) : 'N/A'}}</span>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Recent Transactions</h3>
+            <p class="text-sm text-slate-500">Latest completed sales in the selected scope.</p>
+          </div>
+          <button (click)="exportCsv('recent_transactions')"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="mt-5 space-y-3">
+          @for(transaction of reportData.data.tables.recent_transactions; track transaction.transaction_id){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{transaction.branch_name || 'Unknown Branch'}}</p>
+                <p class="text-xs text-slate-500">{{transaction.cashier_name || 'Unknown Cashier'}} |
+                  {{transaction.payment_method}}</p>
+              </div>
+              <div class="text-left sm:text-right">
+                <p class="font-semibold text-emerald-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
+                <p class="text-xs text-slate-500">{{extras.timeAgo(transaction.created_at)}}</p>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+  </div>
+</main>
+
+@if(isBirModalOpen){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[95vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+    <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <button class="absolute right-4 top-4 text-gray-500 hover:text-red-500" (click)="closeBirModal()">
+        <ion-icon name="close-outline" size="text-large"></ion-icon>
+      </button>
+
+      <div class="pr-8">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">Generate BIR Annual Tax
+          Declaration</p>
+        <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">BIR Form 1702-RT</h2>
+        <p class="mt-2 text-sm text-slate-500">
+          Select branch and taxable year to generate the official annual declaration summary.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[0.95fr,1.35fr]">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium text-slate-700">Branch</label>
+            <select [(ngModel)]="birForm.branch_id"
+              class="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500">
+              <option value="" disabled>Select branch</option>
+              @for(branch of branchData.data; track branch.branchId){
+              <option [value]="branch.branchId">{{branch.branchName}}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-slate-700">Taxable Year</label>
+            <select [(ngModel)]="birForm.year"
+              class="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500">
+              @for(year of availableYears(); track year){
+              <option [value]="year">{{year}}</option>
+              }
+            </select>
+          </div>
+
+          <button (click)="generateBirAnnualDeclaration()"
+            class="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">
+            Generate BIR Annual Tax Declaration
+          </button>
+
+          <p class="text-xs leading-relaxed text-slate-500">
+            The system blocks generation for an unfinished year and uses your selected branch records.
+          </p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-[#d6c3a1] bg-[#fffaf0] p-4 shadow-sm sm:p-6">
+        @if(birReportData?.data; as birReport){
+        <div class="mx-auto max-w-2xl font-mono text-sm text-slate-800">
+          <div class="text-center">
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-500">BIR Form {{birReport.form_no ?
+              birReport.form_no : 'N/A'}}</p>
+            <h3 class="mt-2 text-2xl font-bold">Generated</h3>
+          </div>
+
+          <div class="my-5 border-t border-dashed border-slate-400"></div>
+
+          <div class="space-y-2">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Taxpayer:</span>
+              <span class="font-bold text-slate-900">{{birReport.taxpayer_name}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">TIN:</span>
+              <span class="font-bold text-slate-900">{{birReport.tin_number || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Taxable Year:</span>
+              <span class="font-bold text-slate-900">{{birReport.taxable_year}}</span>
+            </div>
+          </div>
+
+          <div class="my-5 border-t border-dashed border-slate-400"></div>
+
+          <div class="space-y-3">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Sales/Receipts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_sales_receipts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Sales Discounts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.sales_discounts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Net Sales/Receipts:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.net_sales_receipts)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Cost of Sales:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.cost_of_sales)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Income:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_income)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Less: Deductions:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.deductions)}}</span>
+            </div>
+            <div class="my-4 border-t border-dashed border-slate-400"></div>
+            <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
+              <span class="font-semibold">Taxable Net Income:</span>
+              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.taxable_net_income)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
+              <span class="font-semibold">INCOME TAX DUE ({{birReport.income_tax_rate * 100}}%):</span>
+              <span class="text-lg font-bold text-emerald-700">Php
+                {{extras.formatCurrency(birReport.income_tax_due)}}</span>
+            </div>
+          </div>
+        </div>
+        } @else {
+        <div
+          class="flex h-full min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-[#d6c3a1] bg-white/60 p-6 text-center">
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">BIR Form 1702-RT</p>
+          <h3 class="mt-3 text-xl font-semibold text-slate-900">No annual declaration generated yet</h3>
+          <p class="mt-2 max-w-md text-sm text-slate-500">
+            Choose a branch and a completed taxable year, then generate the report to preview the print-ready BIR
+            declaration summary.
+          </p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div
+      class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:justify-between sm:px-6">
+      <button class="rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-300"
+        (click)="closeBirModal()">
+        Close
+      </button>
+
+      @if(birReportData?.data){
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button (click)="printBirReport()"
+          class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          Print
+        </button>
+        <button (click)="downloadBirPdf()"
+          class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+          Download PDF
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}

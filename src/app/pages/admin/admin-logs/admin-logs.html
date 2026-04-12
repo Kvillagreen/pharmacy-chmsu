@@ -1,0 +1,76 @@
+<section class="space-y-6 p-4 sm:p-6">
+  <div>
+    <h2 class="text-2xl font-bold">Backend Logs and Audit Trail</h2>
+    <p class="text-sm text-slate-500">View Laravel log output, deployment logging status, and tracked audit events with IP addresses.</p>
+  </div>
+
+  <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-950">Logging Configuration</h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Active channel: <span class="font-semibold text-slate-700">{{logData.logger?.channel || 'N/A'}}</span>
+          | Level: <span class="font-semibold text-slate-700">{{logData.logger?.level || 'N/A'}}</span>
+        </p>
+        @if((logData.logger?.stack?.length ?? 0) > 0){
+        <p class="mt-2 text-sm text-slate-500">
+          Stack channels: {{(logData.logger?.stack || []).join(', ')}}
+        </p>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="load()"
+        class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+        Refresh logs
+      </button>
+    </div>
+
+    @if(logData.application_log_notice){
+    <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      {{logData.application_log_notice}}
+    </div>
+    }
+
+    @if((logData.logger?.sources?.length ?? 0) > 0){
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      @for(source of logData.logger?.sources ?? []; track $index){
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-semibold text-slate-950">{{source.name}}</p>
+        <p class="mt-1 break-all text-xs text-slate-500">{{source.path}}</p>
+        <p class="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">
+          {{source.exists ? 'Available' : 'Not found'}} | {{source.readable ? 'Readable' : 'Stream only'}}
+        </p>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-2">
+    <div class="rounded-3xl bg-white p-5 shadow-sm">
+      <h3 class="text-lg font-semibold text-slate-950">Audit Logs</h3>
+      <div class="mt-4 max-h-[38rem] space-y-3 overflow-y-auto">
+        @for(item of logData.audit_logs ?? []; track $index){
+        <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <p class="font-semibold text-slate-950">{{item.action}}</p>
+          <p class="mt-1 text-sm text-slate-600">{{item.details}}</p>
+          <p class="mt-3 text-xs uppercase tracking-[0.18em] text-slate-400">{{item.user_name || item.user_email || 'System'}} | {{item.ip_address || 'N/A'}} | {{item.created_at}}</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-3xl bg-slate-950 p-5 text-slate-100 shadow-sm">
+      <h3 class="text-lg font-semibold">Laravel Application Logs</h3>
+      <div class="mt-4 max-h-[38rem] overflow-y-auto rounded-3xl bg-slate-900 p-4 font-mono text-xs leading-relaxed">
+        @if((logData.application_logs?.length ?? 0) === 0){
+        <p class="text-slate-400">No readable file-based application logs were found for the current logging channel.</p>
+        }
+        @for(line of logData.application_logs ?? []; track $index){
+        <p class="break-words">{{line}}</p>
+        }
+      </div>
+    </div>
+  </div>
+</section>

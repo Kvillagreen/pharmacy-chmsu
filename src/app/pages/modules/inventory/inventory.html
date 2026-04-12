@@ -1,0 +1,580 @@
+<main class="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto z-0">
+  <div class="space-y-4 sm:space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="min-w-0">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Product Master List</h1>
+        <p class="text-muted-foreground mt-1 text-sm sm:text-base">
+          Manage your entire catalog, total stock levels, and pricing.
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+        <button
+          (click)="openExportModal()"
+          class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 hover:bg-gray-300 w-full sm:w-auto">
+          <ion-icon name="download-outline"></ion-icon>
+          <span>Export</span>
+        </button>
+
+        <button
+          (click)="isCreate.set(true); this.medicineData.inputData=[]"
+          class="inline-flex items-center text-gray-50 justify-center font-semibold h-10 px-4 rounded-md gap-x-2 bg-primary hover:bg-primary/90 w-full sm:w-auto">
+          <ion-icon name="add-outline"></ion-icon>
+          <span>Add New Product</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+      <div class="bg-white text-card-foreground border rounded-lg shadow-sm border-gray-300 p-4 flex flex-col justify-center">
+        <p class="text-sm font-medium text-muted-foreground">Total Products</p>
+        <p class="text-2xl sm:text-3xl font-bold">{{this.medicineData.data?.total_items || 0}}</p>
+      </div>
+
+      <div class="bg-white text-card-foreground border rounded-lg shadow-sm border-gray-300 p-4 flex flex-col justify-center">
+        <p class="text-sm font-medium text-muted-foreground">Low Stock Items</p>
+        <p class="text-2xl sm:text-3xl font-bold text-amber-600">{{this.medicineData.data?.low_stock || 0 }}</p>
+      </div>
+
+      <div class="bg-white text-card-foreground border rounded-lg shadow-sm border-gray-300 p-4 flex flex-col justify-center">
+        <p class="text-sm font-medium text-muted-foreground">Out of Stock</p>
+        <p class="text-2xl sm:text-3xl font-bold text-destructive">{{this.medicineData.data?.out_of_stock || 0 }}</p>
+      </div>
+
+      <div class="border rounded-lg shadow-sm border-gray-300 p-4 flex flex-col justify-center bg-primary text-white">
+        <p class="text-sm font-medium">Est. Inventory Value</p>
+        <p class="text-2xl sm:text-3xl font-bold wrap-break-word">{{"Php "+ (this.medicineData.data?.total_amount || 0)}}</p>
+      </div>
+    </div>
+
+    <!-- Table / List Container -->
+    <div class="bg-white border-gray-300 border rounded-lg shadow-sm">
+      <!-- Search / Pagination -->
+      <div class="py-3 flex flex-col lg:flex-row gap-3 lg:items-center bg-muted/20 px-3 sm:px-4">
+        <div class="flex justify-center items-center w-full lg:w-1/2 bg-gray-100 h-11 sm:h-12 rounded-md px-2 gap-x-2 focus-within:outline-2 focus-within:outline-green-700">
+          <ion-icon name="search-outline" class="size-4 shrink-0"></ion-icon>
+          <input
+            (input)="changeText($event)"
+            class="w-full h-full outline-none bg-transparent text-sm"
+            placeholder="Search by ID, generic, or brand name...">
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between lg:justify-end gap-3 text-sm text-muted-foreground lg:ml-auto">
+          <span class="text-xs sm:text-sm">
+            Showing {{this.medicineData.data.meta?.current_page}} of {{this.medicineData.data.meta?.last_page}} page
+          </span>
+          <div class="flex text-lg justify-center items-center gap-2">
+            <ion-icon class="cursor-pointer" name="chevron-back-outline" (click)="prev()"></ion-icon>
+            <ion-icon class="cursor-pointer" name="chevron-forward-outline" (click)="next()"></ion-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="hidden lg:block overflow-x-auto">
+        <!-- HEADER -->
+        <div class="w-full p-2 bg-gray-100 h-10 grid justify-center items-center text-center text-xs grid-cols-7 font-bold border-y border-gray-300">
+          <div class="flex items-center justify-start px-4 gap-x-1 w-full h-full">
+            <span>PRODUCT ID</span>
+            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
+              <ion-icon name="caret-up-outline" (click)="filter('sort=medicine_id')"></ion-icon>
+              <ion-icon name="caret-down-outline" (click)="filter('sort=-medicine_id')"></ion-icon>
+            </span>
+          </div>
+
+          <div class="flex justify-start items-center px-4 w-full h-full leading-none gap-x-1">
+            <span>PRODUCT DETAILS</span>
+            <span class="flex flex-col gap-y-0 leading-none text-[9px]">
+              <ion-icon name="caret-up-outline" (click)="filter('sort=medicine_name')"></ion-icon>
+              <ion-icon name="caret-down-outline" (click)="filter('sort=-medicine_name')"></ion-icon>
+            </span>
+          </div>
+
+          <div class="flex justify-end items-center px-4 w-full h-full leading-none">
+            <p>CATEGORY & FORMAT</p>
+          </div>
+
+          <div class="flex items-center justify-end px-4 gap-x-1 w-full h-full">
+            <span>UNIT PRICE</span>
+            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
+              <ion-icon name="caret-up-outline" (click)="filter('sort=price')"></ion-icon>
+              <ion-icon name="caret-down-outline" (click)="filter('sort=-price')"></ion-icon>
+            </span>
+          </div>
+
+          <div class="flex items-center justify-end px-4 gap-x-1 w-full h-full">
+            <span>TOTAL STOCKS</span>
+            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
+              <ion-icon name="caret-up-outline" (click)="filter('sort=stocks')"></ion-icon>
+              <ion-icon name="caret-down-outline" (click)="filter('sort=-stocks')"></ion-icon>
+            </span>
+          </div>
+
+          <div class="flex items-center justify-end px-4 w-full h-full">
+            <p>STATUS</p>
+          </div>
+
+          <div class="flex items-center justify-end px-4 w-full h-full">
+            <p>ACTIONS</p>
+          </div>
+        </div>
+
+        <!-- DATA ROWS -->
+        <div *ngFor="let item of getRows(); let i = index"
+          [ngClass]="i === 9 ? 'rounded-b-md' : 'rounded-none'"
+          class="hover:bg-gray-50 w-full py-4 px-2 grid justify-center items-center text-center text-xs grid-cols-7 font-semibold border-b border-gray-300">
+
+          <div class="flex items-start justify-center flex-col px-4 h-10">
+            {{ item?.medicine_id ? 'PR-' + item.medicine_id : '' }}
+          </div>
+
+          <div class="flex items-start justify-center flex-col px-4 h-full">
+            <p>{{ item?.medicine_name || '' }}</p>
+            <p class="font-medium">{{ item?.generic_name || '' }}</p>
+          </div>
+
+          <div class="flex items-end justify-center flex-col px-4 h-full">
+            <p>{{ item?.category || '' }}</p>
+            <p class="font-medium">
+              {{extras.toTitleCaseSafe(item?.type || '')+' '+(item?.dosage || '')+' '+extras.toLowerCaseSafe(item?.unit || '') }}
+            </p>
+          </div>
+
+          <div class="flex items-end justify-center flex-col px-4 h-full">
+            <p>{{ item?.price ? 'Php ' + item.price : '' }}</p>
+          </div>
+
+          <div class="flex flex-col items-end justify-center px-4 h-full">
+            <p>{{ item?.stocks >= 0 ? item?.stocks : ''}}</p>
+            <p class="text-xs font-medium">
+              {{item?.reorder_level >= 0 && item?.reorder_level != null ? ('Min: ' + item?.reorder_level ) : ' '}}
+            </p>
+          </div>
+
+          <div class="flex items-end flex-col justify-center px-4 h-full">
+            <div *ngIf="item">
+              @if(item?.stocks > item.reorder_level){
+              <div class="bg-gray-200 border text-center rounded-md w-20 border-gray-600">
+                Adequate
+              </div>
+              }@else if (item?.stocks==0){
+              <div class="bg-red-200 border text-center text-red-600 rounded-md w-20 border-red-600">
+                Out of stocks
+              </div>
+              }@else{
+              <div class="bg-yellow-200 border text-center text-yellow-600 rounded-md w-20 border-yellow-600">
+                Low stock
+              </div>
+              }
+            </div>
+          </div>
+
+          <div class="w-full flex flex-row items-center justify-end gap-x-1 px-4 text-xl h-full">
+            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-blue-600">
+              <ion-icon name="create-outline"
+                (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
+            </div>
+            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-red-400">
+              <ion-icon name="trash-outline"
+                (click)="this.medicineData.inputData = item; isDelete.set(true)"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Cards -->
+      <div class="lg:hidden divide-y divide-gray-200">
+        <div *ngFor="let item of getRows(); let i = index" class="p-4 space-y-3">
+          <div *ngIf="item; else emptyRow" class="space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs text-muted-foreground">
+                  {{ item?.medicine_id ? 'PR-' + item.medicine_id : '' }}
+                </p>
+                <p class="font-semibold text-sm wrap-break-word">{{ item?.medicine_name || '' }}</p>
+                <p class="text-sm text-gray-600 wrap-break-word">{{ item?.generic_name || '' }}</p>
+              </div>
+
+              <div class="flex items-center gap-1 shrink-0 text-xl">
+                <div class="rounded-md size-8 flex justify-center items-center text-blue-600">
+                  <ion-icon name="create-outline"
+                    (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
+                </div>
+                <div class="rounded-md size-8 flex justify-center items-center text-red-400">
+                  <ion-icon name="trash-outline"
+                    (click)="this.medicineData.inputData = item; isDelete.set(true)"></ion-icon>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-xs text-muted-foreground">Category</p>
+                <p class="font-medium wrap-break-word">{{ item?.category || '' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-muted-foreground">Format</p>
+                <p class="font-medium wrap-break-word">
+                  {{extras.toTitleCaseSafe(item?.type || '')+' '+(item?.dosage || '')+' '+extras.toLowerCaseSafe(item?.unit || '') }}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-muted-foreground">Unit Price</p>
+                <p class="font-medium">{{ item?.price ? 'Php ' + item.price : '' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-muted-foreground">Stocks</p>
+                <p class="font-medium">{{ item?.stocks >= 0 ? item?.stocks : ''}}</p>
+                <p class="text-xs text-gray-500">
+                  {{item?.reorder_level >= 0 && item?.reorder_level != null ? ('Min: ' + item?.reorder_level ) : ' '}}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              @if(item?.stocks > item.reorder_level){
+              <div class="bg-gray-200 border text-center rounded-md w-full max-w-32 border-gray-600 text-sm py-1">
+                Adequate
+              </div>
+              }@else if (item?.stocks==0){
+              <div class="bg-red-200 border text-center text-red-600 rounded-md w-full max-w-32 border-red-600 text-sm py-1">
+                Out of stocks
+              </div>
+              }@else{
+              <div class="bg-yellow-200 border text-center text-yellow-600 rounded-md w-full max-w-32 border-yellow-600 text-sm py-1">
+                Low stock
+              </div>
+              }
+            </div>
+          </div>
+
+          <ng-template #emptyRow>
+            <div class="h-20 rounded-md bg-gray-50"></div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+@if(isCreate() || isUpdate()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
+  <div class="bg-gray-100 w-full max-w-4xl h-auto rounded-2xl shadow-xl flex flex-col max-h-[95vh] overflow-hidden">
+
+    <div class="sticky top-0 w-full bg-white p-4 rounded-t-2xl z-10">
+      <button
+        class="absolute top-4 right-4 text-gray-500 hover:text-red-500"
+        (click)="isCreate.set(false); isUpdate.set(false); medicineData.inputData=[]">
+        ✕
+      </button>
+
+      <div class="pr-8">
+        @if(isCreate()){
+        <h2 class="text-lg sm:text-xl font-bold">Add New Product</h2>
+        <p class="text-sm sm:text-base text-gray-500">Fill in the details for the new product.</p>
+        }@else {
+        <h2 class="text-lg sm:text-xl font-bold wrap-break-word">
+          Update Product:
+          {{ ' PR-'+medicineData.inputData.medicine_id+' ' +medicineData.inputData.medicine_name+ ' (' +medicineData.inputData.generic_name+')' }}
+        </h2>
+        <p class="text-sm sm:text-base text-gray-500">Fill in the details to update product.</p>
+        }
+      </div>
+    </div>
+
+    <form
+      (submit)="isUpdate() && !isCreate() ? update() : create()"
+      class="flex flex-col h-full w-full overflow-y-auto p-4 gap-y-4">
+
+      <!-- Medicine Information -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
+        <p class="text-gray-800 text-base sm:text-lg font-semibold xl:col-span-6 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 w-full">
+          <span>Medicine Information:</span>
+
+          <span class="flex flex-wrap items-center gap-4 sm:gap-6">
+
+            <label class="flex items-center cursor-pointer select-none space-x-2 group">
+              <div
+                class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
+                [ngClass]="{
+                  'border-gray-800 bg-gray-900': !medicineData.inputData.needs_protection,
+                  'border-blue-500 bg-blue-500/10 shadow-md': medicineData.inputData.needs_protection
+                }"
+                (click)="toggleRx()">
+                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
+                  [ngClass]="{
+                    'opacity-40 scale-90': !medicineData.inputData.needs_protection,
+                    'opacity-100 scale-110 text-blue-500': medicineData.inputData.needs_protection
+                  }">
+                  <ion-icon name="medkit-outline"></ion-icon>
+                </span>
+
+                <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
+                  [ngClass]="{
+                    'bg-gray-600 opacity-40': !medicineData.inputData.needs_protection,
+                    'bg-blue-500 opacity-100 shadow-md': medicineData.inputData.needs_protection
+                  }"></div>
+              </div>
+
+              <span
+                (click)="toggleRx()"
+                class="text-sm font-semibold transition-colors duration-300"
+                [ngClass]="{
+                  'text-gray-700': !medicineData.inputData.needs_protection,
+                  'text-blue-600': medicineData.inputData.needs_protection
+                }">
+                Prescription
+              </span>
+            </label>
+
+            <label class="flex items-center cursor-pointer select-none space-x-2 group">
+              <div
+                class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
+                [ngClass]="{
+                  'border-gray-800 bg-gray-900': !medicineData.inputData.is_dangerous,
+                  'border-red-500 bg-red-500/10 shadow-md': medicineData.inputData.is_dangerous
+                }"
+                (click)="toggleDanger()">
+                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
+                  [ngClass]="{
+                    'opacity-40 scale-90': !medicineData.inputData.is_dangerous,
+                    'opacity-100 scale-110 text-red-500': medicineData.inputData.is_dangerous
+                  }">
+                  <ion-icon name="alert-outline"></ion-icon>
+                </span>
+
+                <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
+                  [ngClass]="{
+                    'bg-gray-600 opacity-40': !medicineData.inputData.is_dangerous,
+                    'bg-red-500 opacity-100 shadow-md': medicineData.inputData.is_dangerous
+                  }"></div>
+              </div>
+
+              <span
+                (click)="toggleDanger()"
+                class="text-sm font-semibold transition-colors duration-300"
+                [ngClass]="{
+                  'text-gray-700': !medicineData.inputData.is_dangerous,
+                  'text-red-600': medicineData.inputData.is_dangerous
+                }">
+                Dangerous
+              </span>
+            </label>
+
+          </span>
+        </p>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Brand Name</label>
+          <input type="text" placeholder="Medicine name eg. brand x" required name="brand_name"
+            class="input w-full" [(ngModel)]="medicineData.inputData.medicine_name" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Generic Name</label>
+          <input type="text" required name="generic_name" placeholder="Generic name eg. brand x"
+            class="input w-full" [(ngModel)]="medicineData.inputData.generic_name" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Category</label>
+          <input type="text" required name="category" placeholder="Category name eg. analgesic"
+            class="input w-full" [(ngModel)]="medicineData.inputData.category" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Unit Price (₱)</label>
+          <input type="number" min="0" required placeholder="Unit price eg. 50.00" name="price"
+            class="input w-full" [(ngModel)]="medicineData.inputData.price" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-2 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Type</label>
+          <input type="text" required name="type" placeholder="Medicine type eg. tablet, syrup..."
+            class="input w-full" [(ngModel)]="medicineData.inputData.type" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-2 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Dosage</label>
+          <input type="number" min="0" required name="dosage" placeholder="Medicine dosage eg. 500"
+            class="input w-full" [(ngModel)]="medicineData.inputData.dosage" />
+        </div>
+
+        <div class="sm:col-span-2 xl:col-span-2 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Unit</label>
+          <input type="text" required name="unit" placeholder="Medicine unit eg. ml, L or oz"
+            class="input w-full" [(ngModel)]="medicineData.inputData.unit" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Total Stocks</label>
+          <input type="number" min="0" required name="stocks" placeholder="Total stocks eg. 32"
+            class="input w-full" [(ngModel)]="medicineData.inputData.stocks" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Minimum Stocks</label>
+          <input type="number" min="0" required name="reorder_level" placeholder="Minimum stocks eg. 40"
+            class="input w-full" [(ngModel)]="medicineData.inputData.reorder_level" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Received Date</label>
+          <input type="date" required name="received_date" class="input w-full"
+            [(ngModel)]="medicineData.inputData.received_date" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Expiry Date</label>
+          <input type="date" required name="expiry_date" class="input w-full"
+            [(ngModel)]="medicineData.inputData.expiry_date" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Manufacturing Date</label>
+          <input type="date" required name="mfg_date" class="input w-full"
+            [(ngModel)]="medicineData.inputData.mfg_date" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Location</label>
+          <input type="text" required name="location" placeholder="Location eg. shelf 3-A"
+            class="input w-full" [(ngModel)]="medicineData.inputData.location" />
+        </div>
+      </div>
+
+      <!-- Supplier Information -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
+        <p class="text-gray-800 text-base sm:text-lg font-semibold xl:col-span-6">Supplier Information:</p>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Contact First Name</label>
+          <input type="text" required name="contact_first_name" placeholder="Contact first name eg. Jose"
+            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_first_name" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Contact Last Name</label>
+          <input type="text" required name="contact_last_name" placeholder="Contact last name eg. Rizal"
+            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_last_name" />
+        </div>
+
+        <div class="sm:col-span-2 xl:col-span-6 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Company Name</label>
+          <input type="text" required name="company_name" placeholder="Supplier name eg. Jollibee"
+            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_name" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Contact Number</label>
+          <input type="text" required name="contact_number" maxlength="11"
+            placeholder="Contact number eg. 09056685366" class="input w-full"
+            [(ngModel)]="medicineData.inputData.contact_number" />
+        </div>
+
+        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
+          <label class="text-sm">Supplier Address</label>
+          <input type="text" required name="address" placeholder="Supplier Address eg. Rizal st."
+            class="input w-full" [(ngModel)]="medicineData.inputData.address" />
+        </div>
+      </div>
+
+      <input type="submit" #clicker hidden>
+    </form>
+
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 p-4 bg-gray-50 rounded-b-2xl border-gray-300 border-t">
+      <button
+        class="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto"
+        (click)="isCreate.set(false); isUpdate.set(false); medicineData.inputData=[]">
+        Cancel
+      </button>
+      <button class="px-4 py-2 bg-blue-500 text-white rounded-lg w-full sm:w-auto" (click)="trigger()">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if (isExportModalOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
+  <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl overflow-hidden">
+    <div class="flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
+      <div>
+        <h2 class="text-lg font-bold">Export Inventory CSV</h2>
+        <p class="text-sm text-gray-500">Choose the received date range and the medicine fields to include.</p>
+      </div>
+      <button class="text-gray-500 hover:text-red-500" (click)="closeExportModal()">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+    </div>
+
+    <div class="space-y-5 px-4 py-4 sm:px-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">From Date</label>
+          <input type="date" [(ngModel)]="exportConfig.fromDate" class="input w-full">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">To Date</label>
+          <input type="date" [(ngModel)]="exportConfig.toDate" class="input w-full">
+        </div>
+      </div>
+
+      <div class="space-y-3 h-99 overflow-y-auto">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-800">Include Data</h3>
+          <p class="text-xs text-gray-500">Only the checked fields will be added to the generated CSV.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          @for (column of exportConfig.columns; track column.key) {
+          <label class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-sm">
+            <input type="checkbox" [(ngModel)]="column.checked" class="h-4 w-4">
+            <span>{{ column.label }}</span>
+          </label>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <button class="rounded-lg bg-gray-200 px-4 py-2" (click)="closeExportModal()">Cancel</button>
+      <button class="rounded-lg bg-primary px-4 py-2 text-white" (click)="exportCsv()">Generate CSV</button>
+    </div>
+  </div>
+</div>
+}
+
+@if (isDelete()) {
+<div class="fixed top-0 right-0 w-screen h-screen flex items-center justify-center backdrop-blur-sm bg-black/30 z-99 p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+    <div class="flex items-center justify-center mb-4">
+      <ion-icon name="trash-outline" class="text-red-500 text-4xl"></ion-icon>
+      <h2 class="text-lg font-semibold ml-1">Confirm Deletion</h2>
+    </div>
+
+    <p class="text-sm text-gray-500 mb-6 wrap-break-words">
+      Are you sure you want to delete these
+      <br> Medicine Name: {{this.medicineData.inputData.medicine_name}}
+      <br> Generic Name: {{this.medicineData.inputData.generic_name}}
+    </p>
+
+    <div class="flex flex-col sm:flex-row justify-center gap-3">
+      <button
+        (click)="isDelete.set(false)"
+        class="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-sm w-full sm:w-auto">
+        Cancel
+      </button>
+      <button
+        (click)="delete()"
+        class="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm w-full sm:w-auto">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+}

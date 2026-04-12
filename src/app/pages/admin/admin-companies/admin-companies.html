@@ -1,0 +1,403 @@
+<section class="space-y-6 p-4 sm:p-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-2xl font-bold">Companies and Branches</h2>
+      <p class="text-sm text-slate-500">Create companies, then add branches under each company.</p>
+    </div>
+    <div class="flex gap-2">
+      <app-button
+        className="rounded-xl bg-slate-900 text-white"
+        label="Create Company"
+        (clicked)="isCreateCompany.set(true)">
+      </app-button>
+      <app-button
+        className="rounded-xl bg-emerald-600 text-white"
+        label="Create Branch"
+        (clicked)="openBranchModal()">
+      </app-button>
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    @if(!isLoading && loadError){
+    <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900 lg:col-span-2">
+      <p class="text-sm font-semibold">Unable to load companies</p>
+      <p class="mt-1 text-sm">{{loadError}}</p>
+    </div>
+    }
+
+    @if(!isLoading && !loadError && companyItems.length === 0){
+    <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm lg:col-span-2">
+      <p class="text-base font-semibold text-slate-900">No companies found</p>
+      <p class="mt-1 text-sm text-slate-500">Create your first company to start managing branches here.</p>
+    </div>
+    }
+
+    @for(company of paginatedCompanies; track company.company_id){
+    <div class="rounded-3xl bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-950">{{company.company_name}}</h3>
+          <p class="mt-1 text-sm text-slate-500">{{company.company_email}} · TIN {{company.tin_number}}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <app-button
+            className="rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+            label="Add Branch"
+            (clicked)="openBranchModal(company.company_id)">
+          </app-button>
+          <button
+            type="button"
+            (click)="openDeleteCompanyModal(company)"
+            class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100">
+            <ion-icon name="trash-outline" class="text-base"></ion-icon>
+            <span>Delete Company</span>
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+        <div class="rounded-2xl bg-slate-50 p-3"><p class="text-xs uppercase tracking-[0.18em] text-slate-500">Branches</p><p class="mt-2 text-2xl font-semibold text-slate-950">{{company.branches_count}}</p></div>
+        <div class="rounded-2xl bg-slate-50 p-3"><p class="text-xs uppercase tracking-[0.18em] text-slate-500">Admins</p><p class="mt-2 text-2xl font-semibold text-slate-950">{{company.admins_count}}</p></div>
+        <div class="rounded-2xl bg-slate-50 p-3"><p class="text-xs uppercase tracking-[0.18em] text-slate-500">ID</p><p class="mt-2 text-2xl font-semibold text-slate-950">{{company.company_id}}</p></div>
+      </div>
+      <div class="mt-4 space-y-3">
+        @for(branch of company.branches; track branch.branch_id){
+        <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="font-semibold text-slate-950">{{branch.branch_name}}</p>
+              <p class="mt-1 text-sm text-slate-500">{{branch.branch_address}}</p>
+              <p class="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">Contact: {{branch.branch_contact}} · Status: {{branch.status}}</p>
+            </div>
+            <button
+              type="button"
+              (click)="openDeleteBranchModal(branch)"
+              class="inline-flex items-center gap-2 self-start rounded-2xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50">
+              <ion-icon name="trash-outline" class="text-base"></ion-icon>
+              <span>Delete Branch</span>
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+
+  @if(totalCompanyPages > 1){
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white px-4 py-4 shadow-sm">
+    <p class="text-sm text-slate-500">Showing page {{currentPage}} of {{totalCompanyPages}}</p>
+    <div class="flex flex-wrap items-center gap-2">
+      <app-button
+        className="rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+        label="Previous"
+        [disabled]="currentPage === 1"
+        (clicked)="setCompanyPage(currentPage - 1)">
+      </app-button>
+      @for(page of companyPageNumbers; track page){
+      <app-button
+        className="rounded-2xl px-4 py-2 text-sm transition"
+        [className]="page === currentPage ? 'rounded-2xl px-4 py-2 text-sm bg-slate-950 text-white' : 'rounded-2xl px-4 py-2 text-sm text-slate-700 bg-slate-50'"
+        [label]="page.toString()"
+        (clicked)="setCompanyPage(page)">
+      </app-button>
+      }
+      <app-button
+        className="rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+        label="Next"
+        [disabled]="currentPage === totalCompanyPages"
+        (clicked)="setCompanyPage(currentPage + 1)">
+      </app-button>
+    </div>
+  </div>
+  }
+</section>
+
+@if(isCreateCompany()){
+<app-modal title="Create Company" (closed)="isCreateCompany.set(false)">
+  <div class="mt-4 grid gap-4">
+    <input [(ngModel)]="companyForm.company_name" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Company name">
+    <input [(ngModel)]="companyForm.company_email" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Company email">
+    <input [(ngModel)]="companyForm.tin_number" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="TIN number">
+  </div>
+  <div class="mt-5 flex justify-end gap-2">
+    <app-button
+      className="rounded-xl bg-slate-200 text-slate-900"
+      label="Cancel"
+      (clicked)="isCreateCompany.set(false)">
+    </app-button>
+    <app-button
+      className="rounded-xl bg-slate-900 text-white"
+      label="Save Company"
+      (clicked)="createCompany()">
+    </app-button>
+  </div>
+</app-modal>
+}
+
+@if(isCreateBranch()){
+<app-modal title="Create Branch" (closed)="isCreateBranch.set(false)">
+  <div class="mt-4 grid gap-4">
+    <select [(ngModel)]="branchForm.company_id" class="h-11 rounded-xl border border-slate-300 px-4">
+      <option value="" disabled>Select company</option>
+      @for(company of companies.data ?? []; track company.company_id){
+      <option [value]="company.company_id">{{company.company_name}}</option>
+      }
+    </select>
+    <input [(ngModel)]="branchForm.branch_name" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch name">
+    <input [(ngModel)]="branchForm.branch_address" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch address">
+    <input [(ngModel)]="branchForm.branch_contact" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch contact">
+    <select [(ngModel)]="branchForm.status" class="h-11 rounded-xl border border-slate-300 px-4">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+  <div class="mt-5 flex justify-end gap-2">
+    <app-button
+      className="rounded-xl bg-slate-200 text-slate-900"
+      label="Cancel"
+      (clicked)="isCreateBranch.set(false)">
+    </app-button>
+    <app-button
+      className="rounded-xl bg-emerald-600 text-white"
+      label="Save Branch"
+      (clicked)="createBranch()">
+    </app-button>
+  </div>
+</app-modal>
+}
+
+@if(isDeleteCompany()){
+<app-modal title="Delete Company" (closed)="closeDeleteCompanyModal()">
+  <div class="grid gap-4">
+    <div class="rounded-3xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-orange-50 p-5 shadow-sm">
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+          <ion-icon name="warning-outline" class="text-2xl"></ion-icon>
+        </div>
+        <div>
+          <p class="text-base font-semibold text-slate-950">This action permanently removes the company.</p>
+          <p class="mt-1 text-sm text-slate-600">
+            Deleting this company also removes its branches, users, transactions, inventory records, and related branch-scoped data.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+          <ion-icon name="business-outline" class="text-xl"></ion-icon>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Company Selected</p>
+          <p class="text-lg font-semibold text-slate-950">{{deleteCompanyValidation?.company_name}}</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="git-branch-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Branches</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteCompanyValidation?.branches_count || 0}}</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="people-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Users</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteCompanyValidation?.users_count || 0}}</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Transactions</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteCompanyValidation?.transactions_count || 0}}</p>
+          <p class="mt-1 text-xs text-slate-500">{{deleteCompanyValidation?.transaction_items_count || 0}} transaction items</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="cube-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Inventory</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteCompanyValidation?.inventories_count || 0}}</p>
+          <p class="mt-1 text-xs text-slate-500">{{deleteCompanyValidation?.medicines_count || 0}} branch medicines found</p>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div class="flex items-start gap-3">
+          <ion-icon name="alert-circle-outline" class="mt-0.5 text-lg text-amber-600"></ion-icon>
+          <div class="text-sm text-amber-900">
+            <p class="font-semibold">Additional cleanup</p>
+            <p class="mt-1">
+              {{deleteCompanyValidation?.medicines_to_delete_count || 0}} orphan medicines and
+              {{deleteCompanyValidation?.batches_to_delete_count || 0}} orphan batches will also be removed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+      <div class="flex items-center gap-2 text-slate-700">
+        <ion-icon name="shield-checkmark-outline" class="text-lg"></ion-icon>
+        <p class="text-sm font-semibold">Confirmation required</p>
+      </div>
+      <p class="mt-2 text-sm text-slate-600">
+        Type <span class="font-semibold text-slate-950">{{deleteCompanyValidation?.company_name}}</span> exactly to enable deletion.
+      </p>
+
+      <div class="mt-4 flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100">
+        <ion-icon name="create-outline" class="text-slate-400"></ion-icon>
+        <input
+          [(ngModel)]="deleteCompanyForm.confirmation_name"
+          class="h-12 w-full bg-transparent outline-none"
+          placeholder="Enter exact company name">
+      </div>
+
+      @if(!canDeleteCompany() && deleteCompanyForm.confirmation_name.trim()){
+      <p class="mt-3 text-sm text-red-600">The typed company name does not match yet.</p>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        (click)="closeDeleteCompanyModal()"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-300">
+        <ion-icon name="close-outline"></ion-icon>
+        <span>Cancel</span>
+      </button>
+      <button
+        type="button"
+        [disabled]="!canDeleteCompany()"
+        (click)="deleteCompany()"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition enabled:hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-red-300">
+        <ion-icon name="trash-outline"></ion-icon>
+        <span>Delete Company</span>
+      </button>
+    </div>
+  </div>
+</app-modal>
+}
+
+@if(isDeleteBranch()){
+<app-modal title="Delete Branch" (closed)="closeDeleteBranchModal()">
+  <div class="grid gap-4">
+    <div class="rounded-3xl border border-red-200 bg-gradient-to-br from-red-50 via-white to-orange-50 p-5 shadow-sm">
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+          <ion-icon name="trash-bin-outline" class="text-2xl"></ion-icon>
+        </div>
+        <div>
+          <p class="text-base font-semibold text-slate-950">This action permanently removes the branch.</p>
+          <p class="mt-1 text-sm text-slate-600">
+            All branch-scoped users, transactions, inventories, and related records connected to this branch will be deleted.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+          <ion-icon name="storefront-outline" class="text-xl"></ion-icon>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Branch Selected</p>
+          <p class="text-lg font-semibold text-slate-950">{{deleteBranchValidation?.branch_name}}</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="people-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Users</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteBranchValidation?.users_count || 0}}</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="receipt-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Transactions</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteBranchValidation?.transactions_count || 0}}</p>
+          <p class="mt-1 text-xs text-slate-500">{{deleteBranchValidation?.transaction_items_count || 0}} transaction items</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="albums-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Inventories</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteBranchValidation?.inventories_count || 0}}</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <div class="flex items-center gap-2 text-slate-500">
+            <ion-icon name="medkit-outline"></ion-icon>
+            <span class="text-xs font-semibold uppercase tracking-[0.18em]">Branch Medicines</span>
+          </div>
+          <p class="mt-2 text-2xl font-bold text-slate-950">{{deleteBranchValidation?.medicines_count || 0}}</p>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div class="flex items-start gap-3">
+          <ion-icon name="alert-circle-outline" class="mt-0.5 text-lg text-amber-600"></ion-icon>
+          <div class="text-sm text-amber-900">
+            <p class="font-semibold">Additional cleanup</p>
+            <p class="mt-1">
+              {{deleteBranchValidation?.medicines_to_delete_count || 0}} orphan medicines and
+              {{deleteBranchValidation?.batches_to_delete_count || 0}} orphan batches will also be removed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+      <div class="flex items-center gap-2 text-slate-700">
+        <ion-icon name="shield-checkmark-outline" class="text-lg"></ion-icon>
+        <p class="text-sm font-semibold">Confirmation required</p>
+      </div>
+      <p class="mt-2 text-sm text-slate-600">
+        Type <span class="font-semibold text-slate-950">{{deleteBranchValidation?.branch_name}}</span> exactly to enable deletion.
+      </p>
+
+      <div class="mt-4 flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100">
+        <ion-icon name="create-outline" class="text-slate-400"></ion-icon>
+        <input
+          [(ngModel)]="deleteBranchForm.confirmation_name"
+          class="h-12 w-full bg-transparent outline-none"
+          placeholder="Enter exact branch name">
+      </div>
+
+      @if(!canDeleteBranch() && deleteBranchForm.confirmation_name.trim()){
+      <p class="mt-3 text-sm text-red-600">The typed branch name does not match yet.</p>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        (click)="closeDeleteBranchModal()"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-300">
+        <ion-icon name="close-outline"></ion-icon>
+        <span>Cancel</span>
+      </button>
+      <button
+        type="button"
+        [disabled]="!canDeleteBranch()"
+        (click)="deleteBranch()"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition enabled:hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-red-300">
+        <ion-icon name="trash-outline"></ion-icon>
+        <span>Delete Branch</span>
+      </button>
+    </div>
+  </div>
+</app-modal>
+}
