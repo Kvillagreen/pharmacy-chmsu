@@ -133,7 +133,7 @@
                   <div
                     class="flex items-center gap-1 rounded-lg border border-gray-300 bg-primary px-2.5 py-0.5 text-xs text-gray-50">
                     <ion-icon name="shield-outline"></ion-icon>
-                    {{extras.toTitleCaseSafe(item?.role)}}
+                    {{extras.formatRole(item?.role)}}
                   </div>
                   <div
                     class="flex items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-900">
@@ -282,10 +282,10 @@
         <label class="text-sm font-medium">Role</label>
         <select [(ngModel)]="createUserForm.role"
           class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
-          <option value="user">User</option>
-          <option value="inventory">Inventory</option>
+          <option value="staff">Staff</option>
           <option value="pharmacist">Pharmacist</option>
-          <option value="manager">Manager</option>
+          <option value="owner">Owner</option>
+          <option value="branch_manager">Branch Manager</option>
           <option value="admin">Admin</option>
         </select>
       </div>

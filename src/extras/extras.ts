@@ -1,5 +1,7 @@
 // extras.ts
 import { signal } from '@angular/core';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { ToastrService } from 'ngx-toastr';
 
 const TOAST_CLASS = 'ngx-toastr extras-toast-base';
@@ -106,6 +108,8 @@ export const Extras = {
     toast.style.position = 'fixed';
     toast.style.bottom = '1.5rem';
     toast.style.right = '1.5rem';
+    toast.style.left = 'auto';
+    toast.style.width = 'min(320px, calc(100vw - 3rem))';
     toast.style.maxWidth = '320px';
     toast.style.padding = '1rem 1.25rem';
     toast.style.borderRadius = '0.75rem';
@@ -119,6 +123,14 @@ export const Extras = {
     toast.style.transition = 'opacity 200ms ease, transform 200ms ease';
     toast.style.transform = 'translateY(0.75rem)';
     toast.style.pointerEvents = 'auto';
+
+    if (window.innerWidth <= 640) {
+      toast.style.left = '1rem';
+      toast.style.right = '1rem';
+      toast.style.bottom = '1rem';
+      toast.style.width = 'auto';
+      toast.style.maxWidth = 'none';
+    }
 
     document.body.appendChild(toast);
     requestAnimationFrame(() => {
@@ -189,6 +201,279 @@ export const Extras = {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  },
+
+  formatRole(value: string | undefined | null): string {
+    if (!value) return '';
+
+    const normalized = value.replace(/_/g, ' ');
+    return normalized
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  },
+
+  downloadTextPdf(filename: string, lines: string[]) {
+    const sanitizedLines = lines.map((line) => String(line ?? '').replace(/[^\x20-\x7E]/g, ' '));
+    const escapePdfText = (value: string) => value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+
+    const streamLines = ['BT', '/F1 12 Tf', '50 780 Td', '14 TL'];
+    sanitizedLines.forEach((line, index) => {
+      if (index === 0) {
+        streamLines.push(`(${escapePdfText(line)}) Tj`);
+      } else {
+        streamLines.push('T*');
+        streamLines.push(`(${escapePdfText(line)}) Tj`);
+      }
+    });
+    streamLines.push('ET');
+
+    const stream = streamLines.join('\n');
+    const pdfObjects = [
+      '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
+      '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
+      '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj',
+      '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
+      `5 0 obj << /Length ${stream.length} >> stream\n${stream}\nendstream endobj`,
+    ];
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+    pdfObjects.forEach((object) => {
+      offsets.push(pdf.length);
+      pdf += `${object}\n`;
+    });
+
+    const xrefPosition = pdf.length;
+    pdf += `xref\n0 ${pdfObjects.length + 1}\n`;
+    pdf += '0000000000 65535 f \n';
+    offsets.slice(1).forEach((offset) => {
+      pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+    });
+    pdf += `trailer << /Size ${pdfObjects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPosition}\n%%EOF`;
+
+    const blob = new Blob([pdf], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async downloadElementPdfById(elementId: string, filename: string) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+      throw new Error(`Element with id "${elementId}" was not found.`);
+    }
+
+    const exportWrapper = this.buildPdfExportClone(element);
+    document.body.appendChild(exportWrapper);
+
+    try {
+      const exportRoot = exportWrapper.firstElementChild as HTMLElement | null;
+      if (!exportRoot) {
+        throw new Error('Unable to prepare the selected section for PDF export.');
+      }
+
+      const canvas = await html2canvas(exportRoot, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+      });
+
+      const imageData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const availableWidth = pageWidth - margin * 2;
+      const imageHeight = (canvas.height * availableWidth) / canvas.width;
+
+      let heightLeft = imageHeight;
+      let position = margin;
+
+      pdf.addImage(imageData, 'PNG', margin, position, availableWidth, imageHeight);
+      heightLeft -= pageHeight - margin * 2;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imageHeight + margin;
+        pdf.addPage();
+        pdf.addImage(imageData, 'PNG', margin, position, availableWidth, imageHeight);
+        heightLeft -= pageHeight - margin * 2;
+      }
+
+      pdf.save(filename);
+    } finally {
+      exportWrapper.remove();
+    }
+  },
+
+  buildPdfExportClone(source: HTMLElement): HTMLDivElement {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-100000px';
+    wrapper.style.top = '0';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.padding = '0';
+
+    const clone = source.cloneNode(true) as HTMLElement;
+    clone.removeAttribute('id');
+    clone.style.background = '#ffffff';
+    wrapper.appendChild(clone);
+
+    this.removePdfUnsafeNodes(clone);
+    this.sanitizePdfCloneStyles(source, clone);
+
+    return wrapper;
+  },
+
+  removePdfUnsafeNodes(target: HTMLElement) {
+    target
+      .querySelectorAll('[data-pdf-exclude="true"], button, input, select, textarea, video, audio, iframe, ion-icon, canvas')
+      .forEach((node) => node.remove());
+
+    target.querySelectorAll('img').forEach((img) => {
+      const src = img.getAttribute('src') || '';
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        img.remove();
+      }
+    });
+  },
+
+  sanitizePdfCloneStyles(source: HTMLElement, target: HTMLElement) {
+    const computed = window.getComputedStyle(source);
+    target.removeAttribute('class');
+
+    this.copySafeComputedStyles(computed, target);
+
+    const sourceChildren = Array.from(source.children) as HTMLElement[];
+    const targetChildren = Array.from(target.children) as HTMLElement[];
+
+    sourceChildren.forEach((child, index) => {
+      const targetChild = targetChildren[index];
+      if (targetChild) {
+        this.sanitizePdfCloneStyles(child, targetChild);
+      }
+    });
+  },
+
+  copySafeComputedStyles(computed: CSSStyleDeclaration, target: HTMLElement) {
+    const safeStyles: Array<[keyof CSSStyleDeclaration, string]> = [
+      ['display', computed.display],
+      ['position', computed.position],
+      ['flexDirection', computed.flexDirection],
+      ['justifyContent', computed.justifyContent],
+      ['alignItems', computed.alignItems],
+      ['alignSelf', computed.alignSelf],
+      ['flexWrap', computed.flexWrap],
+      ['flexGrow', computed.flexGrow],
+      ['flexShrink', computed.flexShrink],
+      ['gap', computed.gap],
+      ['rowGap', computed.rowGap],
+      ['columnGap', computed.columnGap],
+      ['width', computed.width],
+      ['maxWidth', computed.maxWidth],
+      ['minWidth', computed.minWidth],
+      ['height', computed.height],
+      ['maxHeight', computed.maxHeight],
+      ['minHeight', computed.minHeight],
+      ['paddingTop', computed.paddingTop],
+      ['paddingRight', computed.paddingRight],
+      ['paddingBottom', computed.paddingBottom],
+      ['paddingLeft', computed.paddingLeft],
+      ['marginTop', computed.marginTop],
+      ['marginRight', computed.marginRight],
+      ['marginBottom', computed.marginBottom],
+      ['marginLeft', computed.marginLeft],
+      ['borderTopWidth', computed.borderTopWidth],
+      ['borderRightWidth', computed.borderRightWidth],
+      ['borderBottomWidth', computed.borderBottomWidth],
+      ['borderLeftWidth', computed.borderLeftWidth],
+      ['borderTopStyle', computed.borderTopStyle],
+      ['borderRightStyle', computed.borderRightStyle],
+      ['borderBottomStyle', computed.borderBottomStyle],
+      ['borderLeftStyle', computed.borderLeftStyle],
+      ['borderRadius', computed.borderRadius],
+      ['fontFamily', computed.fontFamily],
+      ['fontSize', computed.fontSize],
+      ['fontWeight', computed.fontWeight],
+      ['fontStyle', computed.fontStyle],
+      ['lineHeight', computed.lineHeight],
+      ['letterSpacing', computed.letterSpacing],
+      ['textAlign', computed.textAlign],
+      ['textTransform', computed.textTransform],
+      ['whiteSpace', computed.whiteSpace],
+      ['wordBreak', computed.wordBreak],
+      ['overflowWrap', computed.overflowWrap],
+      ['opacity', computed.opacity],
+      ['backgroundColor', computed.getPropertyValue('background-color')],
+      ['color', computed.getPropertyValue('color')],
+      ['borderTopColor', computed.getPropertyValue('border-top-color')],
+      ['borderRightColor', computed.getPropertyValue('border-right-color')],
+      ['borderBottomColor', computed.getPropertyValue('border-bottom-color')],
+      ['borderLeftColor', computed.getPropertyValue('border-left-color')],
+      ['outlineColor', computed.getPropertyValue('outline-color')],
+      ['textDecorationColor', computed.getPropertyValue('text-decoration-color')],
+    ];
+
+    target.style.backgroundImage = 'none';
+    target.style.boxShadow = 'none';
+    target.style.filter = 'none';
+    target.style.backdropFilter = 'none';
+    target.style.webkitMaskImage = 'none';
+    target.style.maskImage = 'none';
+    target.style.transform = 'none';
+
+    safeStyles.forEach(([property, value]) => {
+      const normalizedValue = String(value ?? '').trim();
+      if (!normalizedValue) {
+        return;
+      }
+
+      if (String(property).toLowerCase().includes('color')) {
+        this.applySafeColorStyle(target, property, normalizedValue);
+        return;
+      }
+
+      (target.style[property] as string | null) = normalizedValue;
+    });
+  },
+
+  applySafeColorStyle(target: HTMLElement, property: keyof CSSStyleDeclaration, value: string) {
+    const safeValue = this.normalizeColorForPdf(value);
+    if (safeValue) {
+      (target.style[property] as string | null) = safeValue;
+    }
+  },
+
+  normalizeColorForPdf(value: string): string {
+    const normalized = String(value ?? '').trim();
+    if (!normalized || normalized === 'initial' || normalized === 'inherit') {
+      return '';
+    }
+
+    if (!/oklab|oklch/i.test(normalized)) {
+      return normalized;
+    }
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return '#000000';
+    }
+
+    try {
+      context.fillStyle = normalized;
+      const parsed = context.fillStyle;
+      return typeof parsed === 'string' && parsed ? parsed : '#000000';
+    } catch {
+      return '#000000';
+    }
   },
 
   removeHyphens(text: string): string {

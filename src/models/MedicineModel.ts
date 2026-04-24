@@ -5,6 +5,7 @@ export interface MedicineModel {
   price?: string,
   reorderLevel?: string,
   isDangerous?: string,
+  isYakapEligible?: string,
 }
 
 export interface MedicineData {

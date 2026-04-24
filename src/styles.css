@@ -103,6 +103,31 @@
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16) !important;
 }
 
+@media (max-width: 640px) {
+  .toast-container {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    bottom: 0.75rem !important;
+    width: auto !important;
+  }
+
+  .toast-container.toast-bottom-right,
+  .toast-container.toast-top-right,
+  .toast-container.toast-bottom-left,
+  .toast-container.toast-top-left {
+    right: 0.75rem !important;
+    left: 0.75rem !important;
+  }
+
+  .ngx-toastr.extras-toast-base {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0.9rem 1rem !important;
+    border-radius: 1rem !important;
+  }
+}
+
 /* 🎯 Tailwind Theme Mapping */
 @theme {
   --color-primary: var(--primary);

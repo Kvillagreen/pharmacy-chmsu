@@ -12,6 +12,13 @@
 
       <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
         <button
+          (click)="mergeDuplicateMedicines()"
+          class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 bg-amber-100 text-amber-800 hover:bg-amber-200 w-full sm:w-auto">
+          <ion-icon name="git-merge-outline"></ion-icon>
+          <span>Merge Duplicates</span>
+        </button>
+
+        <button
           (click)="openExportModal()"
           class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 hover:bg-gray-300 w-full sm:w-auto">
           <ion-icon name="download-outline"></ion-icon>
@@ -173,6 +180,9 @@
           </div>
 
           <div class="w-full flex flex-row items-center justify-end gap-x-1 px-4 text-xl h-full">
+            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-emerald-600">
+              <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
+            </div>
             <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-blue-600">
               <ion-icon name="create-outline"
                 (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
@@ -199,6 +209,9 @@
               </div>
 
               <div class="flex items-center gap-1 shrink-0 text-xl">
+                <div class="rounded-md size-8 flex justify-center items-center text-emerald-600">
+                  <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
+                </div>
                 <div class="rounded-md size-8 flex justify-center items-center text-blue-600">
                   <ion-icon name="create-outline"
                     (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
@@ -364,6 +377,40 @@
               </span>
             </label>
 
+            <label class="flex items-center cursor-pointer select-none space-x-2 group">
+              <div
+                class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
+                [ngClass]="{
+                  'border-gray-800 bg-gray-900': !medicineData.inputData.is_yakap_eligible,
+                  'border-pink-500 bg-pink-500/10 shadow-md': medicineData.inputData.is_yakap_eligible
+                }"
+                (click)="toggleYakapEligible()">
+                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
+                  [ngClass]="{
+                    'opacity-40 scale-90': !medicineData.inputData.is_yakap_eligible,
+                    'opacity-100 scale-110 text-pink-500': medicineData.inputData.is_yakap_eligible
+                  }">
+                  <ion-icon name="people-outline"></ion-icon>
+                </span>
+
+                <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
+                  [ngClass]="{
+                    'bg-gray-600 opacity-40': !medicineData.inputData.is_yakap_eligible,
+                    'bg-pink-500 opacity-100 shadow-md': medicineData.inputData.is_yakap_eligible
+                  }"></div>
+              </div>
+
+              <span
+                (click)="toggleYakapEligible()"
+                class="text-sm font-semibold transition-colors duration-300"
+                [ngClass]="{
+                  'text-gray-700': !medicineData.inputData.is_yakap_eligible,
+                  'text-pink-600': medicineData.inputData.is_yakap_eligible
+                }">
+                Yakap Eligible
+              </span>
+            </label>
+
           </span>
         </p>
 
@@ -446,42 +493,6 @@
         </div>
       </div>
 
-      <!-- Supplier Information -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
-        <p class="text-gray-800 text-base sm:text-lg font-semibold xl:col-span-6">Supplier Information:</p>
-
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Contact First Name</label>
-          <input type="text" required name="contact_first_name" placeholder="Contact first name eg. Jose"
-            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_first_name" />
-        </div>
-
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Contact Last Name</label>
-          <input type="text" required name="contact_last_name" placeholder="Contact last name eg. Rizal"
-            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_last_name" />
-        </div>
-
-        <div class="sm:col-span-2 xl:col-span-6 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Company Name</label>
-          <input type="text" required name="company_name" placeholder="Supplier name eg. Jollibee"
-            class="input w-full" [(ngModel)]="medicineData.inputData.supplier_name" />
-        </div>
-
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Contact Number</label>
-          <input type="text" required name="contact_number" maxlength="11"
-            placeholder="Contact number eg. 09056685366" class="input w-full"
-            [(ngModel)]="medicineData.inputData.contact_number" />
-        </div>
-
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Supplier Address</label>
-          <input type="text" required name="address" placeholder="Supplier Address eg. Rizal st."
-            class="input w-full" [(ngModel)]="medicineData.inputData.address" />
-        </div>
-      </div>
-
       <input type="submit" #clicker hidden>
     </form>
 
@@ -494,6 +505,71 @@
       <button class="px-4 py-2 bg-blue-500 text-white rounded-lg w-full sm:w-auto" (click)="trigger()">
         Save
       </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isTransfer()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
+  <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
+    <div class="flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
+      <div>
+        <h2 class="text-lg font-bold">Transfer Medicine</h2>
+        <p class="text-sm text-gray-500">
+          Send a transfer request to another branch. Inventory will update only after the destination branch accepts it.
+        </p>
+      </div>
+      <button class="text-gray-500 hover:text-red-500" (click)="isTransfer.set(false)">
+        <ion-icon name="close-outline" class="text-lg"></ion-icon>
+      </button>
+    </div>
+
+    <div class="space-y-4 px-4 py-4 sm:px-6">
+      <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <p class="font-semibold">{{medicineData.inputData?.medicine_name}}</p>
+        <p class="mt-1">Available stock: {{medicineData.inputData?.stocks || 0}}</p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Destination Branch</label>
+        <select [(ngModel)]="transferForm.to_branch_id" class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+          <option value="" disabled>Select a branch</option>
+          @for(branch of branchData.data; track branch.branchId){
+          <option [value]="branch.branchId">{{branch.branchName}}</option>
+          }
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium">Quantity</label>
+          <input [(ngModel)]="transferForm.quantity" type="number" min="1" [max]="medicineData.inputData?.stocks || 1"
+            class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium">Current Branch</label>
+          <input [value]="userData.data?.data?.branch_name || 'Assigned Branch'" disabled
+            class="h-10 rounded-lg border border-gray-200 bg-gray-100 px-3 outline-none">
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Notes</label>
+        <textarea [(ngModel)]="transferForm.notes" rows="3"
+          class="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-primary"
+          placeholder="Optional note for the destination branch"></textarea>
+      </div>
+
+      <label class="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+        <input type="checkbox" [(ngModel)]="transferForm.confirmed" class="mt-1 h-4 w-4">
+        <span>I confirm this transfer request. The destination branch must accept it before the medicine is added to their inventory.</span>
+      </label>
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <button class="rounded-lg bg-gray-200 px-4 py-2" (click)="isTransfer.set(false)">Cancel</button>
+      <button class="rounded-lg bg-emerald-600 px-4 py-2 text-white" (click)="submitTransfer()">Send Request</button>
     </div>
   </div>
 </div>

@@ -73,7 +73,7 @@ export const routes: Routes = [
     path: 'hmo-philhealth',
     component: HmoPhilhealth,
     canActivate: [AuthGuard],
-    data: { permission: 'sales' }
+    data: { permission: 'claims' }
   },
   {
     path: 'inventory',

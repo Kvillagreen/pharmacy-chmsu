@@ -27,6 +27,7 @@ export class Login implements OnInit {
     this.extras.load.set(true);
     if (!this.user.email || !this.user.password) {
       this.extras.load.set(false);
+      this.extras.isError('All fields are required.');
       return;
     }
 
@@ -43,6 +44,7 @@ export class Login implements OnInit {
         password: this.user.password
       }
       const res = await this.userService.postUser('login', credentials);
+      console.log(res)
       if (res.data.success) {
         this.encryptData.encryptAndStoreData('user', res.data)
         this.cd.detectChanges()

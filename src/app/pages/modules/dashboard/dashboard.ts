@@ -65,7 +65,7 @@ export class Dashboard implements OnInit {
     private userService: UserService,
     private encryptData: EncryptData,
     private cd: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const storedUser = this.encryptData.decryptData('user');
@@ -97,7 +97,7 @@ export class Dashboard implements OnInit {
 
       const res = await this.userService.getUser(endpoint, '', this.userData.token);
       if (res.status === 200) {
-        this.dashboardData = res.data;
+        this.dashboardData = this.normalizeDashboardResponse(res.data);
         this.maxRevenuePoint = Math.max(
           ...this.dashboardData.data.charts.daily_revenue.map((item) => Number(item.total_revenue || 0)),
           1
@@ -107,6 +107,7 @@ export class Dashboard implements OnInit {
     } catch (e: any) {
       console.log(e);
       this.extras.showToast('Failed to load dashboard data', 'warning');
+      this.cd.detectChanges();
     }
   }
 
@@ -138,5 +139,48 @@ export class Dashboard implements OnInit {
 
   isPositive(value: number): boolean {
     return Number(value) >= 0;
+  }
+
+  private normalizeDashboardResponse(response: any): DashboardData {
+    const payload = response?.data?.charts ? response.data : response;
+
+    return {
+      data: {
+        ...this.dashboardData.data,
+        ...payload,
+        charts: {
+          ...this.dashboardData.data.charts,
+          ...(payload?.charts ?? {}),
+          daily_revenue: this.ensureArray(payload?.charts?.daily_revenue),
+          payment_mix: this.ensureArray(payload?.charts?.payment_mix),
+          category_mix: this.ensureArray(payload?.charts?.category_mix),
+          branch_comparison: this.ensureArray(payload?.charts?.branch_comparison),
+        },
+        tables: {
+          ...this.dashboardData.data.tables,
+          ...(payload?.tables ?? {}),
+          top_medicines: this.ensureArray(payload?.tables?.top_medicines),
+          recent_transactions: this.ensureArray(payload?.tables?.recent_transactions),
+          branch_table: this.ensureArray(payload?.tables?.branch_table),
+        },
+        analysis: {
+          ...this.dashboardData.data.analysis,
+          ...(payload?.analysis ?? {}),
+          highlights: this.ensureArray(payload?.analysis?.highlights),
+        },
+      },
+    };
+  }
+
+  private ensureArray<T>(value: T[] | Record<string, T> | null | undefined): T[] {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value);
+    }
+
+    return [];
   }
 }

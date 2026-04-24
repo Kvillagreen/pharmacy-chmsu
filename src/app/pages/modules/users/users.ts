@@ -51,7 +51,7 @@ export class Users implements OnInit {
     address: '',
     password: '',
     password_confirmation: '',
-    role: 'user',
+    role: 'staff',
     branch_id: '',
   };
   branchForm = {
@@ -117,7 +117,7 @@ export class Users implements OnInit {
 
   buildQuery(): string {
     const params: string[] = [];
-    const selectedBranch = Number(this.encryptData.decryptData('user').data.selectedBranch);
+    const selectedBranch = Number(this.encryptData.decryptData('branch')?.selectedBranch ?? 0);
 
     if (this.pageNumber) {
       params.push(`page=${this.pageNumber}`);
@@ -145,7 +145,7 @@ export class Users implements OnInit {
 
   buildExportQuery(): string {
     const params: string[] = ['export=1'];
-    const selectedBranch = Number(this.encryptData.decryptData('user').data.selectedBranch);
+    const selectedBranch = Number(this.encryptData.decryptData('branch')?.selectedBranch ?? 0);
 
     if (this.sort) {
       params.push(this.sort);
@@ -520,7 +520,7 @@ export class Users implements OnInit {
       address: '',
       password: '',
       password_confirmation: '',
-      role: 'user',
+      role: 'staff',
       branch_id: '',
     };
     this.createSelectedPermissionIds = [];
@@ -530,7 +530,7 @@ export class Users implements OnInit {
     const fullRow: Record<string, unknown> = {
       full_name: this.extras.toTitleCaseSafe(`${item?.first_name ?? ''} ${item?.last_name ?? ''}`.trim()),
       email: item?.email ?? '',
-      role: this.extras.toTitleCaseSafe(item?.role ?? ''),
+      role: this.extras.formatRole(item?.role ?? ''),
       status: this.extras.toTitleCaseSafe(item?.status ?? ''),
       branch_name: item?.branch_name ?? '',
       branch_address: item?.branch_address ?? '',

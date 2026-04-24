@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import axios, { AxiosRequestConfig } from 'axios';
 import { environment } from '../environment/environment';
 import { Router } from '@angular/router';
 
@@ -18,9 +17,7 @@ export class UserService {
 
   private getHeaders(token?: string): Record<string, string> {
     const pageContext = this.getPageContext();
-
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
@@ -28,7 +25,6 @@ export class UserService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // keep this if your backend still uses it
     if (pageContext) {
       headers['X-Page-Context'] = pageContext;
       headers['X-Type'] = pageContext;
@@ -37,50 +33,71 @@ export class UserService {
     return headers;
   }
 
-  private buildConfig(params?: any, token?: string): AxiosRequestConfig {
-    return {
-      headers: this.getHeaders(token),
-      params: params || {},
+  private buildUrl(endpoint: string, params?: any): string {
+    const url = new URL(`${this.apiUrl}${endpoint}`);
+
+    if (params && typeof params === 'object') {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, String(value));
+        }
+      });
+    }
+
+    return url.toString();
+  }
+
+  private async request(method: string, endpoint: string, data?: any, params?: any, token?: string): Promise<any> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    const headers = this.getHeaders(token);
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(this.buildUrl(endpoint, params), {
+      method,
+      headers,
+      body: data !== undefined && data !== null && method !== 'GET' && method !== 'DELETE'
+        ? (isFormData ? data : JSON.stringify(data))
+        : undefined,
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    const parsed = contentType.includes('application/json')
+      ? await response.json()
+      : await response.text();
+
+    const result = {
+      status: response.status,
+      data: parsed,
+      message: (parsed as any)?.message,
     };
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        error: parsed,
+        response: result,
+      };
+    }
+
+    return result;
   }
 
   async postUser(endpoint: string, data?: any, token?: string): Promise<any> {
-    try {
-      const config = this.buildConfig(undefined, token);
-      const response = await axios.post(`${this.apiUrl}${endpoint}`, data, config);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return this.request('POST', endpoint, data, undefined, token);
   }
 
   async putUser(endpoint: string, data?: any, token?: string): Promise<any> {
-    try {
-      const config = this.buildConfig(undefined, token);
-      const response = await axios.put(`${this.apiUrl}${endpoint}`, data, config);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return this.request('PUT', endpoint, data, undefined, token);
   }
 
   async deleteUser(endpoint: string, params?: any, token?: string): Promise<any> {
-    try {
-      const config = this.buildConfig(params, token);
-      const response = await axios.delete(`${this.apiUrl}${endpoint}`, config);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return this.request('DELETE', endpoint, undefined, params, token);
   }
 
   async getUser(endpoint: string, params?: any, token?: string): Promise<any> {
-    try {
-      const config = this.buildConfig(params, token);
-      const response = await axios.get(`${this.apiUrl}${endpoint}`, config);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return this.request('GET', endpoint, undefined, params, token);
   }
 }

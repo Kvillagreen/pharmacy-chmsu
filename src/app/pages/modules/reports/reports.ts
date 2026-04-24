@@ -8,7 +8,7 @@ import { UserData } from '../../../../models/UserModel';
 import { BirAnnualDeclarationData, ReportsData } from '../../../../models/ReportsModel';
 import { BranchData } from '../../../../models/BranchModel';
 import { IonIcon } from '@ionic/angular/standalone';
-
+import jsPDF from 'jspdf';
 @Component({
   selector: 'app-reports',
   imports: [CommonModule, FormsModule, IonIcon],
@@ -74,7 +74,7 @@ export class Reports implements OnInit {
     private userService: UserService,
     private encryptData: EncryptData,
     private cd: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const storedUser = this.encryptData.decryptData('user');
@@ -107,7 +107,13 @@ export class Reports implements OnInit {
 
       const res = await this.userService.getUser(endpoint, '', this.userData.token);
       if (res.status === 200) {
-        this.reportData = res.data;
+        const payload = res.data;
+        payload.data.tables.recent_transactions = (payload.data.tables.recent_transactions ?? []).map((item: any) => ({
+          ...item,
+          created_at_label: this.extras.timeAgo(item.created_at),
+        }));
+
+        this.reportData = payload;
         this.maxRevenuePoint = Math.max(
           ...this.reportData.data.charts.daily_revenue.map((item) => Number(item.total_revenue || 0)),
           1
@@ -169,6 +175,10 @@ export class Reports implements OnInit {
 
   isPositive(value: number): boolean {
     return Number(value) >= 0;
+  }
+
+  recentTransactionTimeLabel(transaction: any): string {
+    return transaction?.created_at_label || this.extras.timeAgo(transaction?.created_at);
   }
 
   exportCsv(type: 'branch_performance' | 'top_medicines' | 'inventory_watch' | 'recent_transactions') {
@@ -297,8 +307,58 @@ export class Reports implements OnInit {
     popup.print();
   }
 
-  downloadBirPdf() {
-    this.printBirReport();
+
+  downloadBirPdf(): void {
+    const report = this.birReportData?.data;
+
+    if (!report) {
+      this.extras.showToast('Generate the BIR declaration first.', 'warning');
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const marginX = 14;
+      const marginY = 16;
+      const lineHeight = 5.25;
+      const lines = this.buildBirPdfLines(80);
+
+      let cursorY = marginY;
+
+      const paintPage = () => {
+        pdf.setFillColor(250, 245, 232);
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+        pdf.setDrawColor(171, 146, 95);
+        pdf.rect(9, 9, pageWidth - 18, pageHeight - 18);
+        pdf.setFont('courier', 'normal');
+        pdf.setFontSize(10.5);
+        pdf.setTextColor(28, 25, 23);
+      };
+
+      paintPage();
+
+      for (const line of lines) {
+        if (cursorY > pageHeight - marginY) {
+          pdf.addPage();
+          paintPage();
+          cursorY = marginY;
+        }
+
+        pdf.text(line, marginX, cursorY);
+        cursorY += lineHeight;
+      }
+
+      pdf.save(this.buildBirPdfFilename());
+    } catch (error) {
+      console.error(error);
+      this.extras.showToast('Failed to download BIR PDF report.', 'warning');
+    }
   }
 
   openBirModal() {
@@ -366,5 +426,148 @@ export class Reports implements OnInit {
         </body>
       </html>
     `;
+  }
+
+  private buildBirPdfFilename(): string {
+    const report = this.birReportData?.data;
+    if (!report) {
+      return 'BIR-Annual-Declaration.pdf';
+    }
+
+    const safeName = String(report.taxpayer_name ?? 'Taxpayer')
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+
+    return `BIR-${report.taxable_year}-${safeName || 'Taxpayer'}.pdf`;
+  }
+
+  private buildBirPdfLines(width: number): string[] {
+    const report = this.birReportData?.data;
+    if (!report) {
+      return [];
+    }
+
+    const lines: string[] = [];
+    const divider = '='.repeat(width);
+    const sectionDivider = '-'.repeat(width);
+    const valueColumn = 54;
+
+    lines.push(this.centerBirText(`BIR FORM ${this.safeBirText(report.form_no || 'N/A')}`, width));
+    lines.push(this.centerBirText('ANNUAL TAX DECLARATION SUMMARY', width));
+    lines.push(this.centerBirText(`Generated ${this.formatBirGeneratedAt(report.generated_at)}`, width));
+    lines.push(divider);
+    lines.push(...this.buildBirKeyValueLines('Taxpayer', report.taxpayer_name, width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('TIN', report.tin_number || 'N/A', width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Taxable Year', report.taxable_year, width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Branch', report.branch_name, width, valueColumn));
+    lines.push(sectionDivider);
+    lines.push(...this.buildBirKeyValueLines('Gross Sales/Receipts', this.formatBirCurrency(report.gross_sales_receipts), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Less: Sales Discounts', this.formatBirCurrency(report.sales_discounts), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Net Sales/Receipts', this.formatBirCurrency(report.net_sales_receipts), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Less: Cost of Sales', this.formatBirCurrency(report.cost_of_sales), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Gross Income', this.formatBirCurrency(report.gross_income), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines('Less: Deductions', this.formatBirCurrency(report.deductions), width, valueColumn));
+    lines.push(sectionDivider);
+    lines.push(...this.buildBirKeyValueLines('Taxable Net Income', this.formatBirCurrency(report.taxable_net_income), width, valueColumn));
+    lines.push(...this.buildBirKeyValueLines(`Income Tax Due (${this.formatBirPercent(report.income_tax_rate)})`, this.formatBirCurrency(report.income_tax_due), width, valueColumn));
+
+    if (report.data_notes?.length) {
+      lines.push(sectionDivider);
+      lines.push('COMPLIANCE NOTES');
+
+      report.data_notes.forEach((note, index) => {
+        lines.push(...this.wrapBirText(`(${index + 1}) ${this.safeBirText(note)}`, width));
+      });
+    }
+
+    lines.push(divider);
+    lines.push(this.centerBirText('END OF REPORT', width));
+
+    return lines;
+  }
+
+  private buildBirKeyValueLines(label: string, value: string | number, width: number, valueColumn: number): string[] {
+    const normalizedLabel = `${this.safeBirText(label)}:`;
+    const normalizedValue = this.safeBirText(value);
+    const rightWidth = width - valueColumn;
+
+    if (normalizedLabel.length >= valueColumn) {
+      const wrapped = this.wrapBirText(normalizedValue, Math.max(width - 2, 10));
+      return [
+        `${normalizedLabel} ${wrapped[0] ?? ''}`.slice(0, width),
+        ...wrapped.slice(1).map((line) => line.slice(0, width)),
+      ];
+    }
+
+    const wrapped = this.wrapBirText(normalizedValue, Math.max(rightWidth, 10));
+    return wrapped.map((line, index) => {
+      if (index === 0) {
+        return `${normalizedLabel.padEnd(valueColumn, ' ')}${line.padStart(rightWidth, ' ')}`;
+      }
+
+      return `${''.padEnd(valueColumn, ' ')}${line.padStart(rightWidth, ' ')}`;
+    });
+  }
+
+  private wrapBirText(value: string, width: number): string[] {
+    const text = this.safeBirText(value);
+    if (!text) {
+      return [''];
+    }
+
+    const words = text.split(/\s+/);
+    const lines: string[] = [];
+    let current = '';
+
+    for (const word of words) {
+      if (!current) {
+        current = word;
+        continue;
+      }
+
+      if (`${current} ${word}`.length <= width) {
+        current += ` ${word}`;
+        continue;
+      }
+
+      lines.push(current);
+      current = word;
+    }
+
+    if (current) {
+      lines.push(current);
+    }
+
+    return lines;
+  }
+
+  private centerBirText(value: string, width: number): string {
+    const text = this.safeBirText(value);
+    if (text.length >= width) {
+      return text.slice(0, width);
+    }
+
+    const leftPadding = Math.floor((width - text.length) / 2);
+    return `${' '.repeat(leftPadding)}${text}`;
+  }
+
+  private safeBirText(value: string | number): string {
+    return String(value ?? '')
+      .replace(/\r?\n|\r/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private formatBirCurrency(value: number): string {
+    return `PHP ${this.extras.formatCurrency(Number(value || 0))}`;
+  }
+
+  private formatBirPercent(value: number): string {
+    return `${(Number(value || 0) * 100).toFixed(2)}%`;
+  }
+
+  private formatBirGeneratedAt(value: string): string {
+    return value ? this.extras.formatDateWithTime(value) : 'Date Unavailable';
   }
 }

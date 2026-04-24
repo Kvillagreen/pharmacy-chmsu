@@ -47,7 +47,7 @@
           </p>
         </div>
 
-        <div class="flex flex-col gap-2 sm:flex-row">
+        <div class="flex flex-col gap-2 sm:flex-row" data-pdf-exclude="true">
           <button (click)="clearBirReport()"
             class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Close Panel
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="mt-5 rounded-2xl border border-[#d6c3a1] bg-white/70 p-4 sm:p-6">
+      <div  class="mt-5 rounded-2xl border border-[#d6c3a1] bg-white/70 p-4 sm:p-6">
         <div class="mx-auto max-w-2xl font-mono text-sm text-slate-800">
           <div class="text-center">
             <p class="text-xs uppercase tracking-[0.3em] text-slate-500">BIR Form {{birReport.form_no ?
@@ -147,7 +147,7 @@
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p class="text-sm font-medium text-slate-500">Revenue</p>
-        <h2 class="mt-3 wrap-break-word text-2xl font-bold text-slate-900 sm:text-3xl">Php
+        <h2 class="mt-3 break-words text-2xl font-bold text-slate-900 sm:text-3xl">Php
           {{extras.formatCurrency(reportData.data.summary.total_revenue)}}</h2>
         <p class="mt-2 text-xs font-semibold"
           [ngClass]="isPositive(reportData.data.summary.revenue_change_pct) ? 'text-emerald-600' : 'text-red-600'">
@@ -166,7 +166,7 @@
 
       <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <p class="text-sm font-medium text-slate-500">Discounts</p>
-        <h2 class="mt-3 wrap-break-word text-2xl font-bold text-slate-900 sm:text-3xl">Php
+        <h2 class="mt-3 break-words text-2xl font-bold text-slate-900 sm:text-3xl">Php
           {{extras.formatCurrency(reportData.data.summary.total_discount)}}</h2>
         <p class="mt-2 text-xs text-slate-500">Recorded discounts in selected period</p>
       </article>
@@ -204,7 +204,7 @@
               <div class="text-center text-[10px] font-semibold text-slate-500">Php
                 {{extras.formatCurrency(point.total_revenue)}}</div>
               <div
-                class="w-full rounded-t-xl bg-linear-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
+                class="w-full rounded-t-xl bg-gradient-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
                 [style.height.%]="getBarHeight(point.total_revenue)">
               </div>
               <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
@@ -258,7 +258,7 @@
                 {{branch.transaction_count}} txns</span>
             </div>
             <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-linear-to-r from-sky-500 to-cyan-400"
+              <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
                 [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(reportData.data.tables.branch_performance, 'total_revenue'))">
               </div>
             </div>
@@ -282,7 +282,7 @@
                 {{method.transaction_count}} txns</span>
             </div>
             <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-linear-to-r from-indigo-500 to-cyan-400"
+              <div class="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
                 [style.width.%]="getPercentWidth(method.total_revenue, getMaxByKey(reportData.data.charts.payment_mix, 'total_revenue'))">
               </div>
             </div>
@@ -307,7 +307,7 @@
               <span class="text-slate-500">{{category.quantity_sold}} units | {{category.transaction_count}} txns</span>
             </div>
             <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-400"
+              <div class="h-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400"
                 [style.width.%]="getPercentWidth(category.quantity_sold, getMaxByKey(reportData.data.charts.category_mix, 'quantity_sold'))">
               </div>
             </div>
@@ -408,7 +408,7 @@
               </div>
               <div class="text-left sm:text-right">
                 <p class="font-semibold text-emerald-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
-                <p class="text-xs text-slate-500">{{extras.timeAgo(transaction.created_at)}}</p>
+                <p class="text-xs text-slate-500">{{recentTransactionTimeLabel(transaction)}}</p>
               </div>
             </div>
           </div>
@@ -420,7 +420,7 @@
 </main>
 
 @if(isBirModalOpen){
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
+<div  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
   <div class="flex h-auto max-h-[95vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
     <div class="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
       <button class="absolute right-4 top-4 text-gray-500 hover:text-red-500" (click)="closeBirModal()">
@@ -437,7 +437,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[0.95fr,1.35fr]">
+    <div  class="grid grid-cols-1 gap-4 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[0.95fr,1.35fr]">
       <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
         <div class="space-y-4">
           <div>
@@ -472,7 +472,7 @@
         </div>
       </div>
 
-      <div class="rounded-2xl border border-[#d6c3a1] bg-[#fffaf0] p-4 shadow-sm sm:p-6">
+      <div id="printable" class="rounded-2xl border border-[#d6c3a1] bg-[#fffaf0] p-4 shadow-sm sm:p-6">
         @if(birReportData?.data; as birReport){
         <div class="mx-auto max-w-2xl font-mono text-sm text-slate-800">
           <div class="text-center">

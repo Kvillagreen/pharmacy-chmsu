@@ -11,6 +11,14 @@ export interface SalesModel {
   used_amount?: number;
   change?: number;
   request_token:string;
+  transaction_type?: string;
+  hmo_provider?: string;
+  patient_name?: string;
+  membership_id?: string;
+  coverage_type?: string;
+  documents_submitted?: boolean;
+  prescription_path?: string;
+  member_id_image_path?: string;
 }
 
 export interface SalesData {

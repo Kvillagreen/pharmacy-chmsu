@@ -131,11 +131,11 @@ export class Header implements OnInit, OnChanges {
   }
 
   isNotificationRead(notification: any): boolean {
-    return this.readNotificationKeys.includes(this.notificationKey(notification));
+    return Boolean(notification?.read_at) || this.readNotificationKeys.includes(this.notificationKey(notification));
   }
 
   updateUnreadCount() {
-    this.unreadCount = this.notifications.filter((notification) => !this.isNotificationRead(notification)).length;
+    this.unreadCount = this.notifications.filter((notification) => !(notification.read_at || this.isNotificationRead(notification))).length;
   }
 
   markNotificationAsRead(notification: any) {
@@ -158,13 +158,14 @@ export class Header implements OnInit, OnChanges {
     }
   }
 
-  toggleNotificationReadState(notification: any) {
+  async toggleNotificationReadState(notification: any) {
     if (this.isNotificationRead(notification)) {
       this.markNotificationAsUnread(notification);
       return;
     }
 
     this.markNotificationAsRead(notification);
+    await this.markNotificationReadOnServer(notification);
   }
 
   markAllNotificationsAsRead() {
@@ -240,7 +241,7 @@ export class Header implements OnInit, OnChanges {
 
       const endpoint = `header/notifications?company_id=${companyId}&branch_id=${selectedBranch}`;
       const res = await this.userService.getUser(endpoint, '', this.userData.token);
-
+      console.log(res)
       if (res.status === 200) {
         this.notifications = res.data.data.notifications ?? [];
         this.updateUnreadCount();
@@ -257,6 +258,60 @@ export class Header implements OnInit, OnChanges {
       this.isProfileOpen.set(false);
     }
     this.cd.detectChanges();
+  }
+
+  async markNotificationReadOnServer(notification: any) {
+    if (!notification?.notification_id) {
+      return;
+    }
+
+    try {
+      await this.userService.putUser(`header/notifications/${notification.notification_id}/read`, {}, this.userData.token);
+      notification.read_at = new Date().toISOString();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  canResolveTransfer(notification: any): boolean {
+    const type = String(notification?.type ?? '').toLowerCase();
+    const transferId = notification?.meta?.inventory_transfer_id;
+
+    return Boolean(
+      transferId &&
+      (notification?.is_actionable === true || type === 'transfer_request')
+    );
+  }
+
+  async resolveTransfer(notification: any, action: 'accept' | 'decline') {
+    const transferId = notification?.meta?.inventory_transfer_id;
+    if (!transferId) {
+      this.extras.showToast('Transfer request details are missing from this notification.', 'warning');
+      return;
+    }
+
+    try {
+      const payload = {
+        resolved_by: Number(this.userData.data?.user_id),
+        notification_id: Number(notification.notification_id),
+      };
+
+      const res = await this.userService.postUser(`inventory-transfer/${transferId}/${action}`, payload, this.userData.token);
+      if (res.status === 200) {
+        await this.markNotificationReadOnServer(notification);
+        this.markNotificationAsRead(notification);
+        await this.getNotifications();
+        this.extras.showToast(
+          action === 'accept' ? 'Transfer accepted successfully.' : 'Transfer declined successfully.',
+          'success'
+        );
+      } else {
+        this.extras.showToast(res.data?.message ?? 'Unable to resolve transfer.', 'warning');
+      }
+    } catch (e: any) {
+      console.log(e);
+      this.extras.showToast(e?.error?.message ?? 'Unable to resolve transfer.', 'warning');
+    }
   }
 
   toggleProfileMenu() {
