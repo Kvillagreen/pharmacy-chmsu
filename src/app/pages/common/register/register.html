@@ -47,11 +47,13 @@
           </div>
         </div>
 
-        <div class="space-y-2">
-          <label class="text-sm font-medium text-slate-700">Address</label>
-          <input type="text" [(ngModel)]="user.address" name="address" required
-            class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
-        </div>
+        <app-address-field
+          [(value)]="user.address"
+          fieldId="register-page-address"
+          label="Home Address"
+          [required]="true"
+          description="Use the structured address fields so the saved address stays clean and consistent.">
+        </app-address-field>
 
         <div class="grid gap-4 sm:grid-cols-2">
           @if(branchList){
@@ -151,7 +153,7 @@
 
         <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm text-slate-600">
           Already have an account?
-          <a (click)="router.navigate(['/login'])" class="ml-1 font-semibold text-emerald-700 hover:text-emerald-800">
+          <a (click)="router.navigate(['/'])" class="ml-1 font-semibold text-emerald-700 hover:text-emerald-800">
             Login
           </a>
         </div>

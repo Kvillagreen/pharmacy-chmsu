@@ -1,0 +1,85 @@
+.offline-order-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.offline-order-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.offline-order-message-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.offline-order-selected-message {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #ffffff);
+}
+
+.offline-order-conversation {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.offline-order-modal-panel {
+  min-height: 0;
+}
+
+.offline-order-logs-table-wrap {
+  height: min(62vh, 640px);
+  min-height: 320px;
+}
+
+@media (min-width: 1280px) {
+  .offline-order-panel {
+    height: calc(100vh - 11rem);
+    min-height: 36rem;
+    max-height: 46rem;
+  }
+}
+
+.offline-order-message-list::-webkit-scrollbar,
+.offline-order-conversation::-webkit-scrollbar,
+.offline-order-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.offline-order-message-list::-webkit-scrollbar-track,
+.offline-order-conversation::-webkit-scrollbar-track,
+.offline-order-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.offline-order-message-list::-webkit-scrollbar-thumb,
+.offline-order-conversation::-webkit-scrollbar-thumb,
+.offline-order-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.offline-order-message-list::-webkit-scrollbar-thumb:hover,
+.offline-order-conversation::-webkit-scrollbar-thumb:hover,
+.offline-order-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@media (max-width: 1023px) {
+  .offline-order-message-list {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .offline-order-logs-table-wrap {
+    height: min(56vh, 480px);
+    min-height: 260px;
+  }
+}

@@ -8,11 +8,12 @@ import { Extras } from '../../../../extras/extras';
 import { AdminCompaniesData } from '../../../../models/AdminModel';
 import { AppButton } from '../../../shared/ui/button/button';
 import { AppModal } from '../../../shared/ui/modal/modal';
+import { AppAddressField } from '../../../shared/ui/address-field/address-field';
 
 @Component({
   selector: 'app-admin-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonIcon, AppButton, AppModal],
+  imports: [CommonModule, FormsModule, IonIcon, AppButton, AppModal, AppAddressField],
   templateUrl: './admin-companies.html',
 })
 export class AdminCompanies implements OnInit {

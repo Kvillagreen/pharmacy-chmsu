@@ -6,11 +6,12 @@ import { EncryptData } from '../../../../environment/encrypt-data';
 import { AdminProfileData } from '../../../../models/AdminModel';
 import { Extras } from '../../../../extras/extras';
 import { AppModal } from '../../../shared/ui/modal/modal';
+import { AppAddressField } from '../../../shared/ui/address-field/address-field';
 
 @Component({
   selector: 'app-admin-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppModal],
+  imports: [CommonModule, FormsModule, AppModal, AppAddressField],
   templateUrl: './admin-profile.html',
 })
 export class AdminProfile {

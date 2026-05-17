@@ -1,3 +1,34 @@
+@if(isLoading && !hasLoaded){
+<main class="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto z-0">
+  <div class="app-skeleton-page">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="space-y-3">
+        <div class="app-skeleton h-8 w-64 rounded-2xl"></div>
+        <div class="app-skeleton h-4 w-full max-w-xl rounded-2xl"></div>
+      </div>
+      <div class="flex gap-2">
+        <div class="app-skeleton h-10 w-28 rounded-xl"></div>
+        <div class="app-skeleton h-10 w-40 rounded-xl"></div>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for(item of [1,2,3,4]; track item){
+      <div class="app-skeleton-card space-y-3">
+        <div class="app-skeleton h-4 w-24 rounded-xl"></div>
+        <div class="app-skeleton h-8 w-28 rounded-xl"></div>
+      </div>
+      }
+    </div>
+    <div class="app-skeleton-card space-y-4">
+      <div class="flex gap-3">
+        <div class="app-skeleton h-12 w-full rounded-xl"></div>
+        <div class="app-skeleton h-10 w-24 rounded-xl"></div>
+      </div>
+      <div class="app-skeleton h-80 w-full rounded-3xl"></div>
+    </div>
+  </div>
+</main>
+} @else {
 <main class="flex-1 p-3 sm:p-4 lg:p-6 overflow-auto z-0">
   <div class="space-y-4 sm:space-y-6">
 
@@ -12,13 +43,6 @@
 
       <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
         <button
-          (click)="mergeDuplicateMedicines()"
-          class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 bg-amber-100 text-amber-800 hover:bg-amber-200 w-full sm:w-auto">
-          <ion-icon name="git-merge-outline"></ion-icon>
-          <span>Merge Duplicates</span>
-        </button>
-
-        <button
           (click)="openExportModal()"
           class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 hover:bg-gray-300 w-full sm:w-auto">
           <ion-icon name="download-outline"></ion-icon>
@@ -26,7 +50,7 @@
         </button>
 
         <button
-          (click)="isCreate.set(true); this.medicineData.inputData=[]"
+          (click)="loadMedicineCategories(); isCreate.set(true); this.medicineData.inputData=[]"
           class="inline-flex items-center text-gray-50 justify-center font-semibold h-10 px-4 rounded-md gap-x-2 bg-primary hover:bg-primary/90 w-full sm:w-auto">
           <ion-icon name="add-outline"></ion-icon>
           <span>Add New Product</span>
@@ -61,11 +85,12 @@
     <div class="bg-white border-gray-300 border rounded-lg shadow-sm">
       <!-- Search / Pagination -->
       <div class="py-3 flex flex-col lg:flex-row gap-3 lg:items-center bg-muted/20 px-3 sm:px-4">
-        <div class="flex justify-center items-center w-full lg:w-1/2 bg-gray-100 h-11 sm:h-12 rounded-md px-2 gap-x-2 focus-within:outline-2 focus-within:outline-green-700">
+        <div class="app-search-shell flex justify-center items-center w-full lg:w-1/2 border border-gray-300 bg-white h-11 sm:h-12 rounded-md px-3 gap-x-2">
           <ion-icon name="search-outline" class="size-4 shrink-0"></ion-icon>
           <input
             (input)="changeText($event)"
-            class="w-full h-full outline-none bg-transparent text-sm"
+            [value]="searchQuery"
+            class="app-search-input w-full h-full outline-none bg-transparent text-sm"
             placeholder="Search by ID, generic, or brand name...">
         </div>
 
@@ -84,47 +109,71 @@
       <div class="hidden lg:block overflow-x-auto">
         <!-- HEADER -->
         <div class="w-full p-2 bg-gray-100 h-10 grid justify-center items-center text-center text-xs grid-cols-7 font-bold border-y border-gray-300">
-          <div class="flex items-center justify-start px-4 gap-x-1 w-full h-full">
+          <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
             <span>PRODUCT ID</span>
-            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=medicine_id')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-medicine_id')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_id')"
+                (click)="filter(getSortValue('medicine_id'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_id', true)"
+                (click)="filter(getSortValue('medicine_id', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex justify-start items-center px-4 w-full h-full leading-none gap-x-1">
+          <div class="flex justify-center items-center px-4 w-full h-full leading-none gap-x-1">
             <span>PRODUCT DETAILS</span>
-            <span class="flex flex-col gap-y-0 leading-none text-[9px]">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=medicine_name')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-medicine_name')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_name')"
+                (click)="filter(getSortValue('medicine_name'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_name', true)"
+                (click)="filter(getSortValue('medicine_name', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex justify-end items-center px-4 w-full h-full leading-none">
+          <div class="flex justify-center items-center px-4 w-full h-full leading-none">
             <p>CATEGORY & FORMAT</p>
           </div>
 
-          <div class="flex items-center justify-end px-4 gap-x-1 w-full h-full">
+          <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
             <span>UNIT PRICE</span>
-            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=price')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-price')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('price')"
+                (click)="filter(getSortValue('price'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('price', true)"
+                (click)="filter(getSortValue('price', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex items-center justify-end px-4 gap-x-1 w-full h-full">
+          <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
             <span>TOTAL STOCKS</span>
-            <span class="flex flex-col h-full gap-y-0 leading-none text-[9px]">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=stocks')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-stocks')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('stocks')"
+                (click)="filter(getSortValue('stocks'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('stocks', true)"
+                (click)="filter(getSortValue('stocks', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex items-center justify-end px-4 w-full h-full">
+          <div class="flex items-center justify-center px-4 w-full h-full">
             <p>STATUS</p>
           </div>
 
-          <div class="flex items-center justify-end px-4 w-full h-full">
+          <div class="flex items-center justify-center px-4 w-full h-full">
             <p>ACTIONS</p>
           </div>
         </div>
@@ -134,34 +183,34 @@
           [ngClass]="i === 9 ? 'rounded-b-md' : 'rounded-none'"
           class="hover:bg-gray-50 w-full py-4 px-2 grid justify-center items-center text-center text-xs grid-cols-7 font-semibold border-b border-gray-300">
 
-          <div class="flex items-start justify-center flex-col px-4 h-10">
+          <div class="flex items-center justify-center flex-col px-4 h-10">
             {{ item?.medicine_id ? 'PR-' + item.medicine_id : '' }}
           </div>
 
-          <div class="flex items-start justify-center flex-col px-4 h-full">
+          <div class="flex items-center justify-center flex-col px-4 h-full text-center">
             <p>{{ item?.medicine_name || '' }}</p>
             <p class="font-medium">{{ item?.generic_name || '' }}</p>
           </div>
 
-          <div class="flex items-end justify-center flex-col px-4 h-full">
+          <div class="flex items-center justify-center flex-col px-4 h-full text-center">
             <p>{{ item?.category || '' }}</p>
             <p class="font-medium">
               {{extras.toTitleCaseSafe(item?.type || '')+' '+(item?.dosage || '')+' '+extras.toLowerCaseSafe(item?.unit || '') }}
             </p>
           </div>
 
-          <div class="flex items-end justify-center flex-col px-4 h-full">
+          <div class="flex items-center justify-center flex-col px-4 h-full text-center">
             <p>{{ item?.price ? 'Php ' + item.price : '' }}</p>
           </div>
 
-          <div class="flex flex-col items-end justify-center px-4 h-full">
+          <div class="flex flex-col items-center justify-center px-4 h-full text-center">
             <p>{{ item?.stocks >= 0 ? item?.stocks : ''}}</p>
             <p class="text-xs font-medium">
               {{item?.reorder_level >= 0 && item?.reorder_level != null ? ('Min: ' + item?.reorder_level ) : ' '}}
             </p>
           </div>
 
-          <div class="flex items-end flex-col justify-center px-4 h-full">
+          <div class="flex items-center flex-col justify-center px-4 h-full">
             <div *ngIf="item">
               @if(item?.stocks > item.reorder_level){
               <div class="bg-gray-200 border text-center rounded-md w-20 border-gray-600">
@@ -179,13 +228,17 @@
             </div>
           </div>
 
-          <div class="w-full flex flex-row items-center justify-end gap-x-1 px-4 text-xl h-full">
-            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-emerald-600">
-              <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
-            </div>
+          <div class="w-full flex flex-row items-center justify-center gap-x-1 px-4 text-xl h-full">
+              <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center"
+                [class.text-emerald-600]="canTransferMedicine(item)"
+                [class.text-gray-300]="!canTransferMedicine(item)"
+                [class.cursor-not-allowed]="!canTransferMedicine(item)"
+                [title]="canTransferMedicine(item) ? 'Transfer medicine' : 'Stocks must be greater than 2 to transfer'">
+                <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
+              </div>
             <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-blue-600">
               <ion-icon name="create-outline"
-                (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
+                (click)="loadMedicineCategories(); this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
             </div>
             <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-red-400">
               <ion-icon name="trash-outline"
@@ -209,12 +262,16 @@
               </div>
 
               <div class="flex items-center gap-1 shrink-0 text-xl">
-                <div class="rounded-md size-8 flex justify-center items-center text-emerald-600">
-                  <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
-                </div>
+                  <div class="rounded-md size-8 flex justify-center items-center"
+                    [class.text-emerald-600]="canTransferMedicine(item)"
+                    [class.text-gray-300]="!canTransferMedicine(item)"
+                    [class.cursor-not-allowed]="!canTransferMedicine(item)"
+                    [title]="canTransferMedicine(item) ? 'Transfer medicine' : 'Stocks must be greater than 2 to transfer'">
+                    <ion-icon name="swap-horizontal-outline" (click)="openTransferModal(item)"></ion-icon>
+                  </div>
                 <div class="rounded-md size-8 flex justify-center items-center text-blue-600">
                   <ion-icon name="create-outline"
-                    (click)="this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
+                    (click)="loadMedicineCategories(); this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
                 </div>
                 <div class="rounded-md size-8 flex justify-center items-center text-red-400">
                   <ion-icon name="trash-outline"
@@ -272,12 +329,13 @@
     </div>
   </div>
 </main>
+}
 
 @if(isCreate() || isUpdate()){
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
-  <div class="bg-gray-100 w-full max-w-4xl h-auto rounded-2xl shadow-xl flex flex-col max-h-[95vh] overflow-hidden">
+  <div class="w-full max-w-5xl h-auto rounded-2xl border border-gray-200 bg-white shadow-xl flex flex-col max-h-[95vh] overflow-hidden">
 
-    <div class="sticky top-0 w-full bg-white p-4 rounded-t-2xl z-10">
+    <div class="sticky top-0 w-full bg-white p-5 rounded-t-2xl z-10 border-b border-gray-200">
       <button
         class="absolute top-4 right-4 text-gray-500 hover:text-red-500"
         (click)="isCreate.set(false); isUpdate.set(false); medicineData.inputData=[]">
@@ -300,11 +358,10 @@
 
     <form
       (submit)="isUpdate() && !isCreate() ? update() : create()"
-      class="flex flex-col h-full w-full overflow-y-auto p-4 gap-y-4">
+      class="flex flex-col h-full w-full overflow-y-auto p-5 gap-y-5 bg-gray-50/70">
 
-      <!-- Medicine Information -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
-        <p class="text-gray-800 text-base sm:text-lg font-semibold xl:col-span-6 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 w-full">
+      <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+        <p class="text-gray-800 text-base sm:text-lg font-semibold flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 w-full">
           <span>Medicine Information:</span>
 
           <span class="flex flex-wrap items-center gap-4 sm:gap-6">
@@ -313,22 +370,22 @@
               <div
                 class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
                 [ngClass]="{
-                  'border-gray-800 bg-gray-900': !medicineData.inputData.needs_protection,
-                  'border-blue-500 bg-blue-500/10 shadow-md': medicineData.inputData.needs_protection
+                  'border-slate-300 bg-white': !medicineData.inputData.needs_protection,
+                  'border-sky-300 bg-sky-50 shadow-md': medicineData.inputData.needs_protection
                 }"
                 (click)="toggleRx()">
-                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
+                <span class="text-sm transition-all duration-300 flex items-center justify-center"
                   [ngClass]="{
-                    'opacity-40 scale-90': !medicineData.inputData.needs_protection,
-                    'opacity-100 scale-110 text-blue-500': medicineData.inputData.needs_protection
+                    'opacity-60 scale-90 text-slate-500': !medicineData.inputData.needs_protection,
+                    'opacity-100 scale-110 text-sky-600': medicineData.inputData.needs_protection
                   }">
                   <ion-icon name="medkit-outline"></ion-icon>
                 </span>
 
                 <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
                   [ngClass]="{
-                    'bg-gray-600 opacity-40': !medicineData.inputData.needs_protection,
-                    'bg-blue-500 opacity-100 shadow-md': medicineData.inputData.needs_protection
+                    'bg-slate-300 opacity-70': !medicineData.inputData.needs_protection,
+                    'bg-sky-400 opacity-100 shadow-md': medicineData.inputData.needs_protection
                   }"></div>
               </div>
 
@@ -337,7 +394,7 @@
                 class="text-sm font-semibold transition-colors duration-300"
                 [ngClass]="{
                   'text-gray-700': !medicineData.inputData.needs_protection,
-                  'text-blue-600': medicineData.inputData.needs_protection
+                  'text-sky-700': medicineData.inputData.needs_protection
                 }">
                 Prescription
               </span>
@@ -347,22 +404,22 @@
               <div
                 class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
                 [ngClass]="{
-                  'border-gray-800 bg-gray-900': !medicineData.inputData.is_dangerous,
-                  'border-red-500 bg-red-500/10 shadow-md': medicineData.inputData.is_dangerous
+                  'border-slate-300 bg-white': !medicineData.inputData.is_dangerous,
+                  'border-rose-300 bg-rose-50 shadow-md': medicineData.inputData.is_dangerous
                 }"
                 (click)="toggleDanger()">
-                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
+                <span class="text-sm transition-all duration-300 flex items-center justify-center"
                   [ngClass]="{
-                    'opacity-40 scale-90': !medicineData.inputData.is_dangerous,
-                    'opacity-100 scale-110 text-red-500': medicineData.inputData.is_dangerous
+                    'opacity-60 scale-90 text-slate-500': !medicineData.inputData.is_dangerous,
+                    'opacity-100 scale-110 text-rose-600': medicineData.inputData.is_dangerous
                   }">
                   <ion-icon name="alert-outline"></ion-icon>
                 </span>
 
                 <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
                   [ngClass]="{
-                    'bg-gray-600 opacity-40': !medicineData.inputData.is_dangerous,
-                    'bg-red-500 opacity-100 shadow-md': medicineData.inputData.is_dangerous
+                    'bg-slate-300 opacity-70': !medicineData.inputData.is_dangerous,
+                    'bg-rose-400 opacity-100 shadow-md': medicineData.inputData.is_dangerous
                   }"></div>
               </div>
 
@@ -371,132 +428,117 @@
                 class="text-sm font-semibold transition-colors duration-300"
                 [ngClass]="{
                   'text-gray-700': !medicineData.inputData.is_dangerous,
-                  'text-red-600': medicineData.inputData.is_dangerous
+                  'text-rose-700': medicineData.inputData.is_dangerous
                 }">
                 Dangerous
-              </span>
-            </label>
-
-            <label class="flex items-center cursor-pointer select-none space-x-2 group">
-              <div
-                class="w-7 h-7 flex items-center justify-center border-2 rounded-lg transition-all duration-300 relative shadow-sm"
-                [ngClass]="{
-                  'border-gray-800 bg-gray-900': !medicineData.inputData.is_yakap_eligible,
-                  'border-pink-500 bg-pink-500/10 shadow-md': medicineData.inputData.is_yakap_eligible
-                }"
-                (click)="toggleYakapEligible()">
-                <span class="text-white text-sm transition-all duration-300 flex items-center justify-center"
-                  [ngClass]="{
-                    'opacity-40 scale-90': !medicineData.inputData.is_yakap_eligible,
-                    'opacity-100 scale-110 text-pink-500': medicineData.inputData.is_yakap_eligible
-                  }">
-                  <ion-icon name="people-outline"></ion-icon>
-                </span>
-
-                <div class="absolute -bottom-1 -right-1 w-2 h-2 rounded-full transition-all duration-300"
-                  [ngClass]="{
-                    'bg-gray-600 opacity-40': !medicineData.inputData.is_yakap_eligible,
-                    'bg-pink-500 opacity-100 shadow-md': medicineData.inputData.is_yakap_eligible
-                  }"></div>
-              </div>
-
-              <span
-                (click)="toggleYakapEligible()"
-                class="text-sm font-semibold transition-colors duration-300"
-                [ngClass]="{
-                  'text-gray-700': !medicineData.inputData.is_yakap_eligible,
-                  'text-pink-600': medicineData.inputData.is_yakap_eligible
-                }">
-                Yakap Eligible
               </span>
             </label>
 
           </span>
         </p>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Brand Name</label>
-          <input type="text" placeholder="Medicine name eg. brand x" required name="brand_name"
-            class="input w-full" [(ngModel)]="medicineData.inputData.medicine_name" />
-        </div>
+        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Brand Name</label>
+            <input type="text" placeholder="Medicine name eg. brand x" required name="brand_name"
+              class="input w-full" [(ngModel)]="medicineData.inputData.medicine_name" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Generic Name</label>
-          <input type="text" required name="generic_name" placeholder="Generic name eg. brand x"
-            class="input w-full" [(ngModel)]="medicineData.inputData.generic_name" />
-        </div>
+          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Generic Name</label>
+            <input type="text" required name="generic_name" placeholder="Generic name eg. paracetamol"
+              class="input w-full" [(ngModel)]="medicineData.inputData.generic_name" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Category</label>
-          <input type="text" required name="category" placeholder="Category name eg. analgesic"
-            class="input w-full" [(ngModel)]="medicineData.inputData.category" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Category</label>
+            <select required name="category" class="input w-full bg-white" [(ngModel)]="medicineData.inputData.category">
+              <option value="" disabled>Select medicine category</option>
+              @for(category of medicineCategoryOptions; track category){
+              <option [value]="category">{{category}}</option>
+              }
+            </select>
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Unit Price (₱)</label>
-          <input type="number" min="0" required placeholder="Unit price eg. 50.00" name="price"
-            class="input w-full" [(ngModel)]="medicineData.inputData.price" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Type</label>
+            <select required name="type" class="input w-full bg-white" [(ngModel)]="medicineData.inputData.type">
+              <option value="" disabled>Select medicine type</option>
+              @for(type of medicineTypeOptions; track type){
+              <option [value]="type">{{type}}</option>
+              }
+            </select>
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-2 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Type</label>
-          <input type="text" required name="type" placeholder="Medicine type eg. tablet, syrup..."
-            class="input w-full" [(ngModel)]="medicineData.inputData.type" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Unit Price (₱)</label>
+            <input type="number" min="0" required placeholder="Unit price eg. 50.00" name="price"
+              class="input w-full" [(ngModel)]="medicineData.inputData.price" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-2 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Dosage</label>
-          <input type="number" min="0" required name="dosage" placeholder="Medicine dosage eg. 500"
-            class="input w-full" [(ngModel)]="medicineData.inputData.dosage" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Dosage</label>
+            <input type="number" min="0" required name="dosage" placeholder="Medicine dosage eg. 500"
+              class="input w-full" [(ngModel)]="medicineData.inputData.dosage" />
+          </div>
 
-        <div class="sm:col-span-2 xl:col-span-2 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Unit</label>
-          <input type="text" required name="unit" placeholder="Medicine unit eg. ml, L or oz"
-            class="input w-full" [(ngModel)]="medicineData.inputData.unit" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Unit</label>
+            <select required name="unit" class="input w-full bg-white" [(ngModel)]="medicineData.inputData.unit">
+              <option value="" disabled>Select unit</option>
+              @for(unit of medicineUnitOptions; track unit){
+              <option [value]="unit">{{unit}}</option>
+              }
+            </select>
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Total Stocks</label>
-          <input type="number" min="0" required name="stocks" placeholder="Total stocks eg. 32"
-            class="input w-full" [(ngModel)]="medicineData.inputData.stocks" />
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Location</label>
+            <input type="text" required name="location" placeholder="Location eg. shelf 3-A"
+              class="input w-full" [(ngModel)]="medicineData.inputData.location" />
+          </div>
         </div>
+      </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Minimum Stocks</label>
-          <input type="number" min="0" required name="reorder_level" placeholder="Minimum stocks eg. 40"
-            class="input w-full" [(ngModel)]="medicineData.inputData.reorder_level" />
-        </div>
+      <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+        <p class="text-gray-800 text-base sm:text-lg font-semibold">Stock & Batch Details</p>
+        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Total Stocks</label>
+            <input type="number" min="0" required name="stocks" placeholder="Total stocks eg. 32"
+              class="input w-full" [(ngModel)]="medicineData.inputData.stocks" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Received Date</label>
-          <input type="date" required name="received_date" class="input w-full"
-            [(ngModel)]="medicineData.inputData.received_date" />
-        </div>
+          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Minimum Stocks</label>
+            <input type="number" min="0" required name="reorder_level" placeholder="Minimum stocks eg. 40"
+              class="input w-full" [(ngModel)]="medicineData.inputData.reorder_level" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Expiry Date</label>
-          <input type="date" required name="expiry_date" class="input w-full"
-            [(ngModel)]="medicineData.inputData.expiry_date" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Received Date</label>
+            <input type="date" required name="received_date" class="input w-full"
+              [(ngModel)]="medicineData.inputData.received_date" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Manufacturing Date</label>
-          <input type="date" required name="mfg_date" class="input w-full"
-            [(ngModel)]="medicineData.inputData.mfg_date" />
-        </div>
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Expiry Date</label>
+            <input type="date" required name="expiry_date" class="input w-full"
+              [(ngModel)]="medicineData.inputData.expiry_date" />
+          </div>
 
-        <div class="sm:col-span-1 xl:col-span-3 flex flex-col items-start gap-y-1">
-          <label class="text-sm">Location</label>
-          <input type="text" required name="location" placeholder="Location eg. shelf 3-A"
-            class="input w-full" [(ngModel)]="medicineData.inputData.location" />
+          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
+            <label class="text-sm">Manufacturing Date</label>
+            <input type="date" required name="mfg_date" class="input w-full"
+              [(ngModel)]="medicineData.inputData.mfg_date" />
+          </div>
         </div>
       </div>
 
       <input type="submit" #clicker hidden>
     </form>
 
-    <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 p-4 bg-gray-50 rounded-b-2xl border-gray-300 border-t">
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 p-4 bg-white rounded-b-2xl border-gray-200 border-t">
       <button
         class="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto"
         (click)="isCreate.set(false); isUpdate.set(false); medicineData.inputData=[]">
@@ -512,8 +554,8 @@
 
 @if(isTransfer()){
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
-  <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
-    <div class="flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
+  <div class="flex max-h-[min(90vh,44rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div class="shrink-0 flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
       <div>
         <h2 class="text-lg font-bold">Transfer Medicine</h2>
         <p class="text-sm text-gray-500">
@@ -525,7 +567,8 @@
       </button>
     </div>
 
-    <div class="space-y-4 px-4 py-4 sm:px-6">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+      <div class="space-y-4">
       <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
         <p class="font-semibold">{{medicineData.inputData?.medicine_name}}</p>
         <p class="mt-1">Available stock: {{medicineData.inputData?.stocks || 0}}</p>
@@ -565,12 +608,14 @@
         <input type="checkbox" [(ngModel)]="transferForm.confirmed" class="mt-1 h-4 w-4">
         <span>I confirm this transfer request. The destination branch must accept it before the medicine is added to their inventory.</span>
       </label>
+      </div>
     </div>
 
-    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+    <div class="shrink-0 flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button class="rounded-lg bg-gray-200 px-4 py-2" (click)="isTransfer.set(false)">Cancel</button>
-      <button class="rounded-lg bg-emerald-600 px-4 py-2 text-white" (click)="submitTransfer()">Send Request</button>
-    </div>
+        <button class="rounded-lg bg-emerald-600 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-emerald-300"
+          [disabled]="!canTransferMedicine(medicineData.inputData)" (click)="submitTransfer()">Send Request</button>
+      </div>
   </div>
 </div>
 }

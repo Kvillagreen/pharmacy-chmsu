@@ -24,6 +24,18 @@ export interface ReportsRevenuePoint {
   transaction_count: number;
 }
 
+export interface ReportsDailyTransactionPoint {
+  date: string;
+  label: string;
+  transaction_count: number;
+}
+
+export interface ReportsDailyDiscountPoint {
+  date: string;
+  label: string;
+  total_discount: number;
+}
+
 export interface ReportsPaymentMix {
   payment_method: string;
   total_revenue: number;
@@ -34,6 +46,11 @@ export interface ReportsCategoryMix {
   category: string;
   quantity_sold: number;
   transaction_count: number;
+}
+
+export interface ReportsInventoryStatusMix {
+  status: string;
+  count: number;
 }
 
 export interface ReportsBranchPerformance {
@@ -69,9 +86,24 @@ export interface ReportsRecentTransaction {
   branch_name: string;
   cashier_name: string;
   payment_method: string;
+  reference_number?: string | null;
   total_amount: number;
   discount: number;
   created_at: string;
+}
+
+export interface ReportsRegulatedTransaction {
+  transaction_id: number;
+  regulated_classification: string;
+  branch_name: string;
+  cashier_name: string;
+  payment_method: string;
+  reference_number?: string | null;
+  total_amount: number;
+  discount: number;
+  patient_name: string;
+  created_at: string;
+  regulated_details: Record<string, any> | null;
 }
 
 export interface ReportsAnalysis {
@@ -84,14 +116,19 @@ export interface ReportsDataPayload {
   summary: ReportsSummary;
   charts: {
     daily_revenue: ReportsRevenuePoint[];
+    daily_transactions: ReportsDailyTransactionPoint[];
+    daily_discounts: ReportsDailyDiscountPoint[];
     payment_mix: ReportsPaymentMix[];
     category_mix: ReportsCategoryMix[];
+    inventory_status_mix: ReportsInventoryStatusMix[];
   };
   tables: {
     branch_performance: ReportsBranchPerformance[];
     top_medicines: ReportsTopMedicine[];
     inventory_watch: ReportsInventoryWatch[];
     recent_transactions: ReportsRecentTransaction[];
+    prescribed_transactions: ReportsRegulatedTransaction[];
+    dangerous_transactions: ReportsRegulatedTransaction[];
   };
   analysis: ReportsAnalysis;
 }
@@ -110,6 +147,22 @@ export interface BirAnnualDeclarationDataPayload {
   taxpayer_name: string;
   tin_number: string;
   taxable_year: number;
+  return_period?: string;
+  due_date?: string;
+  tax_type_code?: string;
+  tax_type_description?: string;
+  atc?: string;
+  atc_description?: string;
+  manner_of_payment?: string;
+  type_of_payment?: string;
+  line_of_business?: string;
+  registered_address?: string;
+  telephone_number?: string;
+  basic_tax_payment?: number;
+  surcharge?: number;
+  interest?: number;
+  compromise?: number;
+  total_amount_payable?: number;
   transaction_count: number;
   gross_sales_receipts: number;
   sales_discounts: number;
@@ -127,4 +180,21 @@ export interface BirAnnualDeclarationDataPayload {
 export interface BirAnnualDeclarationData {
   success?: boolean;
   data: BirAnnualDeclarationDataPayload;
+}
+
+export interface ReportsTransactionRecord {
+  transaction_id: number;
+  branch_name: string;
+  cashier_name: string;
+  payment_method: string;
+  reference_number?: string | null;
+  transaction_type: string;
+  regulated_classification: string | null;
+  patient_name: string | null;
+  sub_total: number;
+  discount: number;
+  total_amount: number;
+  used_amount: number;
+  change: number;
+  created_at: string;
 }

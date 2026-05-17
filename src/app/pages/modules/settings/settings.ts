@@ -7,6 +7,9 @@ import { UserService } from '../../../../services/services';
 import { BranchData } from '../../../../models/BranchModel';
 import { Extras } from '../../../../extras/extras';
 import { UserData } from '../../../../models/UserModel';
+import { AppAddressField } from '../../../shared/ui/address-field/address-field';
+import { BRANCH_THEMES, DEFAULT_BRANCH_THEME_KEY, normalizeBranchThemeKey } from '../../../theme/branch-theme';
+import { BranchThemeService } from '../../../theme/branch-theme.service';
 
 type SettingsTab = 'general' | 'branch' | 'notif' | 'security';
 
@@ -23,12 +26,14 @@ interface SettingsPayload {
     company_name: string;
     company_email: string;
     tin_number: string;
+    theme_key: string;
   };
   access: {
     role: string;
     status: string;
     permission_count: number;
     permissions: string[];
+    can_manage_all_settings: boolean;
   };
   notifications: {
     notify_transactions: boolean;
@@ -55,7 +60,7 @@ interface SettingsPayload {
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, FormsModule, IonIcon],
+  imports: [CommonModule, FormsModule, IonIcon, AppAddressField],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
 })
@@ -64,6 +69,8 @@ export class Settings implements OnInit {
   userData: UserData = { data: [] };
   branchData: BranchData = { data: [], selectedBranch: {} };
   extras = Extras;
+  branchThemes = BRANCH_THEMES;
+  readonly defaultThemeKey = DEFAULT_BRANCH_THEME_KEY;
 
   isEditBranch = signal(false);
   isSaveProfileEdit = signal(false);
@@ -82,6 +89,9 @@ export class Settings implements OnInit {
     new_password: '',
     new_password_confirmation: '',
   };
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   settingsData: SettingsPayload = {
     profile: {
@@ -96,12 +106,14 @@ export class Settings implements OnInit {
       company_name: '',
       company_email: '',
       tin_number: '',
+      theme_key: DEFAULT_BRANCH_THEME_KEY,
     },
     access: {
       role: '',
       status: '',
       permission_count: 0,
       permissions: [],
+      can_manage_all_settings: false,
     },
     notifications: {
       notify_transactions: true,
@@ -130,6 +142,7 @@ export class Settings implements OnInit {
     private encryptData: EncryptData,
     private userService: UserService,
     private cd: ChangeDetectorRef,
+    private branchThemeService: BranchThemeService,
   ) {}
 
   ngOnInit(): void {
@@ -190,6 +203,10 @@ export class Settings implements OnInit {
 
           await this.getBranch();
         }
+
+        if (!this.canAccessTab(this.setSelected)) {
+          this.setSelected = 'general';
+        }
       }
     } catch (e) {
       console.log(e);
@@ -200,7 +217,42 @@ export class Settings implements OnInit {
     }
   }
 
+  canManageAllSettings(): boolean {
+    if (this.settingsData.access.can_manage_all_settings) {
+      return true;
+    }
+
+    const permissions = Array.isArray(this.settingsData.access.permissions)
+      ? this.settingsData.access.permissions
+      : [];
+
+    return permissions.includes('settings');
+  }
+
+  canAccessTab(tab: SettingsTab): boolean {
+    if (tab === 'general' || tab === 'security') {
+      return true;
+    }
+
+    return this.canManageAllSettings();
+  }
+
+  selectTab(tab: SettingsTab) {
+    if (!this.canAccessTab(tab)) {
+      this.setSelected = 'general';
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      return;
+    }
+
+    this.setSelected = tab;
+  }
+
   async getBranch() {
+    if (!this.canManageAllSettings()) {
+      this.branchData.data = [];
+      return;
+    }
+
     try {
       const companyId = Number(this.settingsData.profile.company_id || this.userData.data?.company_id || 0);
       if (!companyId || !this.userData.token) {
@@ -210,7 +262,13 @@ export class Settings implements OnInit {
 
       const res = await this.userService.getUser(`branch/${companyId}`, '', this.userData.token);
       if (res.status === 200 && res.data?.success) {
-        this.branchData.data = res.data?.data?.branches ?? [];
+        const branches = Array.isArray(res.data?.data?.branches) ? res.data.data.branches : [];
+        const assignedBranchId = Number(this.settingsData.profile.branch_id || this.userData.data?.branch_id || 0);
+        this.branchData.data = [...branches].sort((a: any, b: any) => {
+          const aAssigned = Number(a?.branch_id ?? a?.branchId ?? 0) === assignedBranchId ? 1 : 0;
+          const bAssigned = Number(b?.branch_id ?? b?.branchId ?? 0) === assignedBranchId ? 1 : 0;
+          return bAssigned - aAssigned;
+        });
         this.cd.detectChanges();
       }
     } catch (e) {
@@ -220,6 +278,12 @@ export class Settings implements OnInit {
   }
 
   async updateCompany() {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      this.isSaveCompanyEdit.set(false);
+      return;
+    }
+
     const companyId = Number(this.settingsData.profile.company_id || this.userData.data?.company_id || 0);
     const payload = {
       company_name: this.settingsData.profile.company_name,
@@ -317,12 +381,59 @@ export class Settings implements OnInit {
   }
 
   async updateBranch() {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      this.isSaveBranchEdit.set(false);
+      return;
+    }
+
     const payload = { ...this.branchData.selectedBranch };
     try {
       const res = await this.userService.putUser(`branch/${this.branchData.selectedBranch.branch_id}`, payload, this.userData.token);
       if (res.status === 200 && res.data?.success) {
-        this.isSaveBranchEdit.set(false);
-        this.isEditBranch.set(false);
+          const updatedBranch = res.data?.data ?? payload;
+          const updatedBranchId = Number(updatedBranch.branch_id ?? this.branchData.selectedBranch.branch_id ?? 0);
+          const nextThemeKey = normalizeBranchThemeKey(updatedBranch.theme_key ?? this.branchData.selectedBranch.theme_key ?? DEFAULT_BRANCH_THEME_KEY);
+          const assignedBranchId = Number(this.settingsData.profile.branch_id || this.userData.data?.branch_id || 0);
+
+          if (updatedBranchId === assignedBranchId) {
+            this.settingsData.profile = {
+              ...this.settingsData.profile,
+              branch_name: updatedBranch.branch_name ?? this.settingsData.profile.branch_name,
+              theme_key: nextThemeKey,
+            };
+
+            this.userData.data = {
+              ...this.userData.data,
+              branch_name: updatedBranch.branch_name ?? this.userData.data?.branch_name,
+              theme_key: nextThemeKey,
+            };
+
+            const stored = this.encryptData.decryptData('user');
+            if (stored?.data) {
+              stored.data = {
+                ...stored.data,
+                branch_name: updatedBranch.branch_name ?? stored.data.branch_name,
+                theme_key: nextThemeKey,
+              };
+              this.encryptData.encryptAndStoreData('user', stored);
+            }
+          }
+
+          const storedBranch = this.encryptData.decryptData('branch');
+          const selectedBranchId = Number(storedBranch?.selectedBranch ?? assignedBranchId ?? 0);
+          if (updatedBranchId === selectedBranchId || (!selectedBranchId && updatedBranchId === assignedBranchId)) {
+            const branchPayload = {
+              selectedBranch: storedBranch?.selectedBranch ?? assignedBranchId,
+              selectedBranchName: updatedBranch.branch_name ?? storedBranch?.selectedBranchName ?? '',
+              selectedBranchThemeKey: nextThemeKey,
+            };
+            this.encryptData.encryptAndStoreData('branch', branchPayload);
+            this.branchThemeService.syncFromStoredState(this.encryptData.decryptData('user'), branchPayload);
+          }
+
+          this.isSaveBranchEdit.set(false);
+          this.isEditBranch.set(false);
         this.extras.showToast(res.data.message, 'success');
         await this.getBranch();
       } else {
@@ -337,6 +448,12 @@ export class Settings implements OnInit {
   }
 
   async createBranch() {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      this.isSaveBranchCreate.set(false);
+      return;
+    }
+
     if (!this.branchData.selectedBranch.branch_name) {
       this.extras.showToast('Branch name is required.', 'warning');
       this.isSaveBranchCreate.set(false);
@@ -355,6 +472,7 @@ export class Settings implements OnInit {
 
     this.branchData.selectedBranch.company_id = Number(this.settingsData.profile.company_id || this.userData.data?.company_id || 0);
     this.branchData.selectedBranch.status = 'active';
+    this.branchData.selectedBranch.theme_key = this.branchData.selectedBranch.theme_key || this.settingsData.profile.theme_key || DEFAULT_BRANCH_THEME_KEY;
 
     try {
       const res = await this.userService.postUser('branch', { ...this.branchData.selectedBranch }, this.userData.token);
@@ -376,6 +494,12 @@ export class Settings implements OnInit {
   }
 
   async deleteBranch() {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      this.isDeleteBranch.set(false);
+      return;
+    }
+
     try {
       const res = await this.userService.deleteUser(`branch/${this.branchData.selectedBranch.branch_id}`, '', this.userData.token);
       if (res.status === 200 && res.data?.success) {
@@ -394,6 +518,11 @@ export class Settings implements OnInit {
   }
 
   async saveNotifications() {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      return;
+    }
+
     this.isSavingNotifications = true;
 
     try {
@@ -470,10 +599,19 @@ export class Settings implements OnInit {
   }
 
   openBranchEditor(branch?: any) {
-    this.branchData.selectedBranch = branch ? { ...branch } : {
+    if (!this.canManageAllSettings()) {
+      this.extras.showToast('Only profile and security settings are available for this account.', 'warning');
+      return;
+    }
+
+    this.branchData.selectedBranch = branch ? {
+      ...branch,
+      theme_key: normalizeBranchThemeKey(branch.theme_key || branch.themeKey || this.settingsData.profile.theme_key || DEFAULT_BRANCH_THEME_KEY),
+    } : {
       branch_name: '',
       branch_address: '',
       branch_contact: '',
+      theme_key: normalizeBranchThemeKey(this.settingsData.profile.theme_key || DEFAULT_BRANCH_THEME_KEY),
       status: 'active',
     };
 
@@ -485,5 +623,14 @@ export class Settings implements OnInit {
 
     this.isCreateBranch.set(true);
     this.isEditBranch.set(false);
+  }
+
+  themeLabel(themeKey?: string | null): string {
+    return this.branchThemes.find((theme) => theme.key === themeKey)?.name ?? 'Emerald';
+  }
+
+  isAssignedBranch(branch: any): boolean {
+    const branchId = Number(branch?.branch_id ?? branch?.branchId ?? 0);
+    return branchId === Number(this.settingsData.profile.branch_id || this.userData.data?.branch_id || 0);
   }
 }

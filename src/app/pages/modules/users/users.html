@@ -1,3 +1,34 @@
+@if(isLoading && !hasLoaded){
+<main class="flex-1 overflow-auto p-4 sm:p-6">
+  <div class="app-skeleton-page">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div class="space-y-3">
+        <div class="app-skeleton h-8 w-56 rounded-2xl"></div>
+        <div class="app-skeleton h-4 w-full max-w-xl rounded-2xl"></div>
+      </div>
+      <div class="flex gap-2">
+        <div class="app-skeleton h-10 w-28 rounded-xl"></div>
+        <div class="app-skeleton h-10 w-36 rounded-xl"></div>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for(item of [1,2,3,4]; track item){
+      <div class="app-skeleton-card space-y-3">
+        <div class="app-skeleton h-4 w-24 rounded-xl"></div>
+        <div class="app-skeleton h-8 w-28 rounded-xl"></div>
+      </div>
+      }
+    </div>
+    <div class="app-skeleton-card space-y-4">
+      <div class="flex gap-3">
+        <div class="app-skeleton h-12 w-full rounded-xl"></div>
+        <div class="app-skeleton h-10 w-24 rounded-xl"></div>
+      </div>
+      <div class="app-skeleton h-80 w-full rounded-3xl"></div>
+    </div>
+  </div>
+</main>
+} @else {
 <main class="flex-1 overflow-auto p-4 sm:p-6">
   <div class="space-y-6">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -5,6 +36,9 @@
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Users &amp; Roles</h1>
         <p class="mt-1 text-sm text-muted-foreground sm:text-base">
           Manage user accounts, roles, and permissions across all branches.
+        </p>
+        <p class="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+          {{userVisibilityLabel()}}
         </p>
       </div>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -36,8 +70,8 @@
         <p class="text-sm font-medium text-muted-foreground">Administrators</p>
         <p class="text-3xl font-bold text-destructive">{{this.userData.userData?.stats.admin ? this.userData.userData?.stats.admin : 0}}</p>
       </div>
-      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-primary p-4 text-white shadow-sm">
-        <p class="text-sm font-medium">Branch Manager</p>
+      <div class="flex flex-col justify-center rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+        <p class="text-sm font-medium text-muted-foreground">Branch Manager</p>
         <p class="text-3xl font-bold">{{this.userData.userData?.stats.manager ? this.userData.userData?.stats.manager : 0}}</p>
       </div>
     </div>
@@ -45,9 +79,9 @@
     <div class="rounded-lg border border-gray-300 bg-white shadow-sm">
       <div class="flex flex-col gap-3 bg-muted/20 px-3 py-3 sm:px-4 lg:flex-row lg:items-center">
         <div
-          class="flex h-12 w-full items-center gap-x-2 rounded-md bg-gray-100 px-2 focus-within:outline-2 focus-within:outline-green-700 lg:max-w-xl">
+          class="app-search-shell flex h-12 w-full items-center gap-x-2 rounded-md border border-gray-300 bg-white px-3 lg:max-w-xl">
           <ion-icon name="search-outline" class="size-4"></ion-icon>
-          <input (input)="changeText($event)" class="h-full w-full bg-transparent outline-none"
+          <input (input)="changeText($event)" [value]="searchQuery" class="app-search-input h-full w-full bg-transparent outline-none"
             placeholder="Search by name, email, branch...">
         </div>
 
@@ -212,6 +246,7 @@
     </div>
   </div>
 </main>
+}
 
 @if(isExportUser()){
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-3 backdrop-blur-sm sm:p-4">
@@ -311,10 +346,14 @@
         <input [(ngModel)]="createUserForm.password_confirmation" type="password"
           class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
       </div>
-      <div class="flex flex-col gap-2 sm:col-span-2">
-        <label class="text-sm font-medium">Address</label>
-        <textarea [(ngModel)]="createUserForm.address" rows="4"
-          class="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-primary"></textarea>
+      <div class="sm:col-span-2">
+        <app-address-field
+          [(value)]="createUserForm.address"
+          fieldId="users-create-address"
+          label="Home Address"
+          [required]="true"
+          description="Create a structured address that will be saved as one formatted value.">
+        </app-address-field>
       </div>
 
       <div class="flex flex-col gap-2 sm:col-span-2">
@@ -489,7 +528,7 @@
 
       <div class="pr-8">
         <h2 class="text-lg font-bold sm:text-xl">Update User Details</h2>
-        <p class="text-sm text-gray-500 sm:text-base">Only address, first name, last name, and email can be updated.</p>
+        <p class="text-sm text-gray-500 sm:text-base">Update the user details and save the address in the same standard format used across the app.</p>
       </div>
     </div>
 
@@ -510,9 +549,23 @@
           class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
       </div>
       <div class="flex flex-col gap-2 sm:col-span-2">
-        <label class="text-sm font-medium">Address</label>
-        <textarea [(ngModel)]="editUserForm.address" rows="4"
-          class="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-primary"></textarea>
+        <label class="text-sm font-medium">Role</label>
+        <select [(ngModel)]="editUserForm.role"
+          class="h-10 rounded-lg border border-gray-300 px-3 outline-none focus:border-primary">
+          <option value="staff">Pharmacy Staff</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="owner">Owner</option>
+          <option value="branch_manager">Branch Manager</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <app-address-field
+          [(value)]="editUserForm.address"
+          fieldId="users-edit-address"
+          label="Home Address"
+          description="If the previous address was unstructured, update it here to save a cleaner formatted version.">
+        </app-address-field>
       </div>
     </div>
 

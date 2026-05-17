@@ -1,3 +1,23 @@
+@if(isLoading && !hasLoaded){
+<main class="z-0 flex-1 overflow-auto p-4 sm:p-6">
+  <div class="app-skeleton-page">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div class="space-y-3">
+        <div class="app-skeleton h-8 w-64 rounded-2xl"></div>
+        <div class="app-skeleton h-4 w-full max-w-xl rounded-2xl"></div>
+      </div>
+      <div class="app-skeleton h-10 w-32 rounded-xl"></div>
+    </div>
+    <div class="app-skeleton-card space-y-4">
+      <div class="flex gap-3">
+        <div class="app-skeleton h-12 w-full rounded-xl"></div>
+        <div class="app-skeleton h-10 w-24 rounded-xl"></div>
+      </div>
+      <div class="app-skeleton h-80 w-full rounded-3xl"></div>
+    </div>
+  </div>
+</main>
+} @else {
 <main class="z-0 flex-1 overflow-auto p-4 sm:p-6">
   <div class="space-y-6">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -59,9 +79,9 @@
 
     <div class="rounded-lg border border-gray-300 bg-white shadow-sm">
       <div class="flex flex-col gap-3 bg-muted/20 px-3 py-3 sm:px-4 lg:flex-row lg:items-center">
-        <div class="flex h-12 w-full items-center gap-x-2 rounded-md bg-gray-100 px-3 focus-within:outline-2 focus-within:outline-green-700 lg:max-w-xl">
+        <div class="app-search-shell flex h-12 w-full items-center gap-x-2 rounded-md border border-gray-300 bg-white px-3 lg:max-w-xl">
           <ion-icon name="search-outline" class="size-4"></ion-icon>
-          <input (input)="changeText($event)" class="h-full w-full bg-transparent outline-none"
+          <input (input)="changeText($event)" [value]="searchQuery" class="app-search-input h-full w-full bg-transparent outline-none"
             placeholder="Search by ID, generic, or brand name...">
         </div>
         <div class="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center lg:ml-auto">
@@ -81,51 +101,78 @@
 
       <div class="hidden overflow-x-auto md:block">
         <div
-          class="grid h-10 w-full grid-cols-6 items-center justify-center border-y border-gray-300 bg-gray-100 p-2 text-center text-xs font-bold">
-          <div class="flex h-full w-full items-center justify-start gap-x-1 px-4 leading-none">
+          class="grid h-10 w-full grid-cols-7 items-center justify-center border-y border-gray-300 bg-gray-100 p-2 text-center text-xs font-bold">
+          <div class="flex h-full w-full items-center justify-center gap-x-1 px-4 leading-none">
             <span>PRODUCT DETAILS</span>
-            <span class="flex flex-col gap-y-0 text-[9px] leading-none">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=medicine_name')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-medicine_name')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_name')"
+                (click)="filter(getSortValue('medicine_name'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('medicine_name', true)"
+                (click)="filter(getSortValue('medicine_name', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex h-full w-full items-center justify-start gap-x-1 px-4">
+          <div class="flex h-full w-full items-center justify-center gap-x-1 px-4">
             <span>BATCH NUMBER</span>
-            <span class="flex h-full flex-col gap-y-0 text-[9px] leading-none">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=batch_id')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-batch_id')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('batch_id')"
+                (click)="filter(getSortValue('batch_id'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('batch_id', true)"
+                (click)="filter(getSortValue('batch_id', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex h-full w-full items-center justify-start px-4 leading-none">
+          <div class="flex h-full w-full items-center justify-center px-4 leading-none">
             <p>LOCATION</p>
           </div>
 
-          <div class="flex h-full w-full items-center justify-end gap-x-1 px-4">
+          <div class="flex h-full w-full items-center justify-center gap-x-1 px-4">
             <span>TOTAL STOCKS</span>
-            <span class="flex h-full flex-col gap-y-0 text-[9px] leading-none">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=stocks')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-stocks')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('stocks')"
+                (click)="filter(getSortValue('stocks'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('stocks', true)"
+                (click)="filter(getSortValue('stocks', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex h-full w-full items-center justify-end gap-x-1 px-4">
+          <div class="flex h-full w-full items-center justify-center gap-x-1 px-4">
             <span>EXPIRY DATE</span>
-            <span class="flex h-full flex-col gap-y-0 text-[9px] leading-none">
-              <ion-icon name="caret-up-outline" (click)="filter('sort=expiry_date')"></ion-icon>
-              <ion-icon name="caret-down-outline" (click)="filter('sort=-expiry_date')"></ion-icon>
+            <span class="table-sort-stack">
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('expiry_date')"
+                (click)="filter(getSortValue('expiry_date'))">
+                <ion-icon name="caret-up-outline"></ion-icon>
+              </button>
+              <button type="button" class="table-sort-button" [class.is-active]="isSortActive('expiry_date', true)"
+                (click)="filter(getSortValue('expiry_date', true))">
+                <ion-icon name="caret-down-outline"></ion-icon>
+              </button>
             </span>
           </div>
 
-          <div class="flex h-full w-full items-center justify-end px-4">
+          <div class="flex h-full w-full items-center justify-center px-4">
             <p>FEFO STATUS</p>
+          </div>
+          <div class="flex h-full w-full items-center justify-center px-4">
+            <p>ACTIONS</p>
           </div>
         </div>
 
         <div *ngFor="let item of getRows(); let i = index" [ngClass]="i === 9 ? 'rounded-b-md' : 'rounded-none'"
-          class="grid w-full grid-cols-6 items-center justify-center border-b border-gray-300 px-2 py-4 text-center text-xs font-semibold hover:bg-gray-50">
-          <div class="flex h-full flex-col items-start justify-center px-4 text-left">
+          class="grid w-full grid-cols-7 items-center justify-center border-b border-gray-300 px-2 py-4 text-center text-xs font-semibold hover:bg-gray-50">
+          <div class="flex h-full flex-col items-center justify-center px-4 text-center">
             <p>{{ item?.medicine_name || '' }}</p>
             <span class="text-xs font-thin">
               <span *ngIf="item?.type">(</span>
@@ -143,28 +190,28 @@
             </span>
           </div>
 
-          <div class="flex h-full flex-col items-start justify-center px-4">
+          <div class="flex h-full flex-col items-center justify-center px-4 text-center">
             <p *ngIf="item?.batch_id">B- {{ item?.batch_id }}</p>
             <p class="font-light" *ngIf="item?.mfg_date">
               Mfg: {{ extras.formatDate(item.mfg_date) }}
             </p>
           </div>
 
-          <div class="flex h-full flex-col items-start justify-center px-4">
+          <div class="flex h-full flex-col items-center justify-center px-4 text-center">
             <p>{{ item?.location || '' }}</p>
           </div>
 
-          <div class="flex h-full flex-col items-end justify-center px-4">
+          <div class="flex h-full flex-col items-center justify-center px-4 text-center">
             <p>{{ item?.stocks >= 0 ? item?.stocks : ''}}</p>
           </div>
 
-          <div class="flex h-full flex-col items-end justify-center px-4">
+          <div class="flex h-full flex-col items-center justify-center px-4 text-center">
             <p *ngIf="item?.expiry_date">
               {{ extras.formatDate(item.expiry_date) }}
             </p>
           </div>
 
-          <div class="flex h-10 w-full flex-col items-end justify-center px-4">
+          <div class="flex h-10 w-full flex-col items-center justify-center px-4 text-center">
             <div *ngIf="item">
               @if(extras.computeDaysUntilExpiration(item?.expiry_date)<= 30 &&
                 extras.computeDaysUntilExpiration(item?.expiry_date)>= 1){
@@ -186,6 +233,18 @@
                   </div>
                   }
             </div>
+          </div>
+          <div class="flex flex-col items-center justify-center gap-2 px-4">
+            <button *ngIf="item" type="button" (click)="openLocationModal(item)"
+              class="fefo-action fefo-action-neutral">
+              <ion-icon name="location-outline"></ion-icon>
+              <span>Update Location</span>
+            </button>
+            <button *ngIf="item && extras.computeDaysUntilExpiration(item?.expiry_date) <= 0" type="button" (click)="openPullOutModal(item)"
+              class="fefo-action fefo-action-danger">
+              <ion-icon name="remove-circle-outline"></ion-icon>
+              <span>Pull-out</span>
+            </button>
           </div>
         </div>
       </div>
@@ -266,6 +325,18 @@
                     }
               </p>
             </div>
+            <div class="col-span-2 flex flex-wrap gap-2 pt-1">
+              <button type="button" (click)="openLocationModal(item)"
+                class="fefo-action fefo-action-neutral fefo-action-mobile">
+                <ion-icon name="location-outline"></ion-icon>
+                <span>Update Location</span>
+              </button>
+              <button *ngIf="extras.computeDaysUntilExpiration(item?.expiry_date) <= 0" type="button" (click)="openPullOutModal(item)"
+                class="fefo-action fefo-action-danger fefo-action-mobile">
+                <ion-icon name="remove-circle-outline"></ion-icon>
+                <span>Pull-out Expired</span>
+              </button>
+            </div>
           </div>
           }@else{
           <div class="h-28 rounded-lg border border-dashed border-gray-200 bg-white/70"></div>
@@ -276,6 +347,7 @@
     </div>
   </div>
 </main>
+}
 
 @if (isExportModalOpen()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-3 sm:p-4">
@@ -322,6 +394,51 @@
     <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
       <button class="rounded-lg bg-gray-200 px-4 py-2" (click)="closeExportModal()">Cancel</button>
       <button class="rounded-lg bg-primary px-4 py-2 text-white" (click)="exportCsv()">Generate CSV</button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isLocationModalOpen()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+  <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div class="border-b border-gray-200 px-5 py-4">
+      <h3 class="text-lg font-bold">Update Batch Location</h3>
+      <p class="text-sm text-gray-500">Set the latest storage location for this batch.</p>
+    </div>
+    <div class="space-y-4 px-5 py-4">
+      <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm">
+        <p class="font-semibold">{{selectedBatch?.medicine_name || 'Selected batch'}}</p>
+        <p class="text-gray-500">{{selectedBatch?.batch_id ? 'B- ' + selectedBatch?.batch_id : ''}}</p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium">Location</label>
+        <input [(ngModel)]="locationForm.location" type="text" class="input w-full" placeholder="Shelf, cabinet, rack..." />
+      </div>
+    </div>
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+      <button type="button" (click)="closeLocationModal()" class="rounded-lg bg-gray-200 px-4 py-2">Cancel</button>
+      <button type="button" (click)="submitLocationUpdate()" class="rounded-lg bg-primary px-4 py-2 text-white">Save Location</button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isPullOutModalOpen()){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+  <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+    <div class="border-b border-gray-200 px-5 py-4">
+      <h3 class="text-lg font-bold">Pull-out Expired Batch</h3>
+      <p class="text-sm text-gray-500">This will remove the expired batch from active FEFO inventory.</p>
+    </div>
+    <div class="space-y-3 px-5 py-4 text-sm text-gray-700">
+      <p><strong>Medicine:</strong> {{selectedBatch?.medicine_name}}</p>
+      <p><strong>Batch:</strong> {{selectedBatch?.batch_id ? 'B- ' + selectedBatch?.batch_id : '-'}}</p>
+      <p><strong>Expiry:</strong> {{selectedBatch?.expiry_date ? extras.formatDate(selectedBatch?.expiry_date) : '-'}}</p>
+    </div>
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end">
+      <button type="button" (click)="closePullOutModal()" class="rounded-lg bg-gray-200 px-4 py-2">Cancel</button>
+      <button type="button" (click)="confirmPullOut()" class="rounded-lg bg-red-600 px-4 py-2 text-white">Confirm Pull-out</button>
     </div>
   </div>
 </div>

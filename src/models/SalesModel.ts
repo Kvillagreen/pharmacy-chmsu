@@ -8,17 +8,44 @@ export interface SalesModel {
   user_id?: number;
   branch_id?: number;
   payment_method?: string;
+  reference_number?: string;
   used_amount?: number;
   change?: number;
   request_token:string;
   transaction_type?: string;
-  hmo_provider?: string;
   patient_name?: string;
   membership_id?: string;
-  coverage_type?: string;
   documents_submitted?: boolean;
   prescription_path?: string;
   member_id_image_path?: string;
+  patient_age?: number | null;
+  prescriber_name?: string;
+  prescriber_prc_license_number?: string;
+  prescribed_generic_name?: string;
+  prescribed_brand_name?: string;
+  prescribed_dosage_strength?: string;
+  prescribed_dosage_form?: string;
+  prescribed_quantity_dispensed?: number | null;
+  dispensing_date?: string;
+  pharmacist_signature?: string;
+  customer_contact_number?: string;
+  customer_id_number?: string;
+  customer_address_line?: string;
+  customer_barangay?: string;
+  customer_city_municipality?: string;
+  customer_province?: string;
+  customer_postal_code?: string;
+  customer_country?: string;
+  prescriber_clinic_address?: string;
+  prescriber_s2_license_number?: string;
+  prescriber_ptr_number?: string;
+  yellow_prescription_serial_number?: string;
+  dangerous_quantity_in_words?: string;
+  dangerous_quantity_in_figures?: string;
+  dangerous_total_dosage?: string;
+  dangerous_treatment_duration?: string;
+  receiver_name?: string;
+  receiver_signature?: string;
 }
 
 export interface SalesData {

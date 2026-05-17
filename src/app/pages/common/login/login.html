@@ -1,100 +1,524 @@
-<div class="min-h-screen bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
-  <div
-    class="mx-auto grid min-h-[calc(100vh-3rem)] max-w-5xl overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)] lg:grid-cols-[0.95fr_1.05fr]">
-    <section
-      class="flex flex-col justify-between bg-[linear-gradient(180deg,#f8fafc_0%,#f0fdf4_100%)] px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-      <div>
-
-        <h1 class="mt-6 max-w-md text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
-          Simple access for your daily pharmacy workflow.
-        </h1>
-        <p class="mt-4 max-w-lg text-sm leading-7 text-slate-600 sm:text-base">
-          Manage branch activity, sales, and inventory from a cleaner interface that works comfortably on desktop and mobile.
-        </p>
+<div class="min-h-screen bg-[radial-gradient(circle_at_top_left,#fefce8_0%,#f8fafc_30%,#eff6ff_100%)] text-slate-900">
+  <header class="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <img src="pharmacy-mark.svg" alt="Pharmacy Web logo" class="h-11 w-11 rounded-2xl bg-emerald-50 p-2 shadow-sm">
+        <div>
+          <p class="text-lg font-bold tracking-tight text-slate-950">Pharmacy Web</p>
+          <p class="text-xs uppercase tracking-[0.22em] text-slate-500">Medicine Catalog</p>
+        </div>
       </div>
 
-      <div class="mt-10 space-y-3 lg:mt-16">
-        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Focused</p>
-          <p class="mt-2 text-sm text-slate-700">Minimal screens that keep the important actions easy to reach.</p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Responsive</p>
-          <p class="mt-2 text-sm text-slate-700">A layout that stays calm and readable on smaller devices.</p>
-        </div>
+      <button
+        type="button"
+        (click)="openAuthModal('login')"
+        class="inline-flex h-11 items-center justify-center rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Login
+      </button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+    <section class="mb-8 overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_55%,#eff6ff_100%)] px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:px-8 lg:px-10">
+      <div class="max-w-3xl">
+        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">Pharmacy Catalog</p>
+        <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
+          Check available medicines and branch stock in one place.
+        </h1>
+        <p class="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+          Search products, compare branch availability, and review stock levels.
+        </p>
       </div>
     </section>
 
-    <section class="flex items-center justify-center bg-white px-4 py-8 sm:px-8 lg:px-10">
-      <form (submit)="login()" class="w-full max-w-md space-y-6">
+    <section class="rounded-[2rem] border border-white/70 bg-white/85 shadow-[0_20px_60px_rgba(15,23,42,0.10)]">
+      <div class="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Login</p>
-          <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900">Welcome back</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-500">
-            Sign in with your account details to continue.
-          </p>
+          <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Medicine Directory</p>
+          <h2 class="mt-2 text-2xl font-bold text-slate-950">Find medicines by name, branch, and stock level</h2>
         </div>
+        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+          <span>Page {{catalogData.meta.current_page}} of {{catalogData.meta.last_page}}</span>
+          <span>-</span>
+          <span>{{catalogData.meta.total}} total records</span>
+        </div>
+      </div>
 
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-slate-700">Email</label>
-            <input type="email" [(ngModel)]="user.email" name="email" required
-              class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
+      <div class="grid gap-3 border-b border-slate-200 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4 lg:px-6">
+        <label class="flex flex-col gap-2 text-sm text-slate-600 lg:col-span-2">
+          <span class="font-medium text-slate-800">Search</span>
+          <div class="app-search-shell flex h-12 items-center rounded-2xl border border-slate-300 bg-white px-3">
+            <ion-icon name="search-outline" class="text-slate-400"></ion-icon>
+            <input
+              (input)="onCatalogSearch($event)"
+              [value]="catalogFilters.search"
+              type="text"
+              class="app-search-input h-full w-full bg-transparent px-3 text-sm text-slate-800 outline-none"
+              placeholder="Medicine, generic name, branch, category..." />
           </div>
+        </label>
 
-          <div class="space-y-2">
-            <div class="flex items-center justify-between gap-3">
-              <label class="text-sm font-medium text-slate-700">Password</label>
-              <a href="#" class="text-xs font-semibold text-emerald-700 transition hover:text-emerald-800">
-                Forgot password?
-              </a>
-            </div>
-            <div
-              class="flex h-12 items-center rounded-2xl border border-slate-200 bg-slate-50 px-1 transition focus-within:border-emerald-500 focus-within:bg-white">
-              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="user.password" name="password" required
-                class="h-full w-full bg-transparent px-3 text-sm text-slate-800 outline-none" />
+        <div class="flex items-end lg:col-span-2">
+          <button
+            type="button"
+            (click)="openCatalogFilterModal()"
+            class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+            <ion-icon name="options-outline"></ion-icon>
+            Filters
+          </button>
+        </div>
+      </div>
 
-              <button type="button" (click)="showPassword = !showPassword"
-                class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg text-emerald-700 transition hover:bg-emerald-50">
-                @if(showPassword){
-                <ion-icon name="eye-outline"></ion-icon>
-                }@else{
-                <ion-icon name="eye-off-outline"></ion-icon>
+      <div class="p-5 sm:p-6">
+        <div class="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+          @for(item of catalogData.data; track item.inventory_id){
+          <article class="catalog-card flex h-full min-h-[24rem] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+            <div class="flex flex-1 flex-col p-5">
+              <div class="flex flex-nowrap items-center gap-2 overflow-hidden">
+                @if(item.needs_protection){
+                <span class="whitespace-nowrap rounded-full border border-sky-100 bg-sky-50/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">Prescription</span>
                 }
-              </button>
+                @if(item.is_dangerous){
+                <span class="whitespace-nowrap rounded-full border border-rose-100 bg-rose-50/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700">Dangerous</span>
+                }
+                <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide" [ngClass]="stockTone(item)">
+                  {{stockLabel(item)}}
+                </span>
+              </div>
+
+              <div class="mt-4 flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <div class="min-h-[4.5rem]">
+                    <h3 class="text-lg font-semibold leading-6 text-slate-900">{{extras.toTitleCaseSafe(item.medicine_name)}}</h3>
+                    <p class="mt-1 text-sm text-slate-500">{{extras.toTitleCaseSafe(item.generic_name) || 'Generic name not available'}}</p>
+                  </div>
+                </div>
+                <div class="shrink-0 text-right text-slate-800">
+                  <p class="text-[11px] uppercase tracking-[0.16em] text-slate-400">Price</p>
+                  <p class="mt-1 text-sm font-semibold leading-6">Php {{extras.formatCurrency(item.price)}}</p>
+                </div>
+              </div>
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="catalog-card-meta rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Format</p>
+                  <p class="mt-2 text-sm font-semibold text-slate-800">{{extras.toTitleCaseSafe(item.type)}} - {{item.dosage}} {{item.unit}}</p>
+                </div>
+                <div class="catalog-card-meta rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Stocks</p>
+                  <p class="mt-2 text-sm font-semibold text-slate-800">{{item.stocks}} available</p>
+                  <p class="mt-1 text-xs text-slate-500">Minimum level: {{item.reorder_level}}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="flex items-center justify-between gap-3 text-sm text-slate-600">
-          <label class="flex items-center gap-2">
-            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe"
-              class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-            <span>Remember me</span>
-          </label>
-          <span class="text-xs text-slate-400">Secure sign in</span>
-        </div>
-
-        <button type="submit"
-          class="h-12 w-full rounded-2xl bg-emerald-600 text-sm font-semibold text-white transition hover:bg-emerald-700">
-          Login
-        </button>
-
-        <div class="min-h-5 text-center text-sm font-semibold">
-          @if(extras.errorMessage){
-          <div class="text-red-500">{{extras.errorMessage}}</div>
-          }@if(extras.successMessage) {
-          <div class="text-emerald-600">{{extras.successMessage}}</div>
+            <div class="catalog-card-branch border-t border-slate-100 bg-white/85 px-5 py-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Branch</p>
+              <p class="mt-2 text-sm font-semibold text-slate-800">{{extras.toTitleCaseSafe(item.branch_name)}}</p>
+              <p class="mt-1 text-sm text-slate-500">{{extras.toTitleCaseSafe(item.branch_address || 'Address not available')}}</p>
+              <p class="mt-2 text-xs text-slate-400">{{item.branch_contact || 'Contact not available'}}</p>
+              <button
+                type="button"
+                (click)="copyCatalogMessageTemplate(item)"
+                class="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                <ion-icon name="copy-outline"></ion-icon>
+                Copy Message Template
+              </button>
+              <div class="mt-3 rounded-2xl border border-emerald-100 bg-[linear-gradient(135deg,#ecfdf5_0%,#f8fafc_100%)] px-3.5 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">SMS Ordering Contact</p>
+                <div class="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                  <ion-icon name="chatbubble-ellipses-outline" class="text-emerald-600"></ion-icon>
+                  <span>+63 956 246 3904</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Use this number when sending the medicine order template.</p>
+              </div>
+            </div>
+          </article>
           }
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm text-slate-600">
-          Don't have an account?
-          <a (click)="router.navigate(['/register'])" class="ml-1 font-semibold text-emerald-700 hover:text-emerald-800">
-            Create one
-          </a>
+        @if(!catalogData.data.length){
+        <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+          <p class="text-lg font-semibold text-slate-900">No medicines matched your filters.</p>
+          <p class="mt-2 text-sm text-slate-500">Try another branch, stock filter, or search keyword.</p>
         </div>
-      </form>
+        }
+      </div>
+
+      <div class="flex flex-col gap-3 border-t border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p class="text-sm text-slate-500">Browse current medicine availability before logging in to continue with staff tools.</p>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="prevCatalogPage()"
+            [disabled]="catalogData.meta.current_page <= 1"
+            class="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+            Previous
+          </button>
+          <button
+            type="button"
+            (click)="nextCatalogPage()"
+            [disabled]="catalogData.meta.current_page >= catalogData.meta.last_page"
+            class="inline-flex h-10 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+@if(authModalOpen){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+  <div class="flex max-h-[min(90vh,760px)] w-full max-w-xl flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.22)]">
+    <section class="flex min-h-0 flex-col">
+      <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-6 sm:px-8">
+        <div class="flex items-start gap-4">
+          <img src="pharmacy-mark.svg" alt="Pharmacy Web logo" class="h-14 w-14 rounded-2xl bg-emerald-50 p-2.5 shadow-sm">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Account Access</p>
+            <h2 class="mt-2 text-2xl font-bold text-slate-950">Pharmacy Web</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              {{authMode === 'login'
+                ? 'Sign in with your approved account to continue.'
+                : 'Fill in your details and submit your registration request.'}}
+            </p>
+          </div>
+        </div>
+        <button type="button" (click)="closeAuthModal()" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 transition hover:bg-white hover:text-slate-700">
+          <ion-icon name="close-outline" class="text-xl"></ion-icon>
+        </button>
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:px-8">
+        <div class="inline-flex w-full rounded-2xl bg-slate-100 p-1.5">
+          <button
+            type="button"
+            (click)="switchAuthMode('login')"
+            [ngClass]="authMode === 'login' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'"
+            class="flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-semibold transition">
+            Login
+          </button>
+          <button
+            type="button"
+            (click)="switchAuthMode('register')"
+            [ngClass]="authMode === 'register' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'"
+            class="flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-semibold transition">
+            Register
+          </button>
+        </div>
+
+        <div class="mt-6">
+          @if(authMode === 'login'){
+          <form (submit)="login()" class="space-y-6">
+            <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+              <div class="space-y-5">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-700">Email address</label>
+                  <input type="email" [(ngModel)]="user.email" name="email" required
+                    class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-3">
+                    <label class="text-sm font-medium text-slate-700">Password</label>
+                    <button type="button" (click)="openForgotPasswordModal()" class="text-xs font-semibold text-emerald-700 transition hover:text-emerald-800">
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div class="flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-1 transition focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-100">
+                    <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="user.password" name="password" required
+                      class="h-full w-full bg-transparent px-3 text-sm text-slate-800 outline-none" />
+                    <button type="button" (click)="showPassword = !showPassword"
+                      class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg text-emerald-700 transition hover:bg-emerald-50">
+                      @if(showPassword){
+                      <ion-icon name="eye-outline"></ion-icon>
+                      }@else{
+                      <ion-icon name="eye-off-outline"></ion-icon>
+                      }
+                    </button>
+                  </div>
+                </div>
+
+                <label class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                  <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="h-4 w-4 rounded border-slate-300">
+                  <span>Keep me signed in on this device</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="h-12 w-full rounded-2xl bg-emerald-600 text-sm font-semibold text-white transition hover:bg-emerald-700">
+              Sign In
+            </button>
+          </form>
+          } @else {
+          <form (submit)="register()" class="space-y-6">
+            <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+              <div class="grid gap-5">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">First name</label>
+                    <input type="text" [(ngModel)]="registerUser.firstName" name="registerFirstName" required
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Last name</label>
+                    <input type="text" [(ngModel)]="registerUser.lastName" name="registerLastName" required
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                  </div>
+                </div>
+
+                <app-address-field
+                  [(value)]="registerUser.address"
+                  fieldId="landing-register-address"
+                  label="Home Address"
+                  [required]="true"
+                  description="Select the country and build a complete formatted address for the account request.">
+                </app-address-field>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Branch</label>
+                    <select [(ngModel)]="registerUser.branchId" name="registerBranch"
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                      <option value="" disabled>Select branch</option>
+                      @for(branch of branchList; track branch.branchId){
+                      <option [value]="branch.branchId">{{branch.branchName}}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Role</label>
+                    <select [(ngModel)]="registerUser.role" name="registerRole"
+                      class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                      @for(role of roleOptions; track role.value){
+                      <option [value]="role.value">{{role.label}}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+              <div class="grid gap-5">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-700">Email address</label>
+                  <input type="email" [(ngModel)]="registerUser.email" name="registerEmail" required
+                    class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Password</label>
+                    <div class="flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-1 transition focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-100">
+                      <input [type]="showRegisterPassword ? 'text' : 'password'" [(ngModel)]="registerUser.password" name="registerPassword" required
+                        class="h-full w-full bg-transparent px-3 text-sm text-slate-800 outline-none" />
+                      <button type="button" (click)="showRegisterPassword = !showRegisterPassword"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg text-emerald-700 transition hover:bg-emerald-50">
+                        @if(showRegisterPassword){
+                        <ion-icon name="eye-outline"></ion-icon>
+                        }@else{
+                        <ion-icon name="eye-off-outline"></ion-icon>
+                        }
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-slate-700">Confirm password</label>
+                    <div class="flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-1 transition focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-100">
+                      <input [type]="showRegisterConfirmPassword ? 'text' : 'password'" [(ngModel)]="registerUser.confirmpassword" name="registerConfirmPassword" required
+                        class="h-full w-full bg-transparent px-3 text-sm text-slate-800 outline-none" />
+                      <button type="button" (click)="showRegisterConfirmPassword = !showRegisterConfirmPassword"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-lg text-emerald-700 transition hover:bg-emerald-50">
+                        @if(showRegisterConfirmPassword){
+                        <ion-icon name="eye-outline"></ion-icon>
+                        }@else{
+                        <ion-icon name="eye-off-outline"></ion-icon>
+                        }
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="h-12 w-full rounded-2xl bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Create Account
+            </button>
+          </form>
+          }
+
+          <div class="mt-5 min-h-5 text-center text-sm font-semibold">
+            @if(extras.errorMessage){
+            <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-600">{{extras.errorMessage}}</div>
+            } @if(extras.successMessage) {
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-emerald-700">{{extras.successMessage}}</div>
+            }
+          </div>
+
+          <div class="mt-5 border-t border-slate-200 pt-5 text-center text-sm text-slate-500">
+            @if(authMode === 'login'){
+            Need an account?
+            <button type="button" (click)="switchAuthMode('register')" class="ml-1 font-semibold text-emerald-700 hover:text-emerald-800">
+              Register here
+            </button>
+            } @else {
+            Already registered?
+            <button type="button" (click)="switchAuthMode('login')" class="ml-1 font-semibold text-emerald-700 hover:text-emerald-800">
+              Sign in
+            </button>
+            }
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </div>
+}
+
+@if(catalogFilterModalOpen){
+<div class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-sm">
+  <div class="w-full max-w-lg rounded-[2rem] border border-white/60 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Catalog Filters</p>
+        <h3 class="mt-2 text-xl font-bold text-slate-950">Refine medicine results</h3>
+        <p class="mt-2 text-sm text-slate-500">Choose a branch, stock view, and sorting option.</p>
+      </div>
+      <button type="button" (click)="closeCatalogFilterModal()" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-700">
+        <ion-icon name="close-outline" class="text-xl"></ion-icon>
+      </button>
+    </div>
+
+    <div class="grid gap-4 px-6 py-5">
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Branch</span>
+        <select
+          [(ngModel)]="catalogFilters.branch_id"
+          class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none">
+          <option value="0">All branches</option>
+          @for(branch of branchList; track branch.branchId){
+          <option [value]="branch.branchId">{{branch.branchName}}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Stocks</span>
+        <select
+          [(ngModel)]="catalogFilters.stock_filter"
+          class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none">
+          @for(option of stockFilters; track option.value){
+          <option [value]="option.value">{{option.label}}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-2 text-sm text-slate-600">
+        <span class="font-medium text-slate-800">Sort by</span>
+        <select
+          [(ngModel)]="catalogFilters.sort"
+          class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none">
+          @for(option of sortOptions; track option.value){
+          <option [value]="option.value">{{option.label}}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="flex flex-col-reverse gap-3 border-t border-slate-200 rounded-b-[2rem] bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+      <button type="button" (click)="closeCatalogFilterModal()" class="h-11 rounded-2xl bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+        Cancel
+      </button>
+      <button type="button" (click)="applyCatalogFilters()" class="h-11 rounded-2xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800">
+        Apply Filters
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isForgotPasswordOpen){
+<div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm">
+  <div class="w-full max-w-xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+    <div class="border-b border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#f0fdf4_100%)] px-6 py-6 sm:px-8">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Account Recovery</p>
+          <h3 class="mt-3 text-2xl font-bold text-slate-900">Reset your password</h3>
+          <p class="mt-2 max-w-lg text-sm leading-6 text-slate-600">
+            @if(forgotPasswordStep === 'request'){
+            Enter your account email and we'll send a 6-digit verification code.
+            }@else{
+            Enter the code from your email, then set a new secure password.
+            }
+          </p>
+        </div>
+        <button type="button" (click)="closeForgotPasswordModal()" class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 transition hover:bg-white hover:text-slate-700">
+          <ion-icon name="close-outline" class="text-xl"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-5 px-6 py-6 sm:px-8">
+      <div class="space-y-2">
+        <label class="text-sm font-medium text-slate-700">Email address</label>
+        <input type="email" [(ngModel)]="forgotPassword.email" name="forgotPasswordEmail"
+          class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
+      </div>
+
+      @if(forgotPasswordStep === 'reset'){
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-2 sm:col-span-2">
+          <div class="flex items-center justify-between gap-3">
+            <label class="text-sm font-medium text-slate-700">Verification code</label>
+            <button type="button" (click)="resendPasswordResetCode()" [disabled]="resendCountdown > 0"
+              class="text-xs font-semibold text-emerald-700 transition hover:text-emerald-800 disabled:text-slate-400">
+              @if(resendCountdown > 0){
+              Resend code in {{resendCountdown}}s
+              }@else{
+              Resend code
+              }
+            </button>
+          </div>
+          <input type="text" maxlength="6" [(ngModel)]="forgotPassword.code" name="forgotPasswordCode"
+            class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-center text-lg tracking-[0.35em] text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700">New password</label>
+          <input type="password" [(ngModel)]="forgotPassword.password" name="forgotPasswordNewPassword"
+            class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700">Confirm password</label>
+          <input type="password" [(ngModel)]="forgotPassword.password_confirmation" name="forgotPasswordConfirmPassword"
+            class="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white" />
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:justify-end sm:px-8">
+      <button type="button" (click)="closeForgotPasswordModal()"
+        class="h-11 rounded-2xl bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+        Cancel
+      </button>
+      @if(forgotPasswordStep === 'request'){
+      <button type="button" (click)="requestPasswordReset()"
+        class="h-11 rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Send reset code
+      </button>
+      }@else{
+      <button type="button" (click)="resetPassword()"
+        class="h-11 rounded-2xl bg-emerald-600 px-5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Update password
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}

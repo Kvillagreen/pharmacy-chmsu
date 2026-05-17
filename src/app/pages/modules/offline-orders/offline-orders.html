@@ -1,1 +1,621 @@
-<p>offline-orders works!</p>
+<section class="space-y-6 p-4 sm:p-6">
+  <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Offline Order Messages</h1>
+      <p class="mt-1 max-w-2xl text-sm text-slate-500 sm:text-base">
+        Review customer inquiries, inspect the full conversation, and open the composer only when you are ready to reply.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row">
+      <button type="button" (click)="openLogsModal()"
+        class="inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-gray-200 transition hover:bg-slate-50">
+        View Message Logs
+      </button>
+      <button type="button" (click)="getReplies()" [disabled]="isLoading()"
+        class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+        {{isLoading() ? 'Refreshing...' : 'Refresh Messages'}}
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Inbox</p>
+      <p class="mt-3 text-3xl font-bold text-slate-900">{{totalMessages}}</p>
+      <p class="mt-2 text-sm text-slate-500">Recent customer SMS replies loaded from FortMed.</p>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Customers</p>
+      <p class="mt-3 text-3xl font-bold text-emerald-700">{{uniqueCustomers}}</p>
+      <p class="mt-2 text-sm text-slate-500">Unique phone numbers currently visible in the inbox.</p>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reply Ready</p>
+      <p class="mt-3 text-3xl font-bold text-sky-700">{{readyToReplyCount}}</p>
+      <p class="mt-2 text-sm text-slate-500">Conversations ready for response.</p>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Latest Reply</p>
+      <p class="mt-3 text-lg font-bold text-slate-900">{{latestReplyLabel}}</p>
+      <p class="mt-2 text-sm text-slate-500">Most recent received customer message timestamp.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-stretch">
+    <div class="offline-order-panel flex min-h-[520px] flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+      <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Messages</h2>
+            <p class="text-sm text-slate-500">Select a customer to view the full conversation.</p>
+          </div>
+        </div>
+      </div>
+
+      @if(isLoading()){
+      <div class="px-6 py-12 text-center text-sm text-slate-500">
+        Loading offline order messages...
+      </div>
+      } @else if(!replyData.messages.length) {
+      <div class="px-6 py-12 text-center">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+          <ion-icon name="chatbubble-ellipses-outline" class="text-2xl"></ion-icon>
+        </div>
+        <h3 class="mt-4 text-lg font-semibold text-slate-900">No messages yet</h3>
+        <p class="mt-2 text-sm text-slate-500">
+          Customer SMS replies will appear here after they are received by the FortMed inbox.
+        </p>
+      </div>
+      } @else {
+      <div class="offline-order-scroll offline-order-message-list space-y-3 p-4 sm:p-5">
+        @for(message of replyData.messages; track message.id){
+        <article (click)="selectMessage(message)"
+          class="cursor-pointer rounded-2xl border p-4 transition"
+          [ngClass]="isSelectedMessage(message)
+            ? 'offline-order-selected-message shadow-sm'
+            : 'border-gray-200 bg-slate-50 hover:border-slate-300 hover:bg-white'">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="truncate text-sm font-semibold text-slate-900 sm:text-base">
+                  {{message.from_number || 'Unknown sender'}}
+                </h3>
+                <span class="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                  {{message.message_count || 1}} msg
+                </span>
+              </div>
+              @if(message.template_tag) {
+              <p class="mt-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                {{message.template_tag}}
+              </p>
+              }
+              <p class="mt-2 line-clamp-2 text-sm text-slate-600">
+                {{message.message_body || 'No message body received.'}}
+              </p>
+            </div>
+            <div class="shrink-0 text-right text-[11px] text-slate-400">
+              {{message.received_at ? extras.timeAgo(message.received_at) : 'No time'}}
+            </div>
+          </div>
+        </article>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="offline-order-panel flex min-h-[520px] flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+      <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Conversation</h2>
+            @if(selectedMessage()) {
+            <p class="text-sm text-slate-500">
+              {{selectedMessage()?.from_number || 'Unknown sender'}} • {{getConversationCountLabel()}}
+            </p>
+            } @else {
+            <p class="text-sm text-slate-500">Select a message thread to see the customer conversation.</p>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button type="button" (click)="deleteSelectedConversation()" [disabled]="!selectedMessage() || isDeletingConversation()"
+              class="inline-flex items-center justify-center rounded-xl bg-rose-100 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60">
+              {{isDeletingConversation() ? 'Deleting...' : 'Delete Conversation'}}
+            </button>
+            <button type="button" (click)="openComposerModal()" [disabled]="!selectedMessage()"
+              class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+              Message Composer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if(!selectedMessage()) {
+      <div class="flex flex-1 items-center justify-center px-6 py-14">
+        <div class="max-w-md text-center">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
+            <ion-icon name="mail-open-outline" class="text-3xl"></ion-icon>
+          </div>
+          <h3 class="mt-4 text-lg font-semibold text-slate-900">No conversation selected</h3>
+          <p class="mt-2 text-sm text-slate-500">
+            Choose a customer from the left panel to display the full inbound and outbound SMS history here.
+          </p>
+        </div>
+      </div>
+      } @else {
+      <div class="border-b border-gray-100 bg-slate-50/70 px-5 py-4 sm:px-6">
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-base font-semibold text-slate-900">{{selectedMessage()?.from_number || 'Unknown sender'}}</h3>
+              <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                Customer
+              </span>
+              @if(selectedMessage()?.template_tag) {
+              <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                {{selectedMessage()?.template_tag}}
+              </span>
+              }
+            </div>
+            <p class="mt-1 text-sm text-slate-500">Reply to {{selectedMessage()?.reply_to_number || selectedMessage()?.from_number || 'N/A'}}</p>
+            @if(selectedMessage()?.reference_number) {
+            <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Ref: {{selectedMessage()?.reference_number}}
+            </p>
+            }
+          </div>
+          <div class="text-sm text-slate-500">
+            {{selectedMessage()?.received_at ? extras.formatDateWithTime(selectedMessage()?.received_at) : 'Time unavailable'}}
+          </div>
+        </div>
+      </div>
+
+      <div #conversationScrollContainer (scroll)="onConversationScroll($event)"
+        class="offline-order-scroll offline-order-conversation flex-1 space-y-4 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] px-4 py-5 sm:px-6">
+        @if(hasMoreConversationHistory()) {
+        <div class="pb-2 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Scroll up to load older messages
+        </div>
+        }
+        @for(historyItem of getVisibleConversationTimeline(); track historyItem.id){
+          <div class="flex w-full" [ngClass]="historyItem.direction === 'outbound' ? 'justify-end' : 'justify-start'">
+            <article class="offline-order-bubble max-w-[92%] rounded-3xl border px-4 py-3 shadow-sm sm:max-w-[75%]"
+              [ngClass]="getConversationBubbleClass(historyItem.direction)">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide"
+              [ngClass]="getConversationMetaClass(historyItem.direction)">
+              <span>{{getDirectionLabel(historyItem.direction)}}</span>
+              @if(historyItem.template_tag) {
+              <span class="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                {{historyItem.template_tag}}
+              </span>
+              }
+            </div>
+            <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
+              {{historyItem.message_body || 'No message body available.'}}
+            </p>
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+              <div class="flex flex-wrap items-center gap-2">
+                <span>{{historyItem.received_at ? extras.formatDateWithTime(historyItem.received_at) : 'Time unavailable'}}</span>
+                @if(historyItem.reference_number) {
+                <span class="font-semibold uppercase tracking-wide">Ref: {{historyItem.reference_number}}</span>
+                }
+              </div>
+              <button type="button" (click)="deleteConversationMessage(historyItem)"
+                [disabled]="deletingConversationMessageId() === historyItem.id"
+                class="inline-flex items-center justify-center rounded-full bg-white/75 px-3 py-1.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60">
+                {{deletingConversationMessageId() === historyItem.id ? 'Deleting...' : 'Delete Message'}}
+              </button>
+            </div>
+          </article>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+</section>
+
+@if(isComposerModalOpen()) {
+<div class="offline-order-modal fixed inset-0 z-[1250] flex items-center justify-center bg-slate-950/60 p-3 sm:p-4" (click)="closeComposerModal()">
+  <div class="offline-order-modal-panel flex max-h-[95vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 sm:px-6">
+      <div class="min-w-0">
+        <h2 class="text-xl font-semibold text-slate-900">Message Composer</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          Reply to {{selectedMessage()?.from_number || composeModel.to_number || 'the customer'}} using the FortMed SMS channel.
+        </p>
+      </div>
+      <button type="button" (click)="closeComposerModal()"
+        class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    <div class="overflow-y-auto p-4 sm:p-6">
+      <div class="space-y-5">
+        <div class="rounded-2xl border border-gray-200 bg-slate-50 p-4 space-y-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Message Template</label>
+            <select [(ngModel)]="composeModel.template_name" (ngModelChange)="selectTemplate($event)"
+              class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-600">
+              <option value="">Select a template...</option>
+              @for(template of templateOptions; track template){
+              <option [value]="template" [disabled]="isTemplateDisabled(template)">
+                {{template}} {{isTemplateDisabled(template) ? '(Over 161 chars)' : ''}}
+              </option>
+              }
+            </select>
+          </div>
+
+          <div class="rounded-xl border p-3 text-sm"
+            [ngClass]="hasBranchName ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800'">
+            @if(hasBranchName) {
+            Branch detected: <span class="font-semibold">{{resolvedBranchName}}</span>
+            } @else {
+            Branch name is not available yet. The template will ask the customer which branch they are inquiring about.
+            }
+          </div>
+
+          @if(requiresPickupSchedule()) {
+          <div class="rounded-xl border border-sky-200 bg-sky-50 p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm font-semibold text-sky-900">Pickup Schedule</p>
+                <p class="mt-1 text-sm text-sky-800">{{getPickupScheduleText()}}</p>
+              </div>
+              <button type="button" (click)="openPickupScheduleModal()"
+                class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">
+                {{ pickupScheduleModel.pickup_date && pickupScheduleModel.pickup_time ? 'Edit Pickup Time' : 'Set Pickup Time' }}
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Sender Name</label>
+            <input [(ngModel)]="composeModel.sender_name" type="text"
+              class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+              placeholder="KMV Pharmacy">
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">From Number</label>
+            <div class="flex h-11 items-center rounded-xl border border-gray-200 bg-slate-100 px-3 text-sm font-medium text-slate-700">
+              {{fixedFromNumber}}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1 lg:col-span-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">To Number</label>
+            <input [(ngModel)]="composeModel.to_number" type="text"
+              class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+              placeholder="+639171234567">
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 space-y-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-col gap-1">
+              <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Offline Order Builder</h3>
+              <p class="text-sm text-slate-500">Turn this on only if you want the reply to create a sales transaction and deduct stock like the sales page.</p>
+            </div>
+            <button type="button" (click)="toggleOrderBuilder()"
+              class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition"
+              [ngClass]="orderBuilder.enabled
+                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'">
+              {{orderBuilder.enabled ? 'Enabled' : 'Disabled'}}
+            </button>
+          </div>
+
+          @if(orderBuilder.enabled) {
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Payment Method</label>
+              <select [(ngModel)]="orderBuilder.payment_method" (ngModelChange)="updateOrderBuilder()"
+                class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-600">
+                @for(method of paymentMethodOptions; track method){
+                <option [value]="method">{{method}}</option>
+                }
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount</label>
+              <input [(ngModel)]="orderBuilder.amount" (ngModelChange)="updateOrderBuilder()" type="number" min="0" step="0.01"
+                class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+                placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            @for(item of orderBuilder.items; track $index){
+            <div class="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-slate-50 p-3 xl:grid-cols-[minmax(0,1.7fr)_96px_120px_44px]">
+              <div class="space-y-2">
+                <select [(ngModel)]="item.medicine_id" (ngModelChange)="selectInventoryItem($index, $event)"
+                  class="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600">
+                  <option value="">Select medicine...</option>
+                  @for(medicine of medicineOptions; track medicine.medicine_id){
+                  <option [value]="medicine.medicine_id" [disabled]="isMedicineDisabledForRow(medicine.medicine_id, $index)">
+                    {{medicine.medicine_name}} - PHP {{extras.formatCurrency(medicine.price || 0)}}
+                  </option>
+                  }
+                </select>
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <span>{{item.name ? ('Selected: ' + item.name) : 'No medicine selected'}}</span>
+                  <span>Available stock: {{item.available_stock || 0}}</span>
+                </div>
+              </div>
+              <input [(ngModel)]="item.quantity" (ngModelChange)="updateOrderBuilder()" type="number" min="1" [max]="item.available_stock || 1" step="1"
+                class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+                placeholder="Qty">
+              <input [(ngModel)]="item.price" (ngModelChange)="updateOrderBuilder()" type="number" min="0" step="0.01"
+                readonly
+                class="h-11 rounded-xl border border-gray-300 bg-slate-100 px-3 text-sm text-slate-700 outline-none"
+                placeholder="Price">
+              <button type="button" (click)="removeOrderItem($index)"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-600 transition hover:bg-rose-200">
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
+            }
+
+            <button type="button" (click)="addOrderItem()"
+              class="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+              Add Item
+            </button>
+            <div class="rounded-xl border border-dashed border-gray-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              Computed item total: <span class="font-semibold text-slate-900">PHP {{extras.formatCurrency(getComputedOrderAmount())}}</span>
+            </div>
+          </div>
+          } @else {
+          <div class="rounded-xl border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+            Offline order builder is disabled. SMS replies will send normally without creating a sales transaction.
+          </div>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Reply Message</label>
+          <textarea [(ngModel)]="composeModel.message_body" (ngModelChange)="onMessageEdited()" rows="8" maxlength="161"
+            class="min-h-40 rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-600"
+            placeholder="Type your order response here..."></textarea>
+          <div class="text-right text-xs text-slate-500">
+            {{currentMessageLength}} / 161
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-dashed border-gray-200 bg-slate-50 p-4 text-sm text-slate-600">
+          Best practice:
+          Keep replies short and clear, confirm item availability, branch pickup or delivery details, and include the next action for the customer.
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" (click)="composeModel.message_body=''"
+            class="rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+            Clear Message
+          </button>
+          <button type="button" (click)="sendReply()" [disabled]="isSending()"
+            class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+            {{isSending() ? 'Sending...' : 'Send Reply'}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if(isPickupScheduleModalOpen()) {
+<div class="offline-order-modal fixed inset-0 z-[1270] flex items-center justify-center bg-slate-950/65 p-3 sm:p-4" (click)="closePickupScheduleModal()">
+  <div class="offline-order-modal-panel flex w-full max-w-lg flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Set Pickup Schedule</h2>
+          <p class="mt-1 text-sm text-slate-500">Choose the actual pickup date and time for the customer reply.</p>
+        </div>
+        <button type="button" (click)="closePickupScheduleModal()"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4 p-5 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pickup Date</label>
+          <input [(ngModel)]="pickupScheduleModel.pickup_date" type="date"
+            class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600">
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pickup Time</label>
+          <input [(ngModel)]="pickupScheduleModel.pickup_time" type="time"
+            class="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:border-emerald-600">
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Formatted Reply Time</p>
+        <p class="mt-2 text-sm font-medium text-slate-900">{{getPickupScheduleText()}}</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <button type="button" (click)="closePickupScheduleModal()"
+        class="rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+        Cancel
+      </button>
+      <button type="button" (click)="applyPickupSchedule()"
+        class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
+        Apply Pickup Time
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isLogsModalOpen()) {
+<div class="offline-order-modal fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/55 p-4" (click)="closeLogsModal()">
+  <div class="offline-order-modal-panel flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 sm:px-6">
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900">Message Logs</h2>
+        <p class="mt-1 text-sm text-slate-500">Saved inbound and outbound SMS history with reference numbers and template tags.</p>
+      </div>
+      <button type="button" (click)="closeLogsModal()"
+        class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+
+    @if(isLogsLoading()) {
+    <div class="px-6 py-16 text-center text-sm text-slate-500">
+      Loading message logs...
+    </div>
+    } @else if(!messageLogs.length) {
+    <div class="px-6 py-16 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+        <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-slate-900">No message logs yet</h3>
+      <p class="mt-2 text-sm text-slate-500">Sent and received SMS entries will appear here after they are saved.</p>
+    </div>
+    } @else {
+    <div class="flex flex-1 flex-col overflow-hidden p-4 sm:p-6">
+      <div class="flex flex-col gap-3 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Message History Table</p>
+          <p class="text-sm text-slate-500">Saved SMS records in a fixed-height table that adapts to the current screen size.</p>
+        </div>
+        <div class="text-sm font-medium text-slate-500">
+          {{logsRangeLabel}}
+        </div>
+      </div>
+
+      <div class="offline-order-logs-table-wrap mt-4 overflow-auto rounded-2xl border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200 bg-white">
+          <thead class="sticky top-0 z-10 bg-slate-100/95 backdrop-blur">
+            <tr class="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Direction</th>
+              <th class="px-4 py-3">Tag</th>
+              <th class="px-4 py-3">Reference</th>
+              <th class="px-4 py-3">Number</th>
+              <th class="min-w-[280px] px-4 py-3">Message</th>
+              <th class="px-4 py-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for(log of paginatedMessageLogs; track log.id){
+            <tr class="align-top text-sm text-slate-700">
+              <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-500">
+                {{log.received_at ? extras.formatDateWithTime(log.received_at) : 'Time unavailable'}}
+              </td>
+              <td class="px-4 py-3">
+                <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide" [ngClass]="getLogDirectionClass(log.direction)">
+                  {{log.direction}}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                  {{getLogTemplateTag(log.template_tag)}}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {{log.reference_number || 'Pending reference'}}
+              </td>
+              <td class="px-4 py-3">
+                <div class="space-y-1 text-xs text-slate-500">
+                  <p><span class="font-semibold text-slate-700">Counterparty:</span> {{log.counterparty_number || log.from_number || log.to_number || 'Unknown number'}}</p>
+                  <p><span class="font-semibold text-slate-700">From:</span> {{log.from_number || 'N/A'}}</p>
+                  <p><span class="font-semibold text-slate-700">To:</span> {{log.to_number || 'N/A'}}</p>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <p class="max-w-xl whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+                  {{log.message_body || 'No message body available.'}}
+                </p>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button type="button" (click)="deleteLogMessage(log)" [disabled]="deletingLogMessageId() === log.id"
+                  class="inline-flex items-center justify-center rounded-xl bg-rose-100 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60">
+                  {{deletingLogMessageId() === log.id ? 'Deleting...' : 'Delete'}}
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">
+          Page {{logsCurrentPage}} of {{totalLogPages}}
+        </p>
+        <div class="flex items-center gap-2">
+          <button type="button" (click)="previousLogsPage()" [disabled]="logsCurrentPage <= 1"
+            class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">
+            Previous
+          </button>
+          <button type="button" (click)="nextLogsPage()" [disabled]="logsCurrentPage >= totalLogPages"
+            class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>
+}
+
+@if(isDeleteModalOpen()) {
+<div class="offline-order-modal fixed inset-0 z-[1300] flex items-center justify-center bg-slate-950/60 p-4" (click)="closeDeleteModal()">
+  <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">Confirm Action</p>
+          <h2 class="mt-1 text-xl font-semibold text-slate-900">{{getDeleteModalTitle()}}</h2>
+        </div>
+        <button type="button" (click)="closeDeleteModal()"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4 px-5 py-5 sm:px-6">
+      <div class="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        {{getDeleteModalBody()}}
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 bg-slate-50 px-4 py-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Selected</p>
+        <p class="mt-2 break-words text-sm leading-6 text-slate-800">{{getDeleteModalLabel()}}</p>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <button type="button" (click)="closeDeleteModal()"
+        class="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-gray-200 transition hover:bg-slate-100">
+        Cancel
+      </button>
+      <button type="button" (click)="confirmDeleteAction()"
+        [disabled]="isDeletingConversation() || deletingConversationMessageId() !== null || deletingLogMessageId() !== null"
+        class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
+        {{isDeletingConversation() || deletingConversationMessageId() !== null || deletingLogMessageId() !== null ? 'Deleting...' : 'Delete'}}
+      </button>
+    </div>
+  </div>
+</div>
+}

@@ -19,6 +19,8 @@ export class Fefo implements OnInit {
   medicineData: MedicineData = {
 
   }
+  isLoading = true;
+  hasLoaded = false;
 
   pageNumber: number = 1;
   sort: string = '';
@@ -28,6 +30,8 @@ export class Fefo implements OnInit {
   isUpdate = signal(false);
   isDelete = signal(false);
   isExportModalOpen = signal(false);
+  isLocationModalOpen = signal(false);
+  isPullOutModalOpen = signal(false);
   userData: UserData = {
     token: '',
     data: []
@@ -54,6 +58,11 @@ export class Fefo implements OnInit {
     ],
   };
   endpoint: string = 'fefo';
+  selectedBatch: any = null;
+  locationForm = {
+    batch_id: 0,
+    location: '',
+  };
   ngOnInit(): void {
     this.userData.data= this.encryptData.decryptData('user')
     this.getMedicine()
@@ -83,6 +92,7 @@ export class Fefo implements OnInit {
 
 
   async getMedicine() {
+    this.isLoading = true;
     try {
       const endpoint = this.buildQuery();
       const res = await this.userService.getUser(endpoint, '', this.encryptData.decryptData('user').token);
@@ -92,6 +102,10 @@ export class Fefo implements OnInit {
       }
     } catch (e: any) {
       console.log(e);
+    } finally {
+      this.isLoading = false;
+      this.hasLoaded = true;
+      this.cd.detectChanges();
     }
   }
 
@@ -116,6 +130,14 @@ export class Fefo implements OnInit {
     this.sort = sortValue; // "sort=price" OR "sort=-price"
     this.pageNumber = 1;   // reset page
     this.getMedicine();
+  }
+
+  getSortValue(field: string, descending = false) {
+    return `sort=${descending ? '-' : ''}${field}`;
+  }
+
+  isSortActive(field: string, descending = false) {
+    return this.sort === this.getSortValue(field, descending);
   }
 
   openExportModal() {
@@ -280,5 +302,89 @@ export class Fefo implements OnInit {
   private escapeCsvValue(value: unknown) {
     const normalized = value == null ? '' : String(value);
     return `"${normalized.replace(/"/g, '""')}"`;
+  }
+
+  openLocationModal(item: any) {
+    if (!item?.batch_id) {
+      Extras.showToast('This batch has no location record to update.', 'warning');
+      return;
+    }
+
+    this.selectedBatch = item;
+    this.locationForm = {
+      batch_id: Number(item.batch_id),
+      location: String(item.location ?? '').trim(),
+    };
+    this.isLocationModalOpen.set(true);
+  }
+
+  closeLocationModal() {
+    this.isLocationModalOpen.set(false);
+    this.selectedBatch = null;
+    this.locationForm = { batch_id: 0, location: '' };
+  }
+
+  openPullOutModal(item: any) {
+    if (!item?.batch_id) {
+      Extras.showToast('This batch cannot be pulled out.', 'warning');
+      return;
+    }
+
+    this.selectedBatch = item;
+    this.isPullOutModalOpen.set(true);
+  }
+
+  closePullOutModal() {
+    this.isPullOutModalOpen.set(false);
+    this.selectedBatch = null;
+  }
+
+  async submitLocationUpdate() {
+    const location = this.locationForm.location.trim();
+    if (!this.locationForm.batch_id || !location) {
+      Extras.showToast('Please enter a valid location.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await this.userService.postUser(
+        `fefo/${this.locationForm.batch_id}/update-location`,
+        { location },
+        this.encryptData.decryptData('user').token
+      );
+
+      if (res.status === 200 && res.data.success) {
+        Extras.showToast('Batch location updated successfully.', 'success');
+        this.closeLocationModal();
+        this.getMedicine();
+      }
+    } catch (e) {
+      console.log(e);
+      Extras.showToast('Failed to update batch location.', 'danger');
+    }
+  }
+
+  async confirmPullOut() {
+    if (!this.selectedBatch?.batch_id) {
+      Extras.showToast('This batch cannot be pulled out.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await this.userService.postUser(
+        `fefo/${this.selectedBatch.batch_id}/pull-out`,
+        {},
+        this.encryptData.decryptData('user').token
+      );
+
+      if (res.status === 200 && res.data.success) {
+        Extras.showToast('Expired batch pulled out successfully.', 'success');
+        this.closePullOutModal();
+        this.getMedicine();
+      }
+    } catch (e) {
+      console.log(e);
+      Extras.showToast('Failed to pull out expired batch.', 'danger');
+    }
   }
 }

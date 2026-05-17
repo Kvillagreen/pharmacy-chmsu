@@ -1,20 +1,41 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { UserModel } from '../../../../models/UserModel';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../../services/services';
 import { EncryptData } from '../../../../environment/encrypt-data';
 import { Router, RouterLink } from '@angular/router';
 import { Extras } from '../../../../extras/extras';
 import { IonIcon } from '@ionic/angular/standalone';
+import { AppAddressField } from '../../../shared/ui/address-field/address-field';
+
+interface RegisterPageFormState {
+  firstName: string;
+  lastName: string;
+  address: string;
+  email: string;
+  password: string;
+  confirmpassword: string;
+  branchId: string;
+  role: string;
+}
+
 @Component({
-  imports: [FormsModule, IonIcon],
+  imports: [FormsModule, IonIcon, AppAddressField],
   selector: 'app-register',
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
 export class Register implements OnInit {
   extras = Extras
-  user: UserModel = {};
+  user: RegisterPageFormState = {
+    firstName: '',
+    lastName: '',
+    address: '',
+    email: '',
+    password: '',
+    confirmpassword: '',
+    branchId: '',
+    role: '',
+  };
   branchList: any;
   showPassword = false;
   showConfirmPassword = false;

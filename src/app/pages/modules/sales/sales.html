@@ -1,87 +1,124 @@
+@if(isLoading && !hasLoaded){
+<main class="w-full overflow-x-hidden p-4 sm:p-6">
+  <div class="app-skeleton-page">
+    <div class="app-skeleton-card space-y-4">
+      <div class="app-skeleton h-10 w-full rounded-xl"></div>
+      <div class="flex gap-2 overflow-hidden">
+        <div class="app-skeleton h-8 w-20 rounded-full"></div>
+        <div class="app-skeleton h-8 w-24 rounded-full"></div>
+        <div class="app-skeleton h-8 w-28 rounded-full"></div>
+      </div>
+      <div class="app-skeleton h-28 w-full rounded-2xl"></div>
+    </div>
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div class="app-skeleton-card">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          @for(item of [1,2,3,4,5,6]; track item){
+          <div class="space-y-3 rounded-2xl border border-slate-200 p-4">
+            <div class="app-skeleton h-4 w-20 rounded-xl"></div>
+            <div class="app-skeleton h-5 w-full rounded-xl"></div>
+            <div class="app-skeleton h-4 w-24 rounded-xl"></div>
+            <div class="app-skeleton h-10 w-full rounded-xl"></div>
+          </div>
+          }
+        </div>
+      </div>
+      <div class="app-skeleton-card space-y-4">
+        <div class="app-skeleton h-6 w-36 rounded-xl"></div>
+        <div class="app-skeleton h-40 w-full rounded-2xl"></div>
+        <div class="app-skeleton h-28 w-full rounded-2xl"></div>
+      </div>
+    </div>
+  </div>
+</main>
+} @else {
 <main class="w-full overflow-x-hidden">
-  <div class="flex w-full flex-col gap-4 p-4 sm:p-6 xl:flex-row">
-    <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-300 bg-card bg-gray-50">
+  <div class="flex w-full flex-col gap-4 p-4 sm:p-6 xl:flex-row xl:items-stretch">
+    <div
+      class="sales-panel flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-300 bg-card bg-gray-50">
       <div class="flex flex-col gap-3 border-b border-gray-300 bg-gray-100 p-4">
-        <div class="flex h-10 w-full items-center gap-x-2 rounded-md bg-gray-200 px-2 focus-within:outline-2 focus-within:outline-green-700">
+        <div
+          class="app-search-shell flex h-10 w-full items-center gap-x-2 rounded-md border border-gray-300 bg-white px-3">
           <ion-icon name="search-outline" class="size-4"></ion-icon>
-          <input (input)="changeText($event)" class="h-full w-full bg-transparent outline-none"
+          <input (input)="changeText($event)" [value]="searchQuery" class="app-search-input h-full w-full bg-transparent outline-none"
             placeholder="Search by ID, generic, or brand name...">
         </div>
-        <div class="grid max-h-28 grid-cols-2 gap-2 overflow-y-auto p-1 text-xs sm:grid-cols-4 lg:grid-cols-6 2xl:grid-cols-9">
+        <div class="flex max-h-28 overflow-y-auto p-1 text-xs space-x-2 overflow-x-auto">
           @if(salesData.selectedCategory==''){
           <div (click)="filter(''); salesData.selectedCategory=''"
-            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-green-800 bg-primary px-2.5 py-1 font-semibold text-gray-50">
+            class="sales-category-chip sales-category-chip-active flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-2.5 py-1 font-semibold">
             <p>All</p>
           </div>
           }@else{
           <div (click)="filter(''); salesData.selectedCategory=''"
-            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-gray-800 bg-gray-50 px-2.5 py-1 font-semibold text-gray-900">
+            class="sales-category-chip flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-2.5 py-1 font-semibold">
             <p>All</p>
           </div>
           }
           @for(data of salesData.categoryData; track $index){
           @if(salesData.selectedCategory === data){
           <div (click)="filter(`search=${data}`); salesData.selectedCategory = data"
-            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-green-800 bg-primary px-2.5 py-1 font-semibold text-gray-50">
+            class="sales-category-chip sales-category-chip-active flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-3 py-1 font-semibold">
             <p>{{data}}</p>
           </div>
           }@else{
           <div (click)="filter(`search=${data}`); salesData.selectedCategory=data"
-            class="flex cursor-pointer items-center justify-center overflow-clip rounded-md border border-gray-800 bg-gray-50 px-2.5 py-1 font-semibold text-gray-900">
+            class="sales-category-chip flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-3 py-1 font-semibold">
             <p>{{extras.toTitleCaseSafe(data)}}</p>
           </div>
           }
           }
         </div>
-      </div>
-
-      <div class="flex-1 overflow-auto p-4">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          <div class="col-span-full mb-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              class="flex h-10 w-full items-center justify-center rounded-sm bg-primary px-4 text-gray-50 drop-shadow-xs drop-shadow-gray-700 sm:w-14"
-              (click)="prev()">
-              <ion-icon name="arrow-back-outline"></ion-icon>
-            </button>
-            <div class="text-center text-lg font-bold text-gray-900 sm:text-xl">
-              LIST OF MEDICINES
+        <div class="sales-header-toolbar col-span-full mb-1">
+          <div class="sales-header-copy">
+            <p class="sales-header-eyebrow">Medicine Catalog</p>
+            <div class="sales-header-title-row">
+              <h2 class="sales-header-title">List of Medicines</h2>
+              <span class="sales-header-badge">
+                {{medicineData.data.data.length}} Items
+              </span>
             </div>
-            <button
-              class="flex h-10 w-full items-center justify-center rounded-sm bg-primary px-4 text-gray-50 drop-shadow-xs drop-shadow-gray-700 sm:w-14"
-              (click)="next()">
+          </div>
+
+          <div class="sales-header-nav" aria-label="Medicine list navigation">
+            <button class="sales-nav-button sales-nav-button-pill" (click)="prev()">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+              <span>Prev</span>
+            </button>
+            <button class="sales-nav-button sales-nav-button-pill" (click)="next()">
+              <span>Next</span>
               <ion-icon name="arrow-forward-outline"></ion-icon>
             </button>
           </div>
+        </div>
+      </div>
+
+      <div class="sales-scroll overflow-auto p-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+
 
           @for(data of medicineData.data.data; track $index){
-          <div
-            [ngClass]="salesData.selectedTransaction === 'yakap' && !data.is_yakap_eligible ? 'opacity-60' : ''"
-            class="flex min-h-40 h-full cursor-pointer flex-col rounded-xl bg-gray-100 p-4 drop-shadow-xs drop-shadow-gray-700 hover:bg-gray-200">
-            <div class="flex w-full items-center justify-between gap-x-1">
-              <span class="w-full rounded-sm bg-muted py-0.5 text-left text-[10px] font-bold uppercase"
+          <div class="sales-medicine-card flex min-h-40 h-full cursor-pointer flex-col rounded-xl p-4">
+            <div class="flex items-center justify-between gap-x-1">
+              <span
+                class="sales-medicine-category w-full rounded-sm py-0.5 px-2 text-left text-[10px] font-bold uppercase"
                 name="category">{{data.category ? data.category :' '}}</span>
 
               @if(data.needs_protection){
               <div
-                class="inline-flex h-5 w-9 items-center justify-center rounded-md border border-transparent bg-blue-600 text-xs font-semibold text-white">
+                class="inline-flex h-5 items-center justify-center rounded-md border border-sky-100 bg-sky-50 px-1.5 text-xs font-semibold text-sky-700">
                 <span>Rx</span>
               </div>
               }
               @if(data.is_dangerous){
               <div
-                class="inline-flex h-5 w-9 items-center justify-center rounded-md border border-transparent bg-red-600 px-1.5 py-0 font-semibold text-white shadow">
+                class="inline-flex h-5 items-center justify-center rounded-md border border-rose-100 bg-rose-50 px-1.5 py-0 font-semibold text-rose-700">
                 <ion-icon name="warning-outline"></ion-icon>
-              </div>
-              }
-              @if(data.is_yakap_eligible){
-              <div
-                class="inline-flex h-5 w-9 items-center justify-center rounded-md border border-transparent bg-pink-600 px-1.5 py-0 font-semibold text-white shadow">
-                <ion-icon name="people-outline"></ion-icon>
               </div>
               }
             </div>
 
-            <h4 class="text-sm font-semibold transition-colors group-hover:text-primary">
+            <h4 class="text-sm font-semibold">
               {{extras.toTitleCaseSafe(data.medicine_name)}}
               {{data.dosage+' '+data.unit}}
             </h4>
@@ -89,13 +126,13 @@
 
             <div class="mt-auto flex items-end justify-between gap-3 pt-3">
               <div>
-                <span class="block text-xs text-muted-foreground">Stocks: {{getStock(data.medicine_id)}}</span>
+                <span class="block text-xs text-muted-foreground">Stocks: {{getStock(data)}}</span>
                 <span class="font-bold text-primary">{{'Php '+data.price}}</span>
               </div>
               @if(data.medicine_id){
               <button (click)="updateTransaction(data, 'addSale')"
-                [disabled]="getStock(data.medicine_id)<=0 || !canSelectMedicine(data)"
-                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-full bg-primary text-sm font-bold text-gray-50 drop-shadow-xs drop-shadow-gray-900 hover:bg-gray-50 hover:text-gray-700 disabled:bg-gray-400 disabled:text-gray-500">
+                [disabled]="getStock(data)<=0 || !canSelectMedicine(data)"
+                class="sales-add-button inline-flex size-9 cursor-pointer items-center justify-center rounded-full text-sm font-bold">
                 <ion-icon name="add-outline"></ion-icon>
               </button>
               }
@@ -104,234 +141,137 @@
           }
 
           @for(data of getRows(); track $index){
-          <div class="min-h-40 h-full rounded-xl bg-gray-100 p-4 drop-shadow-xs drop-shadow-gray-700">
+          <div class="sales-medicine-card min-h-40 h-full rounded-xl p-4">
           </div>
           }
         </div>
       </div>
     </div>
 
-    <div class="flex w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-card xl:max-w-104">
-      <div
-        class="flex items-center justify-between border-b border-border bg-primary p-4 text-gray-50 text-primary-foreground">
+    <div
+      class="sales-panel flex w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-card xl:max-w-104">
+      <div class="flex items-center justify-between border-b border-border bg-white p-4 text-slate-800">
         <div class="flex items-center gap-2">
           <ion-icon name="cart-outline" class="text-2xl"></ion-icon>
           <h3 class="font-semibold tracking-tight">Current Order</h3>
         </div>
-        <div class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold">
+        <div
+          class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
           {{(medicineData.salesData.length)}} Items
         </div>
       </div>
       <div class="border-b border-gray-200 bg-white p-4 space-y-4">
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-2">
-          @for(option of transactionTypeOptions; track option.value){
-          <button type="button" (click)="setTransactionType(option.value)"
-            [ngClass]="salesData.selectedTransaction === option.value ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-200'"
-            class="rounded-xl w-full border px-3 py-3 text-left transition-all">
-            <div class="flex items-center gap-2">
-              <ion-icon [name]="option.icon" class="text-lg"></ion-icon>
-              <span class="font-semibold text-sm">{{option.label}}</span>
-            </div>
-          </button>
-          }
-        </div>
-
-        <div class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3 py-2">
+        <div
+          class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3 py-2">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Document Status</p>
-            <p class="text-sm text-gray-700">{{documentStatusLabel()}}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Transaction Type</p>
+            <p class="text-sm text-gray-700">{{currentTransactionLabel()}}</p>
+            <p class="text-xs text-gray-500">{{currentTransactionNote()}}</p>
           </div>
           <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="documentStatusClass()">
-            {{salesModel.documents_submitted ? 'Submitted' : (isRegularTransaction() ? 'Not Needed' : (submitDocumentsLater ? 'Later' : 'Pending'))}}
+            {{documentStatusLabel()}}
           </span>
         </div>
-
-        @if(isInsuranceTransaction() || isYakapTransaction()){
-        <div class="space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
-          @if(isInsuranceTransaction()){
-          <div class="rounded-xl border border-sky-200 bg-sky-50 p-3">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Claims Document Flow</p>
-                <p class="mt-1 text-sm text-slate-700">
-                  Choose whether to attach the claim documents now or submit them later from the HMO-PhilHealth Claims page.
-                </p>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <button type="button" (click)="setInsuranceDocumentMode('now')"
-                  [ngClass]="!submitDocumentsLater ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
-                  class="rounded-xl border px-3 py-2 text-sm font-semibold transition">
-                  Submit Now
-                </button>
-                <button type="button" (click)="setInsuranceDocumentMode('later')"
-                  [ngClass]="submitDocumentsLater ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'"
-                  class="rounded-xl border px-3 py-2 text-sm font-semibold transition">
-                  Submit Later
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Provider</label>
-              <select [(ngModel)]="salesModel.hmo_provider"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700">
-                <option value="" disabled>Select provider</option>
-                @for(provider of hmoProviderOptions; track provider){
-                @if(salesData.selectedTransaction === 'philhealth' ? provider === 'PhilHealth' : provider !== 'PhilHealth'){
-                <option [value]="provider">{{provider}}</option>
-                }
-                }
-              </select>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Coverage Type</label>
-              <select [(ngModel)]="salesModel.coverage_type"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700">
-                <option value="full">Full</option>
-                <option value="partial">Partial</option>
-              </select>
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Patient Name</label>
-              <input [(ngModel)]="salesModel.patient_name" type="text"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700"
-                placeholder="Enter patient name">
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Membership ID</label>
-              <input [(ngModel)]="salesModel.membership_id" type="text"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700"
-                placeholder="Enter membership ID">
-            </div>
-          </div>
-
-          @if(submitDocumentsLater){
-          <div class="rounded-xl border border-dashed border-sky-300 bg-white px-3 py-3 text-sm text-slate-700">
-            This sale can proceed without files right now. The documents can be uploaded and tracked later in the claims workspace.
-          </div>
-          }
-          }
-
-          @if(isYakapTransaction()){
-          <div class="rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-xs text-pink-700">
-            Only medicines marked as Yakap Eligible can be added to this transaction.
-          </div>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Full Name</label>
-              <input [(ngModel)]="salesModel.patient_name" type="text"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700"
-                placeholder="Enter full name">
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">ID Number</label>
-              <input [(ngModel)]="salesModel.membership_id" type="text"
-                class="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-green-700"
-                placeholder="Enter ID number">
-            </div>
-          </div>
-          }
-
-          @if(shouldShowDocumentUploader()){
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div class="rounded-xl border border-gray-200 bg-white p-3">
-              <div class="flex items-center justify-between gap-2">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Prescription</p>
-                  <p class="mt-1 text-xs text-gray-600">{{selectedFileName('prescription')}}</p>
-                </div>
-                @if(prescriptionFile){
-                <button type="button" (click)="removeSelectedDocument('prescription')"
-                  class="text-xs font-semibold text-red-500 hover:text-red-600">
-                  Remove
-                </button>
-                }
-              </div>
-              <label
-                class="mt-3 flex h-10 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden"
-                  (change)="onDocumentSelected($event, 'prescription')">
-                Upload Prescription
-              </label>
-            </div>
-
-            <div class="rounded-xl border border-gray-200 bg-white p-3">
-              <div class="flex items-center justify-between gap-2">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                    {{isYakapTransaction() ? 'ID Photo' : 'HMO / Member ID'}}
-                  </p>
-                  <p class="mt-1 text-xs text-gray-600">{{selectedFileName('member_id_image')}}</p>
-                </div>
-                @if(memberIdImageFile){
-                <button type="button" (click)="removeSelectedDocument('member_id_image')"
-                  class="text-xs font-semibold text-red-500 hover:text-red-600">
-                  Remove
-                </button>
-                }
-              </div>
-              <label
-                class="mt-3 flex h-10 cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden"
-                  (change)="onDocumentSelected($event, 'member_id_image')">
-                Upload {{isYakapTransaction() ? 'ID Photo' : 'Member ID'}}
-              </label>
-            </div>
-          </div>
-          }
-        </div>
-        }
       </div>
-      <div class="flex max-h-96 flex-col overflow-y-auto p-4 xl:max-h-99">
+      <div class="sales-scroll overflow-y-auto p-4">
         @if(!medicineData.salesData.length) {
-        <div class="flex h-99 flex-col items-center justify-center space-y-3 text-muted-foreground">
+        <div class="flex h-full min-h-60 flex-col items-center justify-center space-y-3 text-muted-foreground">
           <ion-icon name="cart-outline" class="text-7xl"></ion-icon>
           <p>Scan or tap items to start</p>
         </div>
         }@else{
-        <div class="flex flex-col space-y-2 h-99 overflow-y-auto">
+        <div class="sales-order-list">
+          @if(!isAllBranchesScope()){
           @for(data of medicineData.salesData; track $index){
-          <div class="flex w-full flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            class="sales-cart-item flex w-full flex-col gap-3 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <div
-                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary text-xl font-bold uppercase text-gray-50">
+                class="sales-cart-avatar flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-xl font-bold uppercase">
                 <p>{{data.medicine_name[0]}}</p>
               </div>
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold">{{ extras.toTitleCaseSafe(data.medicine_name) }}</p>
-                <p class="text-sm font-light">
-                  {{ extras.toTitleCaseSafe(data.generic_name)+' '+data.dosage+' '+data.unit }}
+              <div class="sales-cart-copy min-w-0">
+                <p class="sales-cart-title truncate text-sm font-semibold">{{ extras.toTitleCaseSafe(data.medicine_name)
+                  }}</p>
+                <p class="sales-cart-generic truncate text-xs">{{ extras.toTitleCaseSafe(data.generic_name) }}</p>
+                <p class="sales-cart-meta text-xs">
+                  {{ extras.toTitleCaseSafe(data.type) }} · {{data.dosage}} {{data.unit}}
                 </p>
-                <p class="text-xs text-gray-500">
-                  Php {{extras.formatCurrency(data.price) }} x {{ data.quantity }}
+                <p class="sales-cart-price text-xs">
+                  <span class="sales-cart-price-label">Unit Price</span>
+                  <span class="sales-cart-price-value">Php {{extras.formatCurrency(data.price) }}</span>
                 </p>
               </div>
             </div>
-            <div class="flex items-center justify-end gap-2">
+            <div class="sales-cart-actions flex items-center justify-end gap-2">
               <button (click)="updateTransaction(data, 'minusSale')"
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40">
+                class="sales-cart-stepper flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40">
                 <ion-icon name="remove-outline"></ion-icon>
               </button>
               <input type="number" min="0" [value]="data.quantity" (change)="onManualQtyChange($event, data)"
-                class="w-14 rounded-md border py-1 text-center text-sm outline-none" />
-              <button (click)="updateTransaction(data, 'addSale')"
-                [disabled]="!canSelectMedicine(data)"
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-40">
+                class="sales-cart-qty w-14 rounded-md border py-1 text-center text-sm outline-none" />
+              <button (click)="updateTransaction(data, 'addSale')" [disabled]="!canSelectMedicine(data)"
+                class="sales-cart-stepper flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40">
                 <ion-icon name="add-outline"></ion-icon>
               </button>
               <button (click)="updateTransaction(data, 'trash')"
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600">
+                class="sales-cart-remove flex h-8 w-8 items-center justify-center rounded-full text-white">
                 <ion-icon name="trash-outline"></ion-icon>
               </button>
             </div>
           </div>
+          }
+          } @else {
+          @for(group of getSalesGroupsByBranch(); track group.branchName){
+          <div class="space-y-3 rounded-xl border border-gray-200 bg-white p-3">
+            <div class="sales-branch-group-header flex items-center justify-between gap-3 rounded-lg px-3 py-2">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Branch</p>
+                <p class="truncate text-sm font-semibold text-slate-800">{{ group.branchName }}</p>
+              </div>
+            </div>
+
+            @for(data of group.items; track $index){
+            <div
+              class="sales-cart-item flex w-full flex-col gap-3 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex min-w-0 items-center gap-3">
+                <div
+                  class="sales-cart-avatar flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-xl font-bold uppercase">
+                  <p>{{data.medicine_name[0]}}</p>
+                </div>
+                <div class="sales-cart-copy min-w-0">
+                  <p class="sales-cart-title truncate text-sm font-semibold">{{
+                    extras.toTitleCaseSafe(data.medicine_name) }}</p>
+                  <p class="sales-cart-generic truncate text-xs">{{ extras.toTitleCaseSafe(data.generic_name) }}</p>
+                  <p class="sales-cart-meta text-xs">
+                    {{ extras.toTitleCaseSafe(data.type) }} · {{data.dosage}} {{data.unit}}
+                  </p>
+                  <p class="sales-cart-price text-xs">
+                    <span class="sales-cart-price-label">Unit Price</span>
+                    <span class="sales-cart-price-value">Php {{extras.formatCurrency(data.price) }}</span>
+                  </p>
+                </div>
+              </div>
+              <div class="sales-cart-actions flex items-center justify-end gap-2">
+                <button (click)="updateTransaction(data, 'minusSale')"
+                  class="sales-cart-stepper flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40">
+                  <ion-icon name="remove-outline"></ion-icon>
+                </button>
+                <input type="number" min="0" [value]="data.quantity" (change)="onManualQtyChange($event, data)"
+                  class="sales-cart-qty w-14 rounded-md border py-1 text-center text-sm outline-none" />
+                <button (click)="updateTransaction(data, 'addSale')" [disabled]="!canSelectMedicine(data)"
+                  class="sales-cart-stepper flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40">
+                  <ion-icon name="add-outline"></ion-icon>
+                </button>
+                <button (click)="updateTransaction(data, 'trash')"
+                  class="sales-cart-remove flex h-8 w-8 items-center justify-center rounded-full text-white">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+          }
           }
         </div>
         }
@@ -340,21 +280,21 @@
       <div class="relative inset-0 flex flex-col space-y-4 border-t border-border bg-muted/30 p-4">
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div (click)="isDiscount.set(true); salesData.selectedDiscount='DISC'"
-            [ngClass]="salesData.selectedDiscount === 'DISC' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            [ngClass]="salesData.selectedDiscount === 'DISC' ? 'sales-method-tile-active' : 'sales-method-tile'"
             class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
             <div class="text-xl font-semibold">%</div>
             <span>DISCOUNT</span>
           </div>
 
           <div (click)="isDiscount.set(true); salesData.selectedDiscount='SCPWD'; customDiscountPrice(null)"
-            [ngClass]="salesData.selectedDiscount === 'SCPWD' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            [ngClass]="salesData.selectedDiscount === 'SCPWD' ? 'sales-method-tile-active' : 'sales-method-tile'"
             class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
             <ion-icon name="people-outline" class="text-xl font-semibold"></ion-icon>
             <span>SC/PWD</span>
           </div>
 
           <div (click)=" salesData.selectedDiscount=''; customDiscountPrice(null); "
-            [ngClass]="salesData.selectedDiscount === '' ? 'border-green-800 bg-primary text-gray-50' : 'border-gray-800 bg-gray-50 text-gray-700 hover:bg-gray-200 hover:text-gray-700'"
+            [ngClass]="salesData.selectedDiscount === '' ? 'sales-method-tile-active' : 'sales-method-tile'"
             class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
             <ion-icon name="checkbox-outline" class="text-xl font-semibold"></ion-icon>
             <span>No Discount</span>
@@ -370,19 +310,21 @@
             <span>Discount</span>
             <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
           </div>
-          <div class="flex justify-between border-t border-border pt-2 text-lg font-bold">
+          <div class="flex justify-between border-t border-border pt-2 text-lg font-bold text-slate-900">
             <span>Total</span>
-            <span class="text-primary">Php {{extras.formatCurrency(getTotalPrice())}}</span>
+            <span>Php {{extras.formatCurrency(getTotalPrice())}}</span>
           </div>
         </div>
 
         <button (click)="isPay.set(true)"
           class="inline-flex h-12 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-lg font-medium text-gray-50 hover:bg-primary/80 disabled:bg-primary/60"
-          [disabled]="this.getTotalPrice() <= 0">Pay {{this.getTotalPrice() | currency:'PHP'}}</button>
+          [disabled]="this.getTotalPrice() <= 0 || isAllBranchesScope()">{{isAllBranchesScope() ? 'Select Branch To
+          Checkout' : ('Pay ' + (this.getTotalPrice() | currency:'PHP'))}}</button>
       </div>
     </div>
   </div>
 </main>
+}
 
 @if(isDiscount()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3 backdrop-blur-sm sm:px-4">
@@ -415,8 +357,8 @@
       @if(this.salesData.selectedDiscount === 'DISC') {
       <p class="flex w-full flex-col gap-3 pb-3 text-gray-800">
         <label class="font-bold">Custom Discount (Less Amount)</label>
-        <input [value]="salesModel.discount" type="number" min="0" max="100"
-          (input)="customDiscountPrice($event)" name="customDiscount"
+        <input [value]="salesModel.discount" type="number" min="0" max="100" (input)="customDiscountPrice($event)"
+          name="customDiscount"
           class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs focus:outline-green-700"
           placeholder="Input custom discount amount eg. 200">
       </p>
@@ -458,7 +400,7 @@
 
 @if(isPay()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3 backdrop-blur-sm sm:px-4">
-  <div class="flex h-full max-h-[75vh] w-full max-w-md flex-col rounded-2xl bg-gray-100 shadow-xl">
+  <div class="flex h-full max-h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-gray-100 shadow-xl">
     <div class="sticky top-0 w-full rounded-t-2xl bg-white p-4">
       <button (click)="isPay.set(false)" class="absolute top-4 right-4 text-gray-500 hover:text-red-500">
         X
@@ -467,32 +409,229 @@
       <p class="text-sm text-gray-600">Complete the payment for the current order.</p>
     </div>
 
-    <form class="flex h-full w-full flex-col gap-y-3 overflow-y-auto p-4">
-      <div class="flex flex-col gap-y-2">
-        <label class="font-bold">Select Payment Method:</label>
-        <ul class="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
+    <form class="flex h-full w-full flex-col gap-y-4 overflow-y-auto p-4">
+      <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <p class="text-sm font-bold text-slate-900">Payment Method</p>
+          <p class="text-xs text-slate-500">Choose how the customer completed the payment.</p>
+        </div>
+        <ul class="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
           @for(data of paymentMethodList; track $index){
           <li>
-            <input [(ngModel)]="salesModel.payment_method" type="radio" [id]="data.type | lowercase" name="hosting"
+            <input [ngModel]="salesModel.payment_method" type="radio" [id]="data.type | lowercase" name="hosting"
+              (ngModelChange)="onPaymentMethodChange($event)"
               [value]="data.type" class="hidden peer">
             <label [for]="data.type | lowercase"
-              class="inline-flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-300 bg-white p-4 transition-all duration-200 hover:border-gray-400 hover:bg-gray-300 peer-checked:border-gray-900 peer-checked:bg-gray-900 peer-checked:text-white">
-              <div class="flex w-full items-center justify-center text-base font-semibold">
-                <ion-icon [name]="data.icon" class="mr-2 text-xl"></ion-icon>
-                <span>{{data.type}}</span>
+              class="sales-payment-option inline-flex w-full cursor-pointer rounded-xl border p-4 transition-all duration-200">
+              <div class="flex w-full items-center gap-3">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/80 text-xl">
+                  <ion-icon [name]="data.icon"></ion-icon>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-base font-semibold">{{data.type}}</p>
+                </div>
               </div>
             </label>
           </li>}
         </ul>
       </div>
 
-      <div class="mt-2 flex flex-col justify-center space-y-2 border-b border-gray-300 pb-3">
-        <label class="font-bold">Amount Received:</label>
-        <input type="number" min="0" [value]="salesModel.used_amount"
-          (input)="salesModel.used_amount = extras.convertNumber($event.target.value)"
-          class="h-12 w-full rounded-md border border-gray-300 px-3 focus:outline-green-700"
-          placeholder="Input amount received from customer">
+      <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-bold text-slate-900">Amount Paid</label>
+          <input type="number" min="0" [value]="salesModel.used_amount"
+            (input)="salesModel.used_amount = extras.convertNumber($event.target.value)"
+            class="h-12 w-full rounded-xl border border-slate-300 px-3 text-sm focus:outline-green-700"
+            placeholder="Enter the amount paid">
+          <p class="text-xs text-slate-500">Recorded payment received for this transaction.</p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-bold text-slate-900">
+            Reference Number
+            @if(requiresReferenceNumber()){
+            <span class="text-rose-600">*</span>
+            }
+          </label>
+          <input type="text" [value]="salesModel.reference_number || ''" (input)="updateReferenceNumber($event)"
+            [disabled]="!requiresReferenceNumber()" maxlength="120"
+            class="h-12 w-full rounded-xl border border-slate-300 px-3 text-sm uppercase focus:outline-green-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            [placeholder]="requiresReferenceNumber() ? 'Enter payment reference number' : 'Available for Card or Gcash only'">
+          <p class="text-xs text-slate-500">
+            @if(requiresReferenceNumber()){
+            Save the bank terminal or GCash confirmation reference for audit tracking.
+            } @else {
+            Select Card or Gcash to record a payment reference.
+            }
+          </p>
+        </div>
       </div>
+
+      @if(!isRegularTransaction()){
+      <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <p class="text-sm font-bold text-slate-900">Shared Patient Details</p>
+          <p class="text-xs text-slate-600">Common fields are shown once even when both regulated forms are required.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Patient Full Name</label>
+            <input [(ngModel)]="salesModel.patient_name" name="shared_patient_name" type="text"
+              placeholder="Enter patient full name"
+              class="h-10 rounded-md border border-slate-200 px-3 focus:outline-slate-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Prescriber / Physician Full Name</label>
+            <input [(ngModel)]="salesModel.prescriber_name" name="shared_prescriber_name" type="text"
+              placeholder="Enter prescriber or physician full name"
+              class="h-10 rounded-md border border-slate-200 px-3 focus:outline-slate-600">
+          </div>
+          <div class="flex flex-col gap-1 sm:col-span-2">
+            <label class="text-sm font-medium">Patient Address</label>
+            <textarea [(ngModel)]="salesModel.customer_address_line" name="shared_customer_address_line"
+              placeholder="Enter complete patient address"
+              class="min-h-20 rounded-md border border-slate-200 px-3 py-2 focus:outline-slate-600"></textarea>
+          </div>
+        </div>
+      </div>
+      }
+
+      @if(requiresPrescriptionDetails()){
+      <div class="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <div>
+          <p class="text-sm font-bold text-blue-900">Prescription Details</p>
+          <p class="text-xs text-blue-700">Fill in the required prescribed-drug information before saving.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Patient Age</label>
+            <input [(ngModel)]="salesModel.patient_age" name="patient_age" type="number" min="0"
+              placeholder="Enter patient age"
+              class="h-10 rounded-md border border-blue-200 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">PRC License Number</label>
+            <input [(ngModel)]="salesModel.prescriber_prc_license_number" name="prescriber_prc_license_number"
+              type="text" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" placeholder="Enter 7-digit PRC code"
+              class="h-10 rounded-md border border-blue-200 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Generic Name</label>
+            <input [(ngModel)]="salesModel.prescribed_generic_name" name="prescribed_generic_name" type="text" readonly
+              class="h-10 rounded-md border border-blue-200 bg-blue-100 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Brand Name</label>
+            <input [(ngModel)]="salesModel.prescribed_brand_name" name="prescribed_brand_name" type="text" readonly
+              class="h-10 rounded-md border border-blue-200 bg-blue-100 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Dosage Strength</label>
+            <input [(ngModel)]="salesModel.prescribed_dosage_strength" name="prescribed_dosage_strength" type="text"
+              readonly placeholder="500mg"
+              class="h-10 rounded-md border border-blue-200 bg-blue-100 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Dosage Form</label>
+            <input [(ngModel)]="salesModel.prescribed_dosage_form" name="prescribed_dosage_form" type="text" readonly
+              placeholder="Tablet, syrup, capsule"
+              class="h-10 rounded-md border border-blue-200 bg-blue-100 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Quantity Dispensed</label>
+            <input [(ngModel)]="salesModel.prescribed_quantity_dispensed" name="prescribed_quantity_dispensed"
+              type="number" min="1" readonly
+              class="h-10 rounded-md border border-blue-200 bg-blue-100 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Dispensing Date</label>
+            <input [(ngModel)]="salesModel.dispensing_date" name="dispensing_date" type="date"
+              class="h-10 rounded-md border border-blue-200 px-3 focus:outline-blue-600">
+          </div>
+          <div class="flex flex-col gap-1 sm:col-span-2">
+            <label class="text-sm font-medium">Pharmacist Name</label>
+            <input [(ngModel)]="salesModel.pharmacist_signature" name="pharmacist_signature" type="text"
+              placeholder="Enter pharmacist full name"
+              class="h-10 rounded-md border border-blue-200 px-3 focus:outline-blue-600">
+          </div>
+        </div>
+      </div>
+      }
+
+      @if(requiresDangerousDrugDetails()){
+      <div class="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
+        <div>
+          <p class="text-sm font-bold text-red-900">Dangerous Drug Details</p>
+          <p class="text-xs text-red-700">Fill in the yellow-prescription tracking details before saving.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Contact Number</label>
+            <input [(ngModel)]="salesModel.customer_contact_number" name="customer_contact_number" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Valid ID Number</label>
+            <input [(ngModel)]="salesModel.customer_id_number" name="customer_id_number" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1 sm:col-span-2">
+            <label class="text-sm font-medium">Clinic Address</label>
+            <textarea [(ngModel)]="salesModel.prescriber_clinic_address" name="prescriber_clinic_address"
+              class="min-h-20 rounded-md border border-red-200 px-3 py-2 focus:outline-red-600"></textarea>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">S-2 License Number</label>
+            <input [(ngModel)]="salesModel.prescriber_s2_license_number" name="prescriber_s2_license_number" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">PTR Number</label>
+            <input [(ngModel)]="salesModel.prescriber_ptr_number" name="prescriber_ptr_number" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Yellow Prescription Serial No.</label>
+            <input [(ngModel)]="salesModel.yellow_prescription_serial_number" name="yellow_prescription_serial_number"
+              type="text" class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Quantity in Words</label>
+            <input [(ngModel)]="salesModel.dangerous_quantity_in_words" name="dangerous_quantity_in_words" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Quantity in Figures</label>
+            <input [(ngModel)]="salesModel.dangerous_quantity_in_figures" name="dangerous_quantity_in_figures"
+              type="text" readonly class="h-10 rounded-md border border-red-200 bg-red-100 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Total Dosage</label>
+            <input [(ngModel)]="salesModel.dangerous_total_dosage" name="dangerous_total_dosage" type="text" readonly
+              class="h-10 rounded-md border border-red-200 bg-red-100 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Treatment Duration</label>
+            <input [(ngModel)]="salesModel.dangerous_treatment_duration" name="dangerous_treatment_duration" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Receiver Name</label>
+            <input [(ngModel)]="salesModel.receiver_name" name="receiver_name" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Receiver Signature</label>
+            <input [(ngModel)]="salesModel.receiver_signature" name="receiver_signature" type="text"
+              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+          </div>
+        </div>
+      </div>
+      }
 
       <div class="flex w-full justify-between font-medium">
         <span>Sub Total: </span>
@@ -550,16 +689,19 @@
     </div>
 
     <div class="overflow-y-auto bg-[#f6f1e7] p-4 sm:p-6">
-      <div class="mx-auto max-w-sm rounded-[1.75rem] border border-[#dcc7a2] bg-[#fffef9] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:p-6">
+      <div
+        class="mx-auto max-w-sm rounded-[1.75rem] border border-[#dcc7a2] bg-[#fffef9] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:p-6">
         <div class="rounded-2xl border border-dashed border-[#d9c5a2] bg-[#fffaf0] px-4 py-4">
-          <pre class="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-slate-800 sm:text-[13px]">@for(line of receiptPreviewLines(); track $index){<span>{{line}}</span>
+          <pre
+            class="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-slate-800 sm:text-[13px]">@for(line of receiptPreviewLines(); track $index){<span>{{line}}</span>
 }</pre>
         </div>
       </div>
     </div>
 
     <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
-      <button (click)="closeReceipt()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+      <button (click)="closeReceipt()"
+        class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
         Close
       </button>
       <button (click)="downloadReceipt()"

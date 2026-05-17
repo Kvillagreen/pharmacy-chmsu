@@ -8,10 +8,11 @@ import { EncryptData } from '../../../../environment/encrypt-data';
 import { UserData } from '../../../../models/UserModel';
 import { Extras } from '../../../../extras/extras';
 import { BranchData } from '../../../../models/BranchModel';
+import { AppAddressField } from '../../../shared/ui/address-field/address-field';
 
 @Component({
   selector: 'app-users',
-  imports: [IonIcon, CommonModule, FormsModule],
+  imports: [IonIcon, CommonModule, FormsModule, AppAddressField],
   templateUrl: './users.html',
   styleUrl: './users.css',
 })
@@ -39,6 +40,7 @@ export class Users implements OnInit {
     last_name: '',
     email: '',
     address: '',
+    role: 'staff',
   };
   statusForm = {
     user_id: '',
@@ -87,6 +89,8 @@ export class Users implements OnInit {
 
   extras = Extras;
   activeDropdown: any = null;
+  isLoading = true;
+  hasLoaded = false;
   pageNumber = 1;
   sort = '';
   searchQuery = '';
@@ -113,6 +117,17 @@ export class Users implements OnInit {
     this.userData.data = this.encryptData.decryptData('user');
     this.userData.token = this.encryptData.decryptData('user').token;
     this.getUser();
+  }
+
+  canViewUsersAcrossBranches(): boolean {
+    const permissions = this.userData?.data?.data?.permissions ?? [];
+    return Array.isArray(permissions) && permissions.includes('users_all_branches');
+  }
+
+  userVisibilityLabel(): string {
+    return this.canViewUsersAcrossBranches()
+      ? 'Viewing users across all branches in your company.'
+      : 'Viewing users from your assigned branch only.';
   }
 
   buildQuery(): string {
@@ -212,6 +227,7 @@ export class Users implements OnInit {
   }
 
   async getUser() {
+    this.isLoading = true;
     try {
       const endpoint = this.buildQuery();
       const res = await this.userService.getUser(endpoint, '', this.userData.token);
@@ -221,6 +237,10 @@ export class Users implements OnInit {
       }
     } catch (e) {
       console.log(e);
+    } finally {
+      this.isLoading = false;
+      this.hasLoaded = true;
+      this.cd.detectChanges();
     }
   }
 
@@ -271,6 +291,7 @@ export class Users implements OnInit {
       last_name: item.last_name ?? '',
       email: item.email ?? '',
       address: item.address ?? '',
+      role: item.role ?? 'staff',
     };
     this.activeDropdown = null;
     this.isUpdateUser.set(true);
@@ -394,6 +415,7 @@ export class Users implements OnInit {
         last_name: this.editUserForm.last_name.trim(),
         email: this.editUserForm.email.trim(),
         address: this.editUserForm.address.trim(),
+        role: this.editUserForm.role,
       };
 
       const res = await this.userService.putUser(

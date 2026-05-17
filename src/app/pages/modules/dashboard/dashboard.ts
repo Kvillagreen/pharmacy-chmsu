@@ -16,8 +16,9 @@ import { UserData } from '../../../../models/UserModel';
 })
 export class Dashboard implements OnInit {
   extras = Extras;
-  selectedDays = 30;
+  selectedDays = 7;
   maxRevenuePoint = 0;
+  isLoading = true;
   userData: UserData = {
     data: {},
     token: '',
@@ -28,7 +29,7 @@ export class Dashboard implements OnInit {
       scope: {
         company_id: 0,
         branch_id: 0,
-        days: 30,
+        days: 7,
         label: 'All Branches',
       },
       summary: {
@@ -87,11 +88,15 @@ export class Dashboard implements OnInit {
   }
 
   async getDashboard() {
+    this.isLoading = true;
+    this.cd.detectChanges();
+
     try {
       const endpoint = this.buildQuery();
 
       if (!endpoint) {
         this.extras.showToast('Dashboard session data is incomplete. Please log in again.', 'warning');
+        this.isLoading = false;
         return;
       }
 
@@ -107,6 +112,8 @@ export class Dashboard implements OnInit {
     } catch (e: any) {
       console.log(e);
       this.extras.showToast('Failed to load dashboard data', 'warning');
+    } finally {
+      this.isLoading = false;
       this.cd.detectChanges();
     }
   }
@@ -119,10 +126,10 @@ export class Dashboard implements OnInit {
 
   getBarHeight(value: number): number {
     if (!this.maxRevenuePoint) {
-      return 8;
+      return 18;
     }
 
-    return Math.max((value / this.maxRevenuePoint) * 100, 8);
+    return Math.max((value / this.maxRevenuePoint) * 180, 18);
   }
 
   getPercentWidth(value: number, maxValue: number): number {

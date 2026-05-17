@@ -16,7 +16,12 @@
         <input [(ngModel)]="profile.data.first_name" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="First name">
         <input [(ngModel)]="profile.data.last_name" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="Last name">
         <input [(ngModel)]="profile.data.email" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="Email">
-        <textarea [(ngModel)]="profile.data.address" class="min-h-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900" rows="4" placeholder="Address"></textarea>
+        <app-address-field
+          [(value)]="profile.data.address"
+          fieldId="admin-profile-address"
+          label="Address"
+          description="Save the super admin profile address using the shared formatted address builder.">
+        </app-address-field>
         <div class="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
           <p class="mb-2"><span class="font-semibold text-slate-900">Role:</span> {{profile.data.role || 'super_admin'}}</p>
           <p class="mb-2"><span class="font-semibold text-slate-900">Company:</span> {{profile.data.company_name || 'System-wide account'}}</p>
@@ -74,7 +79,13 @@
     <input [(ngModel)]="createSuperAdminForm.last_name" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="Last name">
     <input [(ngModel)]="createSuperAdminForm.email" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="Email">
     <input [(ngModel)]="createSuperAdminForm.password" type="password" class="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-slate-900" placeholder="Password">
-    <textarea [(ngModel)]="createSuperAdminForm.address" class="min-h-[120px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900" rows="3" placeholder="Address"></textarea>
+    <app-address-field
+      [(value)]="createSuperAdminForm.address"
+      fieldId="admin-create-super-address"
+      label="Address"
+      [required]="true"
+      description="Use the same standard address format for newly created super admin accounts.">
+    </app-address-field>
 
     <div class="flex justify-end gap-3">
       <button type="button" (click)="isCreateSuperAdminOpen = false" class="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">

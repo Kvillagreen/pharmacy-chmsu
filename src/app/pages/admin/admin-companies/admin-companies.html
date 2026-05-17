@@ -145,7 +145,13 @@
       }
     </select>
     <input [(ngModel)]="branchForm.branch_name" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch name">
-    <input [(ngModel)]="branchForm.branch_address" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch address">
+    <app-address-field
+      [(value)]="branchForm.branch_address"
+      fieldId="admin-company-branch-address"
+      label="Branch Address"
+      [required]="true"
+      description="Build a complete branch address using country and location fields.">
+    </app-address-field>
     <input [(ngModel)]="branchForm.branch_contact" class="h-11 rounded-xl border border-slate-300 px-4" placeholder="Branch contact">
     <select [(ngModel)]="branchForm.status" class="h-11 rounded-xl border border-slate-300 px-4">
       <option value="active">Active</option>

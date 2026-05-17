@@ -18,6 +18,118 @@ import { UserService } from '../../../../services/services';
 })
 export class Inventory implements OnInit {
   @ViewChild('clicker') clicker!: ElementRef;
+  isLoading = true;
+  hasLoaded = false;
+
+  defaultMedicineCategoryOptions = [
+    'Analgesic',
+    'Anesthetic',
+    'Anti-Allergy',
+    'Antibiotic',
+    'Antacid',
+    'Anthelmintic',
+    'Anti-Anginal',
+    'Anti-Anxiety',
+    'Antiarrhythmic',
+    'Antiasthmatic',
+    'Anticoagulant',
+    'Anticonvulsant',
+    'Antidepressant',
+    'Antidiabetic',
+    'Antidiarrheal',
+    'Antidote',
+    'Antiemetic',
+    'Antifungal',
+    'Anti-Gout',
+    'Antihistamine',
+    'Antihypertensive',
+    'Anti-Inflammatory',
+    'Antilipidemic',
+    'Antimalarial',
+    'Antimigraine',
+    'Antineoplastic',
+    'Antiplatelet',
+    'Antipsychotic',
+    'Antipyretic',
+    'Antiseptic',
+    'Antispasmodic',
+    'Antitussive',
+    'Antivertigo',
+    'Antiviral',
+    'Bronchodilator',
+    'Cardiovascular',
+    'Cold and Flu',
+    'Contraceptive',
+    'Corticosteroid',
+    'Cough Preparation',
+    'Dermatology',
+    'Diagnostic Agent',
+    'Diuretic',
+    'Digestive',
+    'Electrolyte Replacement',
+    'Emergency Medicine',
+    'Endocrine',
+    'ENT Preparations',
+    'Expectorant',
+    'Eye Care',
+    'Gastrointestinal',
+    'Genitourinary',
+    'Hematinic',
+    'Hormonal Therapy',
+    'Immunomodulator',
+    'Immunosuppressant',
+    'Infant Care',
+    'Laxative',
+    'Maintenance',
+    'Medical Supply',
+    'Mineral Supplement',
+    'Mucolytic',
+    'Muscle Relaxant',
+    'Nasal Preparation',
+    'Neurology',
+    'NSAID',
+    'Nutritional Supplement',
+    'Obstetrics and Gynecology',
+    'Ophthalmic',
+    'Otic',
+    'Pain Relief',
+    'Pediatric',
+    'Probiotic',
+    'Respiratory',
+    'Sedative',
+    'Sleep Aid',
+    'Steroid',
+    'Supplement',
+    'Topical Preparation',
+    'Urologic',
+    'Vaccines',
+    'Vasodilator',
+    'Vitamin',
+    'Wound Care',
+  ];
+
+  medicineTypeOptions = [
+    'Tablet',
+    'Syrup/Liquid',
+    'Capsule',
+    'Lozenges',
+    'Spray',
+    'Drops',
+    'Topical Medicine',
+  ];
+
+  medicineUnitOptions = [
+    'mcg',
+    'mg',
+    'g',
+    'kg',
+    'mL',
+    'L',
+    'IU',
+    '%',
+    'mg/mL',
+  ];
+  medicineCategoryOptions: string[] = [];
 
   constructor(
     private userService: UserService,
@@ -65,7 +177,6 @@ export class Inventory implements OnInit {
       { key: 'mfg_date', label: 'Manufacturing Date', checked: true },
       { key: 'needs_protection', label: 'Prescription', checked: true },
       { key: 'is_dangerous', label: 'Dangerous', checked: true },
-      { key: 'is_yakap_eligible', label: 'Yakap Eligible', checked: true },
     ],
   };
 
@@ -82,7 +193,6 @@ export class Inventory implements OnInit {
     selectedData: [],
     inputData: {
       is_dangerous: false,
-      is_yakap_eligible: false,
       needs_protection: false,
     },
   };
@@ -91,13 +201,13 @@ export class Inventory implements OnInit {
     this.userData.token = this.encryptData.decryptData('user').token;
     this.userData.data = this.encryptData.decryptData('user');
     this.initializeFlags();
+    this.loadMedicineCategories();
     this.getMedicine();
   }
 
   initializeFlags() {
     this.medicineData.data.needs_protection = Boolean(this.medicineData.data?.needs_protection) === true;
     this.medicineData.inputData.is_dangerous = Boolean(this.medicineData.inputData?.is_dangerous) === true;
-    this.medicineData.inputData.is_yakap_eligible = Boolean(this.medicineData.inputData?.is_yakap_eligible) === true;
     this.cd.detectChanges();
   }
 
@@ -138,15 +248,63 @@ export class Inventory implements OnInit {
   }
 
   async getMedicine() {
+    this.isLoading = true;
     try {
       const endpoint = this.buildQuery();
       const res = await this.userService.getUser(endpoint, '', this.userData.token);
       if (res.status === 200) {
         this.medicineData.data = res.data;
+        this.updateCategoryOptions(Array.isArray(res.data?.data) ? res.data.data : []);
+        await this.loadMedicineCategories(false);
         this.cd.detectChanges();
       }
     } catch (e: any) {
       console.log(e);
+    } finally {
+      this.isLoading = false;
+      this.hasLoaded = true;
+      this.cd.detectChanges();
+    }
+  }
+
+  async loadMedicineCategories(forceRefresh = true) {
+    const companyId = Number(this.userData.data?.data?.company_id ?? 0);
+    const branchId = this.getSelectedBranchId();
+    const endpoints = [
+      `medicine/categories?company_id=${companyId}&branch_id=${branchId}`,
+      `medicine/categories?company_id=${companyId}`,
+      'medicine/categories',
+      `medicine?company_id=${companyId}&per_page=500&export=1`,
+    ];
+
+    try {
+      const responses = await Promise.allSettled(
+        endpoints.map((endpoint) => this.userService.getUser(endpoint, '', this.userData.token))
+      );
+
+      const mergedSources: any[] = [...this.defaultMedicineCategoryOptions];
+
+      for (const result of responses) {
+        if (result.status !== 'fulfilled') {
+          continue;
+        }
+
+        const payload = result.value?.data;
+        const categoryList = Array.isArray(payload?.data) ? payload.data : [];
+        mergedSources.push(...categoryList);
+      }
+
+      this.updateCategoryOptions(mergedSources);
+
+      if (forceRefresh) {
+        this.cd.detectChanges();
+      }
+    } catch (e: any) {
+      console.log(e);
+      this.updateCategoryOptions(this.defaultMedicineCategoryOptions);
+      if (forceRefresh) {
+        this.cd.detectChanges();
+      }
     }
   }
 
@@ -187,33 +345,20 @@ export class Inventory implements OnInit {
     this.getMedicine();
   }
 
+  getSortValue(field: string, descending = false) {
+    return `sort=${descending ? '-' : ''}${field}`;
+  }
+
+  isSortActive(field: string, descending = false) {
+    return this.sort === this.getSortValue(field, descending);
+  }
+
   openExportModal() {
     this.isExportModalOpen.set(true);
   }
 
   closeExportModal() {
     this.isExportModalOpen.set(false);
-  }
-
-  async mergeDuplicateMedicines() {
-    try {
-      const payload = {
-        company_id: Number(this.userData.data?.data?.company_id ?? 0),
-        branch_id: this.getSelectedBranchId(),
-      };
-
-      const res = await this.userService.postUser('medicine/merge-duplicates', payload, this.userData.token);
-      if (res.status === 200 && res.data?.success) {
-        Extras.showToast(res.data?.message ?? 'Duplicate medicines merged successfully.', 'success');
-        await this.getMedicine();
-        return;
-      }
-
-      Extras.showToast(res.data?.message ?? 'Failed to merge duplicate medicines.', 'warning');
-    } catch (e: any) {
-      console.log(e);
-      Extras.showToast(e?.error?.message ?? 'Failed to merge duplicate medicines.', 'danger');
-    }
   }
 
   async exportCsv() {
@@ -262,11 +407,6 @@ export class Inventory implements OnInit {
     this.medicineData.inputData.is_dangerous = this.medicineData.inputData.is_dangerous ? 0 : 1;
   }
 
-  toggleYakapEligible() {
-    if (!this.medicineData.inputData) this.medicineData.inputData = {};
-    this.medicineData.inputData.is_yakap_eligible = this.medicineData.inputData.is_yakap_eligible ? 0 : 1;
-  }
-
   async delete() {
     try {
       const res = await this.userService.deleteUser(`medicine/${this.medicineData.inputData.medicine_id}`, '', this.userData.token);
@@ -300,10 +440,6 @@ export class Inventory implements OnInit {
     if (!this.medicineData.inputData.is_dangerous) {
       this.medicineData.inputData.is_dangerous = false;
     }
-    if (!this.medicineData.inputData.is_yakap_eligible) {
-      this.medicineData.inputData.is_yakap_eligible = false;
-    }
-
     if (
       !this.medicineData.inputData.generic_name ||
       !this.medicineData.inputData.medicine_name ||
@@ -326,7 +462,9 @@ export class Inventory implements OnInit {
       return;
     }
 
-    this.medicineData.inputData.branch_id = this.getAssignedBranchId();
+    this.medicineData.inputData.branch_id = Number(
+      this.medicineData.inputData?.branch_id ?? this.getSelectedBranchId() ?? this.getAssignedBranchId()
+    );
     const payload = { ...this.medicineData.inputData };
     if (payload.received_date instanceof Date) {
       payload.received_date = payload.received_date.toISOString().split('T')[0];
@@ -383,7 +521,9 @@ export class Inventory implements OnInit {
       return;
     }
 
-    this.medicineData.inputData.branch_id = this.getAssignedBranchId();
+    this.medicineData.inputData.branch_id = Number(
+      this.medicineData.inputData?.branch_id ?? this.getSelectedBranchId() ?? this.getAssignedBranchId()
+    );
     const payload = { ...this.medicineData.inputData };
     if (payload.received_date instanceof Date) {
       payload.received_date = payload.received_date.toISOString().split('T')[0];
@@ -409,6 +549,11 @@ export class Inventory implements OnInit {
   }
 
   async openTransferModal(item: any) {
+    if (!this.canTransferMedicine(item)) {
+      Extras.showToast('Medicines with 2 or fewer stocks cannot be transferred.', 'warning');
+      return;
+    }
+
     this.medicineData.inputData = item;
     this.transferForm = {
       inventory_id: Number(item?.inventory_id ?? 0),
@@ -422,6 +567,11 @@ export class Inventory implements OnInit {
   }
 
   async submitTransfer() {
+    if (!this.canTransferMedicine(this.medicineData.inputData)) {
+      Extras.showToast('Medicines with 2 or fewer stocks cannot be transferred.', 'warning');
+      return;
+    }
+
     if (!this.transferForm.inventory_id || !this.transferForm.to_branch_id || this.transferForm.quantity <= 0) {
       Extras.showToast('Please complete the transfer details.', 'warning');
       return;
@@ -458,6 +608,10 @@ export class Inventory implements OnInit {
       console.log(e);
       Extras.showToast(e?.error?.message ?? 'Failed to send transfer request.', 'danger');
     }
+  }
+
+  canTransferMedicine(item: any): boolean {
+    return Number(item?.stocks ?? 0) > 2;
   }
 
   getRows() {
@@ -509,7 +663,6 @@ export class Inventory implements OnInit {
       mfg_date: item?.mfg_date ?? '',
       needs_protection: item?.needs_protection ? 'Yes' : 'No',
       is_dangerous: item?.is_dangerous ? 'Yes' : 'No',
-      is_yakap_eligible: item?.is_yakap_eligible ? 'Yes' : 'No',
     };
 
     return selectedKeys.reduce((acc, key) => {
@@ -539,5 +692,41 @@ export class Inventory implements OnInit {
   private escapeCsvValue(value: unknown) {
     const normalized = value == null ? '' : String(value);
     return `"${normalized.replace(/"/g, '""')}"`;
+  }
+
+  private updateCategoryOptions(items: any[]) {
+    const categories = new Set<string>(this.medicineCategoryOptions);
+
+    for (const item of items) {
+      const rawCategory = typeof item === 'string'
+        ? String(item).trim()
+        : String(item?.category ?? '').trim();
+
+      if (!rawCategory) {
+        continue;
+      }
+
+      for (const category of this.normalizeCategoryValues(rawCategory)) {
+        if (category) {
+          categories.add(category);
+        }
+      }
+    }
+
+    const currentCategory = String(this.medicineData.inputData?.category ?? '').trim();
+    for (const category of this.normalizeCategoryValues(currentCategory)) {
+      if (category) {
+        categories.add(category);
+      }
+    }
+
+    this.medicineCategoryOptions = Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }
+
+  private normalizeCategoryValues(value: string): string[] {
+    return String(value ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item !== '');
   }
 }

@@ -1,0 +1,39 @@
+.catalog-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.catalog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  border-color: rgba(203, 213, 225, 0.95);
+}
+
+.catalog-card-meta {
+  display: flex;
+  min-height: 5.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.catalog-card-meta p:last-child {
+  line-height: 1.35rem;
+}
+
+.catalog-card-branch {
+  display: flex;
+  min-height: 7.5rem;
+  flex-direction: column;
+}
+
+.catalog-card-branch p:nth-child(2) {
+  min-height: 1.25rem;
+}
+
+.catalog-card-branch p:nth-child(3) {
+  min-height: 2.5rem;
+  line-height: 1.35rem;
+}
+
+.catalog-card-branch p:last-child {
+  margin-top: auto;
+}

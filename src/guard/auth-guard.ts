@@ -75,6 +75,6 @@ export class AuthGuard implements CanActivate {
   private handleInvalidSession(): void {
     this.encryptData.logoutDelete('user');
     this.extras.load.set(false);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

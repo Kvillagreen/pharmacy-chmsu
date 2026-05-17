@@ -20,6 +20,16 @@ export class ControlledDrugs implements OnInit {
   selectedDays = 30;
   perPage = 10;
   pageNumber = 1;
+  sort = '';
+  isLoading = true;
+  hasLoaded = false;
+  isLocationModalOpen = false;
+  isDisposeModalOpen = false;
+  selectedRow: ControlledDrugInventoryRow | null = null;
+  locationForm = {
+    batch_id: 0,
+    location: '',
+  };
   userData: UserData = {
     data: {},
     token: '',
@@ -101,10 +111,15 @@ export class ControlledDrugs implements OnInit {
       params.set('search', this.search.trim());
     }
 
+    if (this.sort) {
+      params.set('sort', this.sort);
+    }
+
     return `controlled-drugs?${params.toString()}`;
   }
 
   async getControlledDrugs(page = 1) {
+    this.isLoading = true;
     try {
       const endpoint = this.buildQuery(page);
 
@@ -122,6 +137,10 @@ export class ControlledDrugs implements OnInit {
     } catch (e) {
       console.log(e);
       this.extras.showToast('Failed to load controlled-drug data', 'warning');
+    } finally {
+      this.isLoading = false;
+      this.hasLoaded = true;
+      this.cd.detectChanges();
     }
   }
 
@@ -144,6 +163,20 @@ export class ControlledDrugs implements OnInit {
 
   prev() {
     this.changePage(this.controlledDrugData.data.inventory.meta.current_page - 1);
+  }
+
+  filter(sortValue: string) {
+    this.sort = sortValue;
+    this.pageNumber = 1;
+    this.getControlledDrugs(1);
+  }
+
+  getSortValue(field: string, descending = false) {
+    return `${descending ? '-' : ''}${field}`;
+  }
+
+  isSortActive(field: string, descending = false) {
+    return this.sort === this.getSortValue(field, descending);
   }
 
   stockStatus(row: ControlledDrugInventoryRow | null | undefined): string {
@@ -265,5 +298,92 @@ export class ControlledDrugs implements OnInit {
     }
 
     return this.extras.formatDate(row.expiry_date);
+  }
+
+  openLocationModal(row: ControlledDrugInventoryRow | null | undefined) {
+    if (!row?.batch_id) {
+      this.extras.showToast('This row has no batch location to update.', 'warning');
+      return;
+    }
+
+    this.selectedRow = row;
+    this.locationForm = {
+      batch_id: Number(row.batch_id),
+      location: String(row.location ?? '').trim(),
+    };
+    this.isLocationModalOpen = true;
+  }
+
+  closeLocationModal() {
+    this.isLocationModalOpen = false;
+    this.selectedRow = null;
+    this.locationForm = {
+      batch_id: 0,
+      location: '',
+    };
+  }
+
+  openDisposeModal(row: ControlledDrugInventoryRow | null | undefined) {
+    if (!row?.batch_id) {
+      this.extras.showToast('This row cannot be disposed.', 'warning');
+      return;
+    }
+
+    this.selectedRow = row;
+    this.isDisposeModalOpen = true;
+  }
+
+  closeDisposeModal() {
+    this.isDisposeModalOpen = false;
+    this.selectedRow = null;
+  }
+
+  async submitLocationUpdate() {
+    const location = this.locationForm.location.trim();
+    if (!this.locationForm.batch_id || !location) {
+      this.extras.showToast('Please enter a valid location.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await this.userService.postUser(
+        `controlled-drugs/${this.locationForm.batch_id}/update-location`,
+        { location },
+        this.userData.token
+      );
+
+      if (res.status === 200 && res.data.success) {
+        this.extras.showToast('Controlled-drug location updated successfully.', 'success');
+        this.closeLocationModal();
+        this.getControlledDrugs(this.pageNumber);
+      }
+    } catch (e) {
+      console.log(e);
+      this.extras.showToast('Failed to update controlled-drug location.', 'danger');
+    }
+  }
+
+  async confirmDispose() {
+    if (!this.selectedRow?.batch_id) {
+      this.extras.showToast('This row cannot be disposed.', 'warning');
+      return;
+    }
+
+    try {
+      const res = await this.userService.postUser(
+        `controlled-drugs/${this.selectedRow.batch_id}/dispose`,
+        {},
+        this.userData.token
+      );
+
+      if (res.status === 200 && res.data.success) {
+        this.extras.showToast('Controlled-drug batch disposed successfully.', 'success');
+        this.closeDisposeModal();
+        this.getControlledDrugs(this.pageNumber);
+      }
+    } catch (e) {
+      console.log(e);
+      this.extras.showToast('Failed to dispose controlled-drug batch.', 'danger');
+    }
   }
 }

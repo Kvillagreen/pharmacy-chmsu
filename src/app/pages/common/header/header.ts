@@ -7,6 +7,8 @@ import { IonIcon } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { BranchThemeService } from '../../../theme/branch-theme.service';
+import { normalizeBranchThemeKey } from '../../../theme/branch-theme';
 
 @Component({
   selector: 'app-header',
@@ -40,7 +42,8 @@ export class Header implements OnInit, OnChanges {
     public encryptData: EncryptData,
     private userService: UserService,
     private cd: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private branchThemeService: BranchThemeService
   ) {}
 
   ngOnChanges() {
@@ -83,7 +86,7 @@ export class Header implements OnInit, OnChanges {
 
     if (this.checker('branches')) {
       if (!branch) {
-        branch = { selectedBranch: 0 };
+        branch = { selectedBranch: 0, selectedBranchName: '', selectedBranchThemeKey: this.userData.data?.theme_key ?? 'emerald' };
         this.encryptData.encryptAndStoreData('branch', branch);
       }
       this.branchNumber = Number(branch.selectedBranch) || 0;
@@ -92,6 +95,7 @@ export class Header implements OnInit, OnChanges {
       branch = {
         selectedBranch: this.getStoredBranchId(),
         selectedBranchName: '',
+        selectedBranchThemeKey: this.userData.data?.theme_key ?? 'emerald',
       };
       this.encryptData.encryptAndStoreData('branch', branch);
     }
@@ -184,7 +188,7 @@ export class Header implements OnInit, OnChanges {
     const res = await this.userService.postUser('logout', '', this.userData.token);
     if (res.status === 200) {
       this.encryptData.logoutDelete('user');
-      this.router.navigate(['/login']);
+      this.router.navigate(['/']);
       this.isLogout.set(false);
       this.cd.detectChanges();
     }
@@ -197,10 +201,34 @@ export class Header implements OnInit, OnChanges {
     const branch = {
       selectedBranch,
       selectedBranchName: selectedBranchData?.branchName ?? '',
+      selectedBranchThemeKey: normalizeBranchThemeKey(selectedBranchData?.theme_key ?? selectedBranchData?.themeKey ?? this.userData.data?.theme_key ?? 'emerald'),
     };
 
     this.encryptData.encryptAndStoreData('branch', branch);
+    this.branchThemeService.syncFromStoredState(this.encryptData.decryptData('user'), branch);
     window.location.reload();
+  }
+
+  private persistCurrentBranchThemeContext(): void {
+    const storedBranch = this.encryptData.decryptData('branch') ?? {};
+    const selectedBranch = Number(storedBranch?.selectedBranch ?? this.branchNumber ?? this.getStoredBranchId() ?? 0);
+    const effectiveBranchId = selectedBranch || this.getStoredBranchId();
+    const selectedBranchData = this.branchList.find((branch) => Number(branch.branchId) === Number(effectiveBranchId));
+
+    const branchPayload = {
+      selectedBranch,
+      selectedBranchName: selectedBranchData?.branchName ?? storedBranch?.selectedBranchName ?? '',
+      selectedBranchThemeKey: normalizeBranchThemeKey(
+        selectedBranchData?.theme_key
+        ?? selectedBranchData?.themeKey
+        ?? this.userData.data?.theme_key
+        ?? storedBranch?.selectedBranchThemeKey
+        ?? 'emerald'
+      ),
+    };
+
+    this.encryptData.encryptAndStoreData('branch', branchPayload);
+    this.branchThemeService.syncFromStoredState(this.encryptData.decryptData('user'), branchPayload);
   }
 
   async getBranchList() {
@@ -215,6 +243,7 @@ export class Header implements OnInit, OnChanges {
       const res = await this.userService.getUser('branch/' + companyId, undefined, this.userData.token);
       if (res.status === 200 && res.data?.success) {
         this.branchList = Array.isArray(res.data?.data?.branches) ? res.data.data.branches : [];
+        this.persistCurrentBranchThemeContext();
       } else {
         console.log(res);
         this.branchList = [];
@@ -362,5 +391,9 @@ export class Header implements OnInit, OnChanges {
     }
 
     return !!this.permissionMap[permission];
+  }
+
+  canOpenSettings(): boolean {
+    return Boolean(this.userData.token && this.userData.data);
   }
 }

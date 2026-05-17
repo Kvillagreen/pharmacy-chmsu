@@ -1,0 +1,125 @@
+.dashboard-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.dashboard-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.dashboard-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #edf2f7 0%, #f8fafc 50%, #edf2f7 100%);
+  background-size: 200% 100%;
+  animation: dashboard-shimmer 1.4s ease-in-out infinite;
+}
+
+.revenue-chart {
+  position: relative;
+  overflow: hidden;
+}
+
+.revenue-chart::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to top, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 100% 3.25rem;
+  pointer-events: none;
+}
+
+.revenue-chart-scroll {
+  position: relative;
+  min-height: 16rem;
+  align-items: flex-end;
+}
+
+.revenue-bar {
+  min-height: 18px;
+}
+
+.theme-chart-surface {
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border) 45%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 94%, #ffffff 6%) 0%,
+    color-mix(in srgb, var(--secondary) 78%, var(--card) 22%) 100%
+  );
+}
+
+.theme-bar-primary {
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border) 72%);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--primary) 65%, #ffffff 35%) 0%,
+    color-mix(in srgb, var(--accent) 72%, var(--card) 28%) 55%,
+    color-mix(in srgb, var(--card) 88%, #ffffff 12%) 100%
+  );
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 32%, transparent 68%);
+}
+
+.theme-bar-secondary {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--chart-2) 72%, #ffffff 28%) 0%,
+    color-mix(in srgb, var(--chart-1) 82%, #ffffff 18%) 100%
+  );
+}
+
+.theme-bar-tertiary {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--chart-4) 70%, #ffffff 30%) 0%,
+    color-mix(in srgb, var(--chart-5) 78%, #ffffff 22%) 100%
+  );
+}
+
+.theme-progress-track {
+  background: color-mix(in srgb, var(--secondary) 82%, var(--card) 18%);
+}
+
+@media (min-width: 1280px) {
+  .dashboard-panel {
+    height: 28rem;
+  }
+
+  .dashboard-panel-wide {
+    height: 30rem;
+  }
+
+  .revenue-chart-scroll {
+    min-height: 18rem;
+  }
+}
+
+.dashboard-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@keyframes dashboard-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

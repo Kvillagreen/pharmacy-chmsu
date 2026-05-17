@@ -53,37 +53,27 @@ export class Sales implements OnInit {
     {
       type: 'Cash',
       icon: 'cash-outline',
+      note: 'Accept physical cash and compute change automatically.',
     },
     {
       type: 'Card',
       icon: 'card-outline',
+      note: 'Store the terminal or bank reference for the payment.',
     },
     {
       type: 'Gcash',
       icon: 'phone-portrait-outline',
+      note: 'Store the GCash reference for easier verification.',
     },
   ];
 
   transactionTypeOptions = [
     { value: 'regular', label: 'Regular', icon: 'checkbox-outline', note: 'No extra documents required.' },
-    { value: 'hmo', label: 'HMO', icon: 'business-outline', note: 'Requires provider, member info, and documents.' },
-    { value: 'philhealth', label: 'PhilHealth', icon: 'shield-checkmark-outline', note: 'Requires member info and documents.' },
-    { value: 'yakap', label: 'Yakap', icon: 'people-outline', note: 'Only Yakap eligible medicines can be selected.' },
   ];
 
-  hmoProviderOptions = [
-    'Maxicare',
-    'Medicard',
-    'Intellicare',
-    'Etiqa',
-    'Avega',
-    'Cocolife',
-    'Valucare',
-    'PhilHealth',
-  ];
-
-  stockMap: { [key: number]: any } = {};
-  onLoad = signal(false);
+  stockMap: { [key: string]: any } = {};
+  isLoading = true;
+  hasLoaded = false;
   isDiscount = signal(false);
   isPay = signal(false);
   isReceiptOpen = signal(false);
@@ -93,10 +83,6 @@ export class Sales implements OnInit {
   extras = Extras;
   endpoint = 'transaction';
   lastReceipt: any = null;
-  prescriptionFile: File | null = null;
-  memberIdImageFile: File | null = null;
-  submitDocumentsLater = false;
-
   constructor(
     private userService: UserService,
     private encryptData: EncryptData,
@@ -107,6 +93,7 @@ export class Sales implements OnInit {
     this.userData.token = this.encryptData.decryptData('user').token;
     this.userData.data = this.encryptData.decryptData('user');
     this.loadSales();
+    this.loadMedicineCategories();
     this.getMedicine();
   }
 
@@ -118,17 +105,44 @@ export class Sales implements OnInit {
       scpwd_id_number: '',
       discount_type: '',
       payment_method: '',
+      reference_number: '',
       used_amount: 0,
       items: [],
       request_token: '',
       transaction_type: 'regular',
-      hmo_provider: '',
       patient_name: '',
       membership_id: '',
-      coverage_type: 'full',
       documents_submitted: false,
       prescription_path: '',
       member_id_image_path: '',
+      patient_age: null,
+      prescriber_name: '',
+      prescriber_prc_license_number: '',
+      prescribed_generic_name: '',
+      prescribed_brand_name: '',
+      prescribed_dosage_strength: '',
+      prescribed_dosage_form: '',
+      prescribed_quantity_dispensed: null,
+      dispensing_date: '',
+      pharmacist_signature: '',
+      customer_contact_number: '',
+      customer_id_number: '',
+      customer_address_line: '',
+      customer_barangay: '',
+      customer_city_municipality: '',
+      customer_province: '',
+      customer_postal_code: '',
+      customer_country: 'Philippines',
+      prescriber_clinic_address: '',
+      prescriber_s2_license_number: '',
+      prescriber_ptr_number: '',
+      yellow_prescription_serial_number: '',
+      dangerous_quantity_in_words: '',
+      dangerous_quantity_in_figures: '',
+      dangerous_total_dosage: '',
+      dangerous_treatment_duration: '',
+      receiver_name: '',
+      receiver_signature: '',
     };
   }
 
@@ -159,32 +173,6 @@ export class Sales implements OnInit {
     this.getMedicine();
   }
 
-  getUniqueCategories(): string[] {
-    if (!this.medicineData.data?.data) return [];
-
-    const normalize = (str: string) => {
-      if (!str) return '';
-      let cleaned = str.toLowerCase().replace(/\s+/g, '');
-      if (cleaned.endsWith('s')) cleaned = cleaned.slice(0, -1);
-      return cleaned;
-    };
-
-    const seen = new Set<string>();
-    const uniqueCategories: string[] = [];
-
-    for (const item of this.medicineData.data.data) {
-      const raw = item.category || '';
-      const norm = normalize(raw);
-
-      if (!seen.has(norm)) {
-        seen.add(norm);
-        uniqueCategories.push(raw);
-      }
-    }
-
-    return uniqueCategories;
-  }
-
   buildQuery(): string {
     const params: string[] = [];
     const selectedBranch = this.getSelectedBranchId();
@@ -207,9 +195,16 @@ export class Sales implements OnInit {
 
   loadSales() {
     const saved = this.encryptData.decryptData('sales');
-    if (saved) {
-      this.medicineData.salesData = JSON.parse(saved);
+    const branchCarts = this.normalizeSalesStorage(saved);
+    const selectedBranchId = this.getSelectedBranchId();
+
+    if (selectedBranchId > 0) {
+      this.medicineData.salesData = branchCarts[String(selectedBranchId)] ?? [];
+    } else {
+      this.medicineData.salesData = Object.values(branchCarts).flat();
     }
+
+    this.syncRegulatedMedicineInfo();
   }
 
   getSubTotalPrice(): number {
@@ -282,14 +277,10 @@ export class Sales implements OnInit {
     data: any,
     action: 'addSale' | 'minusSale' | 'addStock' | 'minusStock' | 'trash'
   ) {
-    if ((action === 'addSale' || action === 'minusStock') && !this.canSelectMedicine(data)) {
-      Extras.showToast('Only Yakap eligible medicines can be selected for Yakap transactions.', 'warning');
-      return;
-    }
-
     const sales = this.medicineData.salesData;
-    const stockItem = this.stockMap[data.medicine_id];
-    let salesItem = sales.find((x: any) => x.medicine_id === data.medicine_id);
+    const itemKey = this.getCartItemKey(data);
+    const stockItem = this.stockMap[itemKey];
+    let salesItem = sales.find((x: any) => this.getCartItemKey(x) === itemKey);
 
     if (!stockItem) return;
 
@@ -313,7 +304,7 @@ export class Sales implements OnInit {
         stockItem.stocks++;
 
         if (salesItem.quantity <= 0) {
-          this.removeSale(data.medicine_id);
+          this.removeSale(data);
         }
         break;
 
@@ -332,7 +323,7 @@ export class Sales implements OnInit {
       case 'trash':
         if (!salesItem) return;
         stockItem.stocks += salesItem.quantity;
-        this.removeSale(data.medicine_id);
+        this.removeSale(data);
         break;
     }
 
@@ -341,25 +332,43 @@ export class Sales implements OnInit {
     }
 
     this.syncStocksWithSales();
+    this.syncRegulatedMedicineInfo();
     this.customDiscountPrice(null);
     this.saveSales();
     this.cd.detectChanges();
   }
 
-  getStock(medicineId: number): number {
-    const stockItem = this.stockMap[medicineId];
+  getStock(item: any): number {
+    const stockItem = this.stockMap[this.getCartItemKey(item)];
     if (!stockItem) return 0;
     return stockItem.stocks || 0;
   }
 
-  removeSale(medicine_id: number) {
+  removeSale(item: any) {
+    const itemKey = this.getCartItemKey(item);
     this.medicineData.salesData = this.medicineData.salesData.filter(
-      (x: any) => x.medicine_id !== medicine_id
+      (x: any) => this.getCartItemKey(x) !== itemKey
     );
+    this.syncRegulatedMedicineInfo();
   }
 
   saveSales() {
-    this.encryptData.encryptAndStoreData('sales', JSON.stringify(this.medicineData.salesData));
+    const selectedBranchId = this.getSelectedBranchId();
+    let branchCarts = this.normalizeSalesStorage(this.encryptData.decryptData('sales'));
+
+    if (selectedBranchId > 0) {
+      branchCarts[String(selectedBranchId)] = (this.medicineData.salesData ?? []).map((item: any) => ({ ...item }));
+    } else {
+      branchCarts = this.groupSalesByBranch(this.medicineData.salesData ?? []);
+    }
+
+    Object.keys(branchCarts).forEach((branchKey) => {
+      if (!branchCarts[branchKey]?.length) {
+        delete branchCarts[branchKey];
+      }
+    });
+
+    this.encryptData.encryptAndStoreData('sales', branchCarts);
   }
 
   updateTotal(item: any) {
@@ -373,17 +382,35 @@ export class Sales implements OnInit {
     return Number(storedBranch?.selectedBranch ?? this.userData.data?.data?.branch_id ?? 0);
   }
 
+  async loadMedicineCategories(forceRefresh = true) {
+    const companyId = Number(this.userData.data?.data?.company_id ?? 0);
+    const branchId = this.getSelectedBranchId();
+    const endpoint = branchId > 0
+      ? `medicine?company_id=${companyId}&branch_id=${branchId}&per_page=500&export=1`
+      : `medicine?company_id=${companyId}&per_page=500&export=1`;
+
+    try {
+      const response = await this.userService.getUser(endpoint, '', this.userData.token);
+      const medicines = Array.isArray(response?.data?.data) ? response.data.data : [];
+      this.updateCategoryOptions(medicines, true);
+
+      if (forceRefresh) {
+        this.cd.detectChanges();
+      }
+    } catch (e: any) {
+      console.log(e);
+      this.salesData.categoryData = [];
+      if (forceRefresh) {
+        this.cd.detectChanges();
+      }
+    }
+  }
+
   onManualQtyChange(event: any, data: any) {
     let newQty = Number(event.target.value);
     if (isNaN(newQty) || newQty < 0) newQty = 0;
 
-    if (this.salesData.selectedTransaction === 'yakap' && !data?.is_yakap_eligible && newQty > 0) {
-      Extras.showToast('Only Yakap eligible medicines can be selected for Yakap transactions.', 'warning');
-      event.target.value = data.quantity || 0;
-      return;
-    }
-
-    const stockItem = this.stockMap[data.medicine_id];
+    const stockItem = this.stockMap[this.getCartItemKey(data)];
     if (!stockItem) return;
 
     const oldQty = data.quantity || 0;
@@ -396,14 +423,16 @@ export class Sales implements OnInit {
     data.quantity = newQty;
 
     if (data.quantity <= 0) {
-      this.removeSale(data.medicine_id);
+      this.removeSale(data);
     }
 
     this.syncStocksWithSales();
+    this.syncRegulatedMedicineInfo();
     this.saveSales();
   }
 
   async getMedicine() {
+    this.isLoading = true;
     try {
       const endpoint = this.buildQuery();
       const res = await this.userService.getUser(endpoint, null, this.userData.token);
@@ -412,15 +441,16 @@ export class Sales implements OnInit {
         const apiData = res.data.data || [];
 
         apiData.forEach((item: any) => {
-          const existing = this.stockMap[item.medicine_id];
+          const stockKey = this.getCartItemKey(item);
+          const existing = this.stockMap[stockKey];
 
           if (!existing) {
-            this.stockMap[item.medicine_id] = {
+            this.stockMap[stockKey] = {
               ...item,
               original_stock: item.stocks,
             };
           } else {
-            this.stockMap[item.medicine_id] = {
+            this.stockMap[stockKey] = {
               ...item,
               stocks: existing.stocks,
               original_stock: existing.original_stock,
@@ -433,19 +463,19 @@ export class Sales implements OnInit {
         this.medicineData.data = {
           ...res.data,
           data: apiData.map((item: any) => ({
-            ...this.stockMap[item.medicine_id],
+            ...this.stockMap[this.getCartItemKey(item)],
           })),
         };
-
-        if (!this.onLoad()) {
-          this.salesData.categoryData = this.getUniqueCategories();
-          this.onLoad.set(true);
-        }
+        this.updateCategoryOptions(apiData);
 
         this.cd.detectChanges();
       }
     } catch (e: any) {
       console.log(e);
+    } finally {
+      this.isLoading = false;
+      this.hasLoaded = true;
+      this.cd.detectChanges();
     }
   }
 
@@ -455,7 +485,7 @@ export class Sales implements OnInit {
     });
 
     this.medicineData.salesData.forEach((sale: any) => {
-      const stockItem = this.stockMap[sale.medicine_id];
+      const stockItem = this.stockMap[this.getCartItemKey(sale)];
 
       if (stockItem) {
         stockItem.stocks -= sale.quantity;
@@ -481,99 +511,68 @@ export class Sales implements OnInit {
     return arr;
   }
 
-  setTransactionType(type: string) {
-    if (type === this.salesData.selectedTransaction) {
-      return;
-    }
+  getSalesGroupsByBranch() {
+    const grouped = new Map<string, { branchName: string; items: any[]; totalQuantity: number }>();
 
-    if (type === 'yakap') {
-      const hasInvalidMedicines = this.medicineData.salesData.some((item: any) => !item?.is_yakap_eligible);
-      if (hasInvalidMedicines) {
-        Extras.showToast('Remove non-Yakap medicines from the cart before switching to Yakap.', 'warning');
-        return;
+    for (const item of this.medicineData.salesData ?? []) {
+      const branchName = String(item?.branch_name ?? '').trim() || 'Unassigned Branch';
+      const existing = grouped.get(branchName);
+
+      if (existing) {
+        existing.items.push(item);
+        existing.totalQuantity += Number(item?.quantity ?? 0);
+        continue;
       }
+
+      grouped.set(branchName, {
+        branchName,
+        items: [item],
+        totalQuantity: Number(item?.quantity ?? 0),
+      });
     }
 
+    return Array.from(grouped.values());
+  }
+
+  isAllBranchesScope(): boolean {
+    return this.getSelectedBranchId() === 0;
+  }
+
+  setTransactionType(type: string) {
     this.salesData.selectedTransaction = type;
     this.salesModel.transaction_type = type;
-
-    if (type === 'philhealth') {
-      this.salesModel.hmo_provider = 'PhilHealth';
-    } else if (type !== 'hmo') {
-      this.salesModel.hmo_provider = '';
-    }
-
-    if (type === 'regular') {
-      this.clearTransactionDocuments();
-      this.salesModel.patient_name = '';
-      this.salesModel.membership_id = '';
-      this.salesModel.coverage_type = 'full';
-      this.submitDocumentsLater = false;
-    }
-
-    if (type === 'yakap') {
-      this.salesModel.patient_name = '';
-      this.salesModel.membership_id = '';
-      this.salesModel.coverage_type = '';
-      this.salesModel.hmo_provider = '';
-      this.submitDocumentsLater = false;
-    } else {
-    }
-
     this.updateDocumentStatus();
     this.cd.detectChanges();
   }
 
   isRegularTransaction(): boolean {
-    return this.salesData.selectedTransaction === 'regular';
+    return !this.requiresPrescriptionDetails() && !this.requiresDangerousDrugDetails();
   }
 
-  isInsuranceTransaction(): boolean {
-    return this.salesData.selectedTransaction === 'hmo' || this.salesData.selectedTransaction === 'philhealth';
+  isPrescriptionTransaction(): boolean {
+    return this.requiresPrescriptionDetails();
   }
 
-  isYakapTransaction(): boolean {
-    return this.salesData.selectedTransaction === 'yakap';
+  isDangerousTransaction(): boolean {
+    return this.requiresDangerousDrugDetails();
   }
 
   canSelectMedicine(medicine: any): boolean {
-    if (this.salesData.selectedTransaction !== 'yakap') {
-      return true;
-    }
-
-    return Boolean(medicine?.is_yakap_eligible);
+    return true;
   }
 
   onDocumentSelected(event: Event, type: 'prescription' | 'member_id_image') {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
 
-    if (type === 'prescription') {
-      this.prescriptionFile = file;
-    } else {
-      this.memberIdImageFile = file;
-    }
-
-    if (file && this.isInsuranceTransaction()) {
-      this.submitDocumentsLater = false;
-    }
-
     this.updateDocumentStatus();
   }
 
   removeSelectedDocument(type: 'prescription' | 'member_id_image') {
-    if (type === 'prescription') {
-      this.prescriptionFile = null;
-    } else {
-      this.memberIdImageFile = null;
-    }
-
     this.updateDocumentStatus();
   }
 
   clearTransactionDocuments() {
-    this.prescriptionFile = null;
-    this.memberIdImageFile = null;
     this.updateDocumentStatus();
   }
 
@@ -583,12 +582,7 @@ export class Sales implements OnInit {
       return;
     }
 
-    if (this.isInsuranceTransaction() && this.submitDocumentsLater && !this.prescriptionFile && !this.memberIdImageFile) {
-      this.salesModel.documents_submitted = false;
-      return;
-    }
-
-    this.salesModel.documents_submitted = Boolean(this.prescriptionFile && this.memberIdImageFile);
+    this.salesModel.documents_submitted = false;
   }
 
   documentStatusLabel(): string {
@@ -596,11 +590,15 @@ export class Sales implements OnInit {
       return 'No documents required';
     }
 
-    if (this.isInsuranceTransaction() && this.submitDocumentsLater && !this.salesModel.documents_submitted) {
-      return 'Documents will be submitted later';
+    if (this.requiresPrescriptionDetails() && this.requiresDangerousDrugDetails()) {
+      return 'Both regulated forms required';
     }
 
-    return this.salesModel.documents_submitted ? 'Documents submitted' : 'Pending required documents';
+    if (this.isPrescriptionTransaction()) {
+      return 'Prescription details required';
+    }
+
+    return 'Dangerous drug details required';
   }
 
   documentStatusClass(): string {
@@ -608,103 +606,77 @@ export class Sales implements OnInit {
       return 'bg-slate-100 text-slate-700';
     }
 
-    if (this.isInsuranceTransaction() && this.submitDocumentsLater && !this.salesModel.documents_submitted) {
-      return 'bg-sky-100 text-sky-700';
+    if (this.requiresPrescriptionDetails() && this.requiresDangerousDrugDetails()) {
+      return 'bg-amber-100 text-amber-700';
     }
 
-    return this.salesModel.documents_submitted
-      ? 'bg-emerald-100 text-emerald-700'
-      : 'bg-amber-100 text-amber-700';
+    if (this.isPrescriptionTransaction()) {
+      return 'bg-blue-100 text-blue-700';
+    }
+
+    return 'bg-red-100 text-red-700';
   }
 
   selectedFileName(type: 'prescription' | 'member_id_image'): string {
-    const file = type === 'prescription' ? this.prescriptionFile : this.memberIdImageFile;
-    return file?.name || 'No file selected';
-  }
-
-  setInsuranceDocumentMode(mode: 'now' | 'later') {
-    if (!this.isInsuranceTransaction()) {
-      return;
-    }
-
-    this.submitDocumentsLater = mode === 'later';
-
-    if (this.submitDocumentsLater) {
-      this.clearTransactionDocuments();
-    } else {
-      this.updateDocumentStatus();
-    }
+    return 'No file selected';
   }
 
   shouldShowDocumentUploader(): boolean {
-    if (this.isYakapTransaction()) {
-      return true;
-    }
-
-    if (!this.isInsuranceTransaction()) {
-      return false;
-    }
-
-    return !this.submitDocumentsLater || Boolean(this.prescriptionFile || this.memberIdImageFile);
+    return false;
   }
 
   private validateTransactionDetails(): boolean {
-    const transactionType = this.salesData.selectedTransaction || 'regular';
+    const transactionType = this.currentRegulatedClassification();
     this.salesModel.transaction_type = transactionType;
 
-    if (transactionType === 'hmo' || transactionType === 'philhealth') {
-      if (!this.salesModel.hmo_provider) {
-        this.extras.showToast('Provider is required for this transaction type.', 'warning');
-        return false;
-      }
+    const validators: Array<{ valid: boolean; message: string }> = [];
 
-      if (!this.salesModel.patient_name?.trim()) {
-        this.extras.showToast('Patient name is required.', 'warning');
-        return false;
-      }
-
-      if (!this.salesModel.membership_id?.trim()) {
-        this.extras.showToast('Membership ID is required.', 'warning');
-        return false;
-      }
-
-      if (!this.salesModel.coverage_type) {
-        this.extras.showToast('Coverage type is required.', 'warning');
-        return false;
-      }
-
-      if ((this.prescriptionFile && !this.memberIdImageFile) || (!this.prescriptionFile && this.memberIdImageFile)) {
-        this.extras.showToast('Please upload both the prescription and member ID together.', 'warning');
-        return false;
-      }
-
-      if (!this.submitDocumentsLater && (!this.prescriptionFile || !this.memberIdImageFile)) {
-        this.extras.showToast('Prescription and ID document are required.', 'warning');
-        return false;
-      }
+    if (this.requiresPrescriptionDetails() || this.requiresDangerousDrugDetails()) {
+      validators.push(
+        { valid: !!this.salesModel.patient_name?.trim(), message: 'Patient full name is required.' },
+        { valid: !!this.salesModel.customer_address_line?.trim(), message: 'Patient address is required.' },
+      );
     }
 
-    if (transactionType === 'yakap') {
-      if (!this.salesModel.patient_name?.trim()) {
-        this.extras.showToast('Full name is required for Yakap transactions.', 'warning');
-        return false;
-      }
+    if (this.requiresPrescriptionDetails()) {
+      validators.push(
+        { valid: this.salesModel.patient_age !== null && Number(this.salesModel.patient_age) >= 0, message: 'Patient age is required.' },
+        { valid: !!this.salesModel.prescriber_name?.trim(), message: 'Prescriber full name is required.' },
+        { valid: !!this.salesModel.prescriber_prc_license_number?.trim(), message: 'PRC license number is required.' },
+        { valid: /^\d{7}$/.test(String(this.salesModel.prescriber_prc_license_number ?? '').trim()), message: 'PRC license number must be a 7-digit code.' },
+        { valid: !!this.salesModel.prescribed_generic_name?.trim(), message: 'Generic name is required.' },
+        { valid: !!this.salesModel.prescribed_dosage_strength?.trim(), message: 'Dosage strength is required.' },
+        { valid: !!this.salesModel.prescribed_dosage_form?.trim(), message: 'Dosage form is required.' },
+        { valid: Number(this.salesModel.prescribed_quantity_dispensed || 0) > 0, message: 'Quantity dispensed is required.' },
+        { valid: !!this.salesModel.dispensing_date?.trim(), message: 'Dispensing date is required.' },
+        { valid: !!this.salesModel.pharmacist_signature?.trim(), message: 'Pharmacist name is required.' },
+      );
+    }
 
-      if (!this.salesModel.membership_id?.trim()) {
-        this.extras.showToast('ID number is required for Yakap transactions.', 'warning');
-        return false;
-      }
+    if (this.requiresDangerousDrugDetails()) {
+      validators.push(
+        { valid: !!this.salesModel.prescriber_name?.trim(), message: 'Physician full name is required.' },
+        { valid: !!this.salesModel.prescriber_clinic_address?.trim(), message: 'Clinic address is required.' },
+        { valid: !!this.salesModel.prescriber_s2_license_number?.trim(), message: 'S-2 license number is required.' },
+        { valid: !!this.salesModel.prescriber_ptr_number?.trim(), message: 'PTR number is required.' },
+        { valid: !!this.salesModel.yellow_prescription_serial_number?.trim(), message: 'Yellow prescription serial number is required.' },
+        { valid: !!this.salesModel.dangerous_quantity_in_words?.trim(), message: 'Exact quantity in words is required.' },
+        { valid: !!this.salesModel.dangerous_quantity_in_figures?.trim(), message: 'Exact quantity in figures is required.' },
+        { valid: !!this.salesModel.dangerous_total_dosage?.trim(), message: 'Total dosage is required.' },
+        { valid: !!this.salesModel.dangerous_treatment_duration?.trim(), message: 'Treatment duration is required.' },
+        { valid: !!this.salesModel.receiver_name?.trim(), message: 'Receiver name is required.' },
+        { valid: !!this.salesModel.receiver_signature?.trim(), message: 'Receiver signature is required.' },
+        {
+          valid: !!this.salesModel.customer_contact_number?.trim() || !!this.salesModel.customer_id_number?.trim(),
+          message: 'Provide either a contact number or a valid ID number.',
+        },
+      );
+    }
 
-      if (!this.prescriptionFile || !this.memberIdImageFile) {
-        this.extras.showToast('Prescription and ID photo are required for Yakap transactions.', 'warning');
-        return false;
-      }
-
-      const hasInvalidItems = this.medicineData.salesData.some((item: any) => !item?.is_yakap_eligible);
-      if (hasInvalidItems) {
-        this.extras.showToast('Only Yakap eligible medicines can be checked out as Yakap.', 'warning');
-        return false;
-      }
+    const failed = validators.find((item) => !item.valid);
+    if (failed) {
+      this.extras.showToast(failed.message, 'warning');
+      return false;
     }
 
     this.updateDocumentStatus();
@@ -718,6 +690,7 @@ export class Sales implements OnInit {
       quantity: item.quantity,
     }));
 
+    this.syncRegulatedMedicineInfo();
     this.salesModel.items = items;
     this.salesModel.user_id = this.userData.data.data.user_id;
     this.salesModel.branch_id = this.getSelectedBranchId();
@@ -726,7 +699,7 @@ export class Sales implements OnInit {
       Number(this.salesModel.total_amount),
       Number(this.salesModel.used_amount)
     );
-    this.salesModel.transaction_type = this.salesData.selectedTransaction || 'regular';
+    this.salesModel.transaction_type = this.currentRegulatedClassification();
     this.salesModel.documents_submitted = Boolean(this.salesModel.documents_submitted);
 
     const scalarEntries: Record<string, any> = {
@@ -738,14 +711,41 @@ export class Sales implements OnInit {
       change: this.salesModel.change,
       used_amount: this.salesModel.used_amount,
       payment_method: this.salesModel.payment_method,
+      reference_number: this.requiresReferenceNumber() ? (this.salesModel.reference_number ?? '') : '',
       discount: this.salesModel.discount ?? 0,
       discount_type: this.salesModel.discount_type ?? '',
       scpwd_id_number: this.salesModel.scpwd_id_number ?? '',
-      hmo_provider: this.salesModel.hmo_provider ?? '',
       patient_name: this.salesModel.patient_name ?? '',
       membership_id: this.salesModel.membership_id ?? '',
-      coverage_type: this.salesModel.coverage_type ?? '',
       documents_submitted: this.salesModel.documents_submitted ? '1' : '0',
+      patient_age: this.salesModel.patient_age ?? '',
+      prescriber_name: this.salesModel.prescriber_name ?? '',
+      prescriber_prc_license_number: this.salesModel.prescriber_prc_license_number ?? '',
+      prescribed_generic_name: this.salesModel.prescribed_generic_name ?? '',
+      prescribed_brand_name: this.salesModel.prescribed_brand_name ?? '',
+      prescribed_dosage_strength: this.salesModel.prescribed_dosage_strength ?? '',
+      prescribed_dosage_form: this.salesModel.prescribed_dosage_form ?? '',
+      prescribed_quantity_dispensed: this.salesModel.prescribed_quantity_dispensed ?? '',
+      dispensing_date: this.salesModel.dispensing_date ?? '',
+      pharmacist_signature: this.salesModel.pharmacist_signature ?? '',
+      customer_contact_number: this.salesModel.customer_contact_number ?? '',
+      customer_id_number: this.salesModel.customer_id_number ?? '',
+      customer_address_line: this.salesModel.customer_address_line ?? '',
+      customer_barangay: this.salesModel.customer_barangay ?? '',
+      customer_city_municipality: this.salesModel.customer_city_municipality ?? '',
+      customer_province: this.salesModel.customer_province ?? '',
+      customer_postal_code: this.salesModel.customer_postal_code ?? '',
+      customer_country: this.salesModel.customer_country ?? 'Philippines',
+      prescriber_clinic_address: this.salesModel.prescriber_clinic_address ?? '',
+      prescriber_s2_license_number: this.salesModel.prescriber_s2_license_number ?? '',
+      prescriber_ptr_number: this.salesModel.prescriber_ptr_number ?? '',
+      yellow_prescription_serial_number: this.salesModel.yellow_prescription_serial_number ?? '',
+      dangerous_quantity_in_words: this.salesModel.dangerous_quantity_in_words ?? '',
+      dangerous_quantity_in_figures: this.salesModel.dangerous_quantity_in_figures ?? '',
+      dangerous_total_dosage: this.salesModel.dangerous_total_dosage ?? '',
+      dangerous_treatment_duration: this.salesModel.dangerous_treatment_duration ?? '',
+      receiver_name: this.salesModel.receiver_name ?? '',
+      receiver_signature: this.salesModel.receiver_signature ?? '',
       request_token: this.salesModel.request_token,
     };
 
@@ -758,18 +758,135 @@ export class Sales implements OnInit {
       formData.append(`items[${index}][quantity]`, String(item.quantity));
     });
 
-    if (this.prescriptionFile) {
-      formData.append('prescription', this.prescriptionFile);
-    }
-
-    if (this.memberIdImageFile) {
-      formData.append('member_id_image', this.memberIdImageFile);
-    }
-
     return formData;
   }
 
+  private syncRegulatedMedicineInfo() {
+    const selectedItems = Array.isArray(this.medicineData.salesData) ? this.medicineData.salesData : [];
+    const uniqueValues = (values: string[]) => Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+    const joinValues = (values: string[]) => uniqueValues(values).join(', ');
+    const totalQuantity = selectedItems.reduce((sum: number, item: any) => sum + Number(item?.quantity || 0), 0);
+
+    this.salesModel.prescribed_generic_name = joinValues(
+      selectedItems.map((item: any) => String(item?.generic_name ?? ''))
+    );
+    this.salesModel.prescribed_brand_name = joinValues(
+      selectedItems.map((item: any) => String(item?.medicine_name ?? ''))
+    );
+    this.salesModel.prescribed_dosage_strength = joinValues(
+      selectedItems.map((item: any) => this.formatMedicineStrength(item))
+    );
+    this.salesModel.prescribed_dosage_form = joinValues(
+      selectedItems.map((item: any) => String(item?.type ?? ''))
+    );
+    this.salesModel.prescribed_quantity_dispensed = totalQuantity > 0 ? totalQuantity : null;
+    this.salesModel.dangerous_quantity_in_figures = joinValues(
+      selectedItems.map((item: any) => this.formatMedicineQuantity(item))
+    );
+    this.salesModel.dangerous_total_dosage = joinValues(
+      selectedItems.map((item: any) => this.formatMedicineStrength(item))
+    );
+  }
+
+  private formatMedicineStrength(item: any): string {
+    const dosage = String(item?.dosage ?? '').trim();
+    const unit = String(item?.unit ?? '').trim();
+    return [dosage, unit].filter(Boolean).join(' ');
+  }
+
+  private formatMedicineQuantity(item: any): string {
+    const medicineName = String(item?.medicine_name ?? '').trim();
+    const quantity = Number(item?.quantity ?? 0);
+
+    if (!medicineName && !quantity) {
+      return '';
+    }
+
+    return `${medicineName}${medicineName ? ': ' : ''}${quantity}`;
+  }
+
+  currentRegulatedClassification(): 'regular' | 'controlled' | 'dangerous' | 'mixed' {
+    if (this.requiresPrescriptionDetails() && this.requiresDangerousDrugDetails()) {
+      return 'mixed';
+    }
+
+    if (this.requiresDangerousDrugDetails()) {
+      return 'dangerous';
+    }
+
+    if (this.requiresPrescriptionDetails()) {
+      return 'controlled';
+    }
+
+    return 'regular';
+  }
+
+  requiresPrescriptionDetails(): boolean {
+    return this.medicineData.salesData.some((item: any) => Boolean(item?.needs_protection));
+  }
+
+  requiresDangerousDrugDetails(): boolean {
+    return this.medicineData.salesData.some((item: any) => Boolean(item?.is_dangerous));
+  }
+
+  currentTransactionLabel(): string {
+    if (this.requiresPrescriptionDetails() && this.requiresDangerousDrugDetails()) {
+      return 'Prescription + Dangerous Drugs';
+    }
+
+    if (this.isDangerousTransaction()) {
+      return 'Dangerous Drugs';
+    }
+
+    if (this.isPrescriptionTransaction()) {
+      return 'Prescription';
+    }
+
+    return 'Regular';
+  }
+
+  currentTransactionNote(): string {
+    if (this.requiresPrescriptionDetails() && this.requiresDangerousDrugDetails()) {
+      return 'Both prescription and yellow-prescription details are required for this cart.';
+    }
+
+    if (this.isDangerousTransaction()) {
+      return 'Yellow prescription fields are required before checkout.';
+    }
+
+    if (this.isPrescriptionTransaction()) {
+      return 'Prescription details are required before checkout.';
+    }
+
+    return 'Standard checkout with no extra regulated-drug form.';
+  }
+
+  requiresReferenceNumber(method = this.salesModel.payment_method): boolean {
+    return method === 'Card' || method === 'Gcash';
+  }
+
+  onPaymentMethodChange(method: string) {
+    this.salesModel.payment_method = method;
+
+    if (!this.requiresReferenceNumber(method)) {
+      this.salesModel.reference_number = '';
+    }
+  }
+
+  updateReferenceNumber(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.salesModel.reference_number = (target.value ?? '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9\-_]/g, '')
+      .slice(0, 120);
+  }
+
   async pay() {
+    if (this.isAllBranchesScope()) {
+      this.extras.showToast('Select a specific branch before checkout.', 'warning');
+      return;
+    }
+
     this.salesModel.items = this.medicineData.salesData.map((item: any) => ({
       medicine_id: item.medicine_id,
       quantity: item.quantity,
@@ -797,6 +914,11 @@ export class Sales implements OnInit {
 
     if (!this.salesModel.payment_method) {
       this.extras.showToast('Payment method is required', 'danger');
+      return;
+    }
+
+    if (this.requiresReferenceNumber() && !this.salesModel.reference_number?.trim()) {
+      this.extras.showToast('Reference number is required for card or Gcash payments', 'warning');
       return;
     }
 
@@ -828,9 +950,6 @@ export class Sales implements OnInit {
     this.salesData.selectedDiscount = '';
     this.medicineData.salesData = [];
     this.stockMap = {};
-    this.prescriptionFile = null;
-    this.memberIdImageFile = null;
-    this.submitDocumentsLater = false;
     this.isPay.set(false);
     this.isDiscount.set(false);
     this.saveSales();
@@ -888,6 +1007,57 @@ export class Sales implements OnInit {
     return this.buildReceiptTextLines(this.lastReceipt, 40);
   }
 
+  private getCartItemKey(item: any): string {
+    const branchId = Number(item?.branch_id ?? 0);
+    const inventoryId = Number(item?.inventory_id ?? item?.medicine_id ?? 0);
+    return `${branchId}:${inventoryId}`;
+  }
+
+  private groupSalesByBranch(items: any[]): Record<string, any[]> {
+    return (items ?? []).reduce((acc: Record<string, any[]>, item: any) => {
+      const branchKey = String(Number(item?.branch_id ?? 0));
+      if (!acc[branchKey]) {
+        acc[branchKey] = [];
+      }
+      acc[branchKey].push({ ...item });
+      return acc;
+    }, {});
+  }
+
+  private normalizeSalesStorage(saved: any): Record<string, any[]> {
+    if (!saved) {
+      return {};
+    }
+
+    if (typeof saved === 'string') {
+      try {
+        return this.normalizeSalesStorage(JSON.parse(saved));
+      } catch (e) {
+        console.log(e);
+        return {};
+      }
+    }
+
+    if (Array.isArray(saved)) {
+      return this.groupSalesByBranch(
+        saved.map((item: any) => ({
+          ...item,
+          branch_id: Number(item?.branch_id ?? this.getSelectedBranchId() ?? this.userData.data?.data?.branch_id ?? 0),
+        }))
+      );
+    }
+
+    return Object.entries(saved).reduce((acc: Record<string, any[]>, [branchKey, items]) => {
+      acc[String(branchKey)] = Array.isArray(items)
+        ? items.map((item: any) => ({
+            ...item,
+            branch_id: Number(item?.branch_id ?? branchKey ?? 0),
+          }))
+        : [];
+      return acc;
+    }, {});
+  }
+
   private buildReceiptFilename(receipt: any): string {
     const receiptId = String(receipt?.transaction_id ?? 'receipt')
       .replace(/[^a-z0-9]+/gi, '-')
@@ -920,6 +1090,9 @@ export class Sales implements OnInit {
     lines.push(...this.buildReceiptKeyValueLines('Date', this.formatReceiptDate(receipt?.created_at), width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Cashier', cashierName, width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Payment', receipt?.payment_method || 'N/A', width, 18));
+    if (receipt?.reference_number) {
+      lines.push(...this.buildReceiptKeyValueLines('Reference', receipt.reference_number, width, 18));
+    }
     lines.push(...this.buildReceiptKeyValueLines('Type', transactionType, width, 18));
 
     if (receipt?.discount_type) {
@@ -936,14 +1109,6 @@ export class Sales implements OnInit {
 
     if (receipt?.membership_id) {
       lines.push(...this.buildReceiptKeyValueLines('Member ID', receipt.membership_id, width, 18));
-    }
-
-    if (receipt?.hmo_provider) {
-      lines.push(...this.buildReceiptKeyValueLines('Provider', receipt.hmo_provider, width, 18));
-    }
-
-    if (receipt?.coverage_type) {
-      lines.push(...this.buildReceiptKeyValueLines('Coverage', receipt.coverage_type, width, 18));
     }
 
     lines.push(sectionDivider);
@@ -968,13 +1133,11 @@ export class Sales implements OnInit {
     lines.push(...this.buildReceiptKeyValueLines('Subtotal', this.formatReceiptCurrency(receipt?.sub_total), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Discount', this.formatReceiptCurrency(receipt?.discount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Total', this.formatReceiptCurrency(receipt?.total_amount), width, 20));
-    lines.push(...this.buildReceiptKeyValueLines('Cash', this.formatReceiptCurrency(receipt?.used_amount), width, 20));
+    lines.push(...this.buildReceiptKeyValueLines('Amount Paid', this.formatReceiptCurrency(receipt?.used_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Change', this.formatReceiptCurrency(receipt?.change), width, 20));
 
     if (receipt?.documents_submitted) {
       lines.push(...this.buildReceiptKeyValueLines('Docs', 'SUBMITTED', width, 20));
-    } else if (receipt?.transaction_type === 'hmo' || receipt?.transaction_type === 'philhealth') {
-      lines.push(...this.buildReceiptKeyValueLines('Docs', 'TO FOLLOW', width, 20));
     }
 
     lines.push(divider);
@@ -1080,5 +1243,34 @@ export class Sales implements OnInit {
 
   private formatReceiptDate(value: string): string {
     return value ? this.extras.formatDateWithTime(value) : 'Date Unavailable';
+  }
+
+  private updateCategoryOptions(items: any[], reset = false) {
+    const categories = new Set<string>(reset ? [] : this.salesData.categoryData);
+
+    for (const item of items) {
+      const rawCategory = typeof item === 'string'
+        ? String(item).trim()
+        : String(item?.category ?? '').trim();
+
+      if (!rawCategory) {
+        continue;
+      }
+
+      for (const category of this.normalizeCategoryValues(rawCategory)) {
+        if (category) {
+          categories.add(category);
+        }
+      }
+    }
+
+    this.salesData.categoryData = Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }
+
+  private normalizeCategoryValues(value: string): string[] {
+    return String(value ?? '')
+      .split(/[,;|]+/)
+      .map((item) => item.trim())
+      .filter((item) => item !== '');
   }
 }

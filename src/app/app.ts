@@ -11,6 +11,7 @@ import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationErr
 import { UserService } from '../services/services';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
+import { BranchThemeService } from './theme/branch-theme.service';
 @Injectable({ providedIn: 'root' })
 export class LoadingService {
   private loadingSubject = new BehaviorSubject<boolean>(false);
@@ -35,7 +36,7 @@ export class App implements OnInit, DoCheck {
   extras = Extras
   currentUrl = '';
   constructor(private encryptData: EncryptData, private cd: ChangeDetectorRef, private router: Router, private userService: UserService,
-    private toastrService: ToastrService
+    private toastrService: ToastrService, private branchThemeService: BranchThemeService
   ) {
     Extras.init(this.toastrService);
     this.router.events.subscribe(event => {
@@ -62,14 +63,27 @@ export class App implements OnInit, DoCheck {
   ngOnInit(): void {
     this.currentUrl = this.router.url;
 
-    if (this.encryptData.decryptData('user')) {
-      this.user.token = this.encryptData.decryptData('user').token ?? '';
+    const storedUser = this.encryptData.decryptData('user');
+    const storedBranch = this.encryptData.decryptData('branch');
+
+    if (storedUser) {
+      this.user.token = storedUser.token ?? '';
+      this.branchThemeService.syncFromStoredState(storedUser, storedBranch);
+    } else {
+      this.branchThemeService.clearTheme();
     }
     this.cd.detectChanges()
   }
 
   ngDoCheck(): void {
-    this.user.token = this.encryptData.decryptData('user');
+    const storedUser = this.encryptData.decryptData('user');
+    const storedBranch = this.encryptData.decryptData('branch');
+    this.user.token = storedUser;
+    if (storedUser) {
+      this.branchThemeService.syncFromStoredState(storedUser, storedBranch);
+    } else {
+      this.branchThemeService.clearTheme();
+    }
     this.cd.detectChanges()
   }
   isAdminRoute(): boolean {

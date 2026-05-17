@@ -1,3 +1,38 @@
+@if(isLoading){
+<main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+  <div class="app-skeleton-page">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="space-y-3">
+        <div class="app-skeleton h-8 w-72 rounded-2xl"></div>
+        <div class="app-skeleton h-4 w-full max-w-2xl rounded-2xl"></div>
+      </div>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <div class="app-skeleton h-11 w-32 rounded-xl"></div>
+        <div class="app-skeleton h-11 w-48 rounded-xl"></div>
+        <div class="app-skeleton h-11 w-40 rounded-xl"></div>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      @for(item of [1,2,3,4,5]; track item){
+      <div class="app-skeleton-card space-y-3">
+        <div class="app-skeleton h-4 w-20 rounded-xl"></div>
+        <div class="app-skeleton h-8 w-32 rounded-xl"></div>
+        <div class="app-skeleton h-3 w-24 rounded-xl"></div>
+      </div>
+      }
+    </div>
+    <div class="grid gap-4 xl:grid-cols-2">
+      @for(item of [1,2,3,4]; track item){
+      <div class="app-skeleton-card space-y-4">
+        <div class="app-skeleton h-5 w-40 rounded-xl"></div>
+        <div class="app-skeleton h-4 w-64 rounded-xl"></div>
+        <div class="app-skeleton h-56 w-full rounded-3xl"></div>
+      </div>
+      }
+    </div>
+  </div>
+</main>
+} @else {
 <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
   <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -19,17 +54,13 @@
               <option value="90">Last 90 days</option>
             </select>
           </div>
-          <button (click)="printReport()"
-            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Print
-          </button>
-          <button (click)="exportCsv('recent_transactions')"
-            class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
-            Export CSV
-          </button>
           <button (click)="openBirModal()"
             class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">
-            Philippines BIR Tax Declaration
+            Philippines BIR Form 0605
+          </button>
+          <button (click)="openTransactionRecordsModal()"
+            class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Transaction Records
           </button>
         </div>
       </div>
@@ -39,11 +70,11 @@
     <section class="rounded-3xl border border-[#d6c3a1] bg-[#fffaf0] p-4 shadow-sm sm:p-6">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">BIR Annual Tax Declaration</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">BIR Payment Form Summary</p>
           <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">BIR Form {{birReport.form_no ?
             birReport.form_no: 'N/A'}}</h2>
           <p class="mt-2 max-w-2xl text-sm text-slate-500">
-            Receipt-style annual declaration summary for {{birReport.taxpayer_name}}.
+            Receipt-style BIR 0605 payment summary for {{birReport.taxpayer_name}}.
           </p>
         </div>
 
@@ -87,6 +118,38 @@
               <span class="font-bold text-slate-900">{{birReport.tin_number || 'N/A'}}</span>
             </div>
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Return Period:</span>
+              <span class="font-bold text-slate-900">{{birReport.return_period ? extras.formatDate(birReport.return_period) : birReport.taxable_year}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Due Date:</span>
+              <span class="font-bold text-slate-900">{{birReport.due_date ? extras.formatDate(birReport.due_date) : 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">ATC:</span>
+              <span class="font-bold text-slate-900">{{birReport.atc || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Tax Type Code:</span>
+              <span class="font-bold text-slate-900">{{birReport.tax_type_code || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Payment Type:</span>
+              <span class="font-bold text-slate-900">{{birReport.type_of_payment || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Line of Business:</span>
+              <span class="font-bold text-slate-900">{{birReport.line_of_business || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Telephone Number:</span>
+              <span class="font-bold text-slate-900">{{birReport.telephone_number || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <span class="text-slate-500">Registered Address:</span>
+              <span class="font-bold text-slate-900 sm:max-w-[60%] sm:text-right">{{birReport.registered_address || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span class="text-slate-500">Taxable Year:</span>
               <span class="font-bold text-slate-900">{{birReport.taxable_year}}</span>
             </div>
@@ -96,38 +159,38 @@
 
           <div class="space-y-3">
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Gross Sales/Receipts:</span>
+              <span>Basic Tax / Deposit / Advance Payment:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.basic_tax_payment ?? birReport.income_tax_due)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Surcharge:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.surcharge ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Interest:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.interest ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Compromise:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.compromise ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Sales / Receipts Reference:</span>
               <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_sales_receipts)}}</span>
             </div>
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Sales Discounts:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.sales_discounts)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Net Sales/Receipts:</span>
+              <span>Net Sales / Receipts Reference:</span>
               <span class="font-bold">Php {{extras.formatCurrency(birReport.net_sales_receipts)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Cost of Sales:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.cost_of_sales)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Gross Income:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_income)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Deductions:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.deductions)}}</span>
             </div>
             <div class="my-4 border-t border-dashed border-slate-400"></div>
             <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
-              <span class="font-semibold">Taxable Net Income:</span>
-              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.taxable_net_income)}}</span>
+              <span class="font-semibold">Computed Annual Tax Due Reference:</span>
+              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.income_tax_due)}}</span>
             </div>
             <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
-              <span class="font-semibold">INCOME TAX DUE ({{birReport.income_tax_rate * 100}}%):</span>
+              <span class="font-semibold">TOTAL AMOUNT PAYABLE:</span>
               <span class="text-lg font-bold text-emerald-700">Php
-                {{extras.formatCurrency(birReport.income_tax_due)}}</span>
+                {{extras.formatCurrency(birReport.total_amount_payable ?? birReport.income_tax_due)}}</span>
             </div>
           </div>
 
@@ -171,73 +234,233 @@
         <p class="mt-2 text-xs text-slate-500">Recorded discounts in selected period</p>
       </article>
 
-      <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
-        <p class="text-sm font-medium text-amber-700">Low Stock</p>
-        <h2 class="mt-3 text-2xl font-bold text-amber-900 sm:text-3xl">{{reportData.data.summary.low_stock_count}}</h2>
-        <p class="mt-2 text-xs text-amber-700">Needs replenishment follow-up</p>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Low Stock</p>
+        <h2 class="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{{reportData.data.summary.low_stock_count}}</h2>
+        <p class="mt-2 text-xs text-slate-500">Needs replenishment follow-up</p>
       </article>
 
-      <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm sm:p-5">
-        <p class="text-sm font-medium text-rose-700">Expiring Soon</p>
-        <h2 class="mt-3 text-2xl font-bold text-rose-900 sm:text-3xl">{{reportData.data.summary.expiring_30_count}}</h2>
-        <p class="mt-2 text-xs text-rose-700">Batches expiring within 30 days</p>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <p class="text-sm font-medium text-slate-500">Expiring Soon</p>
+        <h2 class="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">{{reportData.data.summary.expiring_30_count}}</h2>
+        <p class="mt-2 text-xs text-slate-500">Batches expiring within 30 days</p>
       </article>
     </section>
 
     <section class="grid gap-4 xl:grid-cols-2">
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel reports-panel-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Revenue Trend</h3>
-            <p class="text-sm text-slate-500">Daily sales activity for the selected period.</p>
+            <p class="text-sm text-slate-500">Daily sales movement for the selected reporting window.</p>
           </div>
-          <button (click)="exportCsv('branch_performance')"
-            class="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            Export Branch CSV
-          </button>
         </div>
 
-        <div class="mt-6">
-          <div class="flex h-56 items-end gap-2 overflow-x-auto rounded-2xl bg-slate-50 p-3 sm:h-72 sm:p-4">
-            @for(point of reportData.data.charts.daily_revenue; track point.date){
-            <div class="flex min-w-14 flex-1 flex-col items-center justify-end gap-2 sm:min-w-12">
-              <div class="text-center text-[10px] font-semibold text-slate-500">Php
-                {{extras.formatCurrency(point.total_revenue)}}</div>
-              <div
-                class="w-full rounded-t-xl bg-gradient-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
-                [style.height.%]="getBarHeight(point.total_revenue)">
+        <div class="mt-5 grid gap-4 2xl:grid-cols-[minmax(0,1fr)_14rem]">
+          <div class="reports-chart theme-chart-surface rounded-[1.75rem] p-4 sm:p-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Revenue Line</p>
+                <p class="mt-2 break-words text-2xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.total_revenue)}}</p>
               </div>
-              <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
+              <div class="sm:text-right">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Change</p>
+                <p class="mt-2 text-sm font-semibold" [ngClass]="isPositive(reportData.data.summary.revenue_change_pct) ? 'text-emerald-600' : 'text-red-600'">
+                  {{isPositive(reportData.data.summary.revenue_change_pct) ? '+' : ''}}{{reportData.data.summary.revenue_change_pct}}%
+                </p>
+              </div>
+            </div>
+
+            <div class="reports-line-scroll mt-5">
+              <div class="min-w-[22rem] sm:min-w-0">
+                <div class="reports-line-shell">
+                  <svg viewBox="0 0 320 160" class="h-48 w-full">
+                    <defs>
+                      <linearGradient id="reportsRevenueFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.24"></stop>
+                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.04"></stop>
+                      </linearGradient>
+                    </defs>
+                    <polyline points="18,142 302,142" class="reports-axis-line"></polyline>
+                    <polygon [attr.points]="getAreaChartPoints(reportData.data.charts.daily_revenue, 'total_revenue')" fill="url(#reportsRevenueFill)"></polygon>
+                    <polyline [attr.points]="getLineChartPoints(reportData.data.charts.daily_revenue, 'total_revenue')" class="reports-line-primary"></polyline>
+                    @for(point of reportData.data.charts.daily_revenue; track point.date){
+                    <circle
+                      [attr.cx]="reportData.data.charts.daily_revenue.length === 1 ? 160 : 18 + ($index * (284 / (reportData.data.charts.daily_revenue.length - 1)))"
+                      [attr.cy]="18 + (124 - ((point.total_revenue || 0) / maxRevenuePoint) * 124)"
+                      r="3.5"
+                      class="reports-line-dot">
+                    </circle>
+                    }
+                  </svg>
+                </div>
+
+                <div class="mt-3 flex items-center justify-between gap-2 text-center">
+                  @for(point of reportData.data.charts.daily_revenue; track point.date){
+                  <div class="reports-line-label flex-1" [class.hidden]="reportData.data.charts.daily_revenue.length > 8 && ($index % 2 === 1)">
+                    {{point.label}}
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Average Sale</p>
+              <p class="mt-2 break-words text-xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.average_sale)}}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Previous Revenue</p>
+              <p class="mt-2 break-words text-xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.previous_revenue)}}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Discount Pressure</p>
+              <p class="mt-2 break-words text-xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.total_discount)}}</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="reports-panel reports-panel-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Inventory Snapshot</h3>
+          <p class="text-sm text-slate-500">Status distribution based on live stock and batch records.</p>
+        </div>
+
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          @for(item of reportData.data.charts.inventory_status_mix; track item.status){
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <span class="rounded-full px-2.5 py-1 text-xs font-semibold" [ngClass]="getInventoryStatusTone(item.status)">
+                {{item.status}}
+              </span>
+              <span class="text-lg font-bold text-slate-900">{{item.count}}</span>
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Inventory Value</p>
+          <p class="mt-2 text-2xl font-bold sm:text-3xl">Php
+            {{extras.formatCurrency(reportData.data.summary.inventory_value)}}</p>
+        </div>
+
+        <div class="mt-5">
+          <div class="reports-highlight-carousel rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Inventory Insights</p>
+            <p class="mt-3 text-sm leading-6 text-slate-700">
+              {{currentInventoryHighlight}}
+            </p>
+
+            @if(reportData.data.analysis.highlights.length > 1){
+            <div class="mt-4 flex items-center gap-2">
+              @for(note of reportData.data.analysis.highlights; track $index){
+              <button
+                type="button"
+                class="reports-highlight-dot"
+                [class.reports-highlight-dot-active]="$index === currentHighlightIndex"
+                [attr.aria-label]="'Show insight ' + ($index + 1)"
+                (click)="setHighlightSlide($index)">
+              </button>
+              }
             </div>
             }
           </div>
         </div>
       </article>
+    </section>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="reports-panel reports-panel-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
-          <h3 class="text-lg font-semibold text-slate-900">Report Notes</h3>
-          <p class="text-sm text-slate-500">Generated from your live transaction and inventory data.</p>
+          <h3 class="text-lg font-semibold text-slate-900">Transaction Volume</h3>
+          <p class="text-sm text-slate-500">How many sales were completed each day.</p>
         </div>
 
-        <div class="mt-5 space-y-3">
-          @for(note of reportData.data.analysis.highlights; track $index){
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-            {{note}}
+        <div class="reports-scroll mt-5">
+          <div class="reports-chart reports-chart-equal theme-chart-surface rounded-[1.75rem] p-4 sm:p-5">
+            <div class="mb-4 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl border border-white/60 bg-white/70 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Total Transactions</p>
+                <p class="mt-2 text-2xl font-bold text-slate-900">{{reportData.data.summary.transaction_count}}</p>
+              </div>
+              <div class="rounded-2xl border border-white/60 bg-white/70 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Average Sale</p>
+                <p class="mt-2 break-words text-2xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.average_sale)}}</p>
+              </div>
+            </div>
+
+            <div class="reports-chart-scroll reports-chart-scroll-equal flex items-end gap-3 overflow-x-auto pb-2">
+              @for(point of reportData.data.charts.daily_transactions; track point.date){
+              <div class="flex min-w-16 flex-1 flex-col items-center justify-end gap-2 sm:min-w-14">
+                <div class="text-center text-[10px] font-semibold text-slate-500">{{point.transaction_count}} txns</div>
+                <div class="reports-bar theme-bar-secondary w-full max-w-12 rounded-t-[1rem] transition-all"
+                  [style.height.px]="getTransactionBarHeight(point.transaction_count)">
+                </div>
+                <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
+              </div>
+              }
+            </div>
           </div>
-          }
+        </div>
+      </article>
+
+      <article class="reports-panel reports-panel-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Discount Trend</h3>
+          <p class="text-sm text-slate-500">Daily discount totals from recorded transactions.</p>
         </div>
 
-        <div class="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Inventory Value</p>
-          <p class="mt-2 text-2xl font-bold sm:text-3xl">Php
-            {{extras.formatCurrency(reportData.data.summary.inventory_value)}}</p>
+        <div class="reports-scroll mt-5">
+          <div class="reports-chart reports-chart-equal theme-chart-surface rounded-[1.75rem] p-4 sm:p-5">
+            <div class="mb-4 rounded-2xl border border-white/60 bg-white/70 p-4 sm:p-5">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Selected Period Discounts</p>
+              <p class="mt-2 break-words text-2xl font-bold text-slate-900">Php {{extras.formatCurrency(reportData.data.summary.total_discount)}}</p>
+            </div>
+
+            <div class="reports-line-scroll reports-line-scroll-equal">
+              <div class="min-w-[22rem] sm:min-w-0">
+                <div class="reports-line-shell">
+                  <svg viewBox="0 0 320 160" class="h-48 w-full">
+                    <defs>
+                      <linearGradient id="reportsDiscountFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="var(--chart-4)" stop-opacity="0.22"></stop>
+                        <stop offset="100%" stop-color="var(--chart-4)" stop-opacity="0.04"></stop>
+                      </linearGradient>
+                    </defs>
+                    <polyline points="18,142 302,142" class="reports-axis-line"></polyline>
+                    <polygon [attr.points]="getAreaChartPoints(reportData.data.charts.daily_discounts, 'total_discount')" fill="url(#reportsDiscountFill)"></polygon>
+                    <polyline [attr.points]="getLineChartPoints(reportData.data.charts.daily_discounts, 'total_discount')" class="reports-line-tertiary"></polyline>
+                    @for(point of reportData.data.charts.daily_discounts; track point.date){
+                    <circle
+                      [attr.cx]="reportData.data.charts.daily_discounts.length === 1 ? 160 : 18 + ($index * (284 / (reportData.data.charts.daily_discounts.length - 1)))"
+                      [attr.cy]="18 + (124 - ((point.total_discount || 0) / maxDiscountPoint) * 124)"
+                      r="3.5"
+                      class="reports-line-dot-tertiary">
+                    </circle>
+                    }
+                  </svg>
+                </div>
+
+                <div class="mt-3 flex items-center justify-between gap-2 text-center">
+                  @for(point of reportData.data.charts.daily_discounts; track point.date){
+                  <div class="reports-line-label flex-1" [class.hidden]="reportData.data.charts.daily_discounts.length > 8 && ($index % 2 === 1)">
+                    {{point.label}}
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
     </section>
 
     <section class="grid gap-4 xl:grid-cols-2">
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Branch Performance</h3>
@@ -249,7 +472,7 @@
           </button>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <div class="reports-scroll mt-5 space-y-4 overflow-y-auto">
           @for(branch of reportData.data.tables.branch_performance; track branch.branch_id){
           <div class="space-y-2">
             <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
@@ -257,8 +480,8 @@
               <span class="text-slate-500">Php {{extras.formatCurrency(branch.total_revenue)}} |
                 {{branch.transaction_count}} txns</span>
             </div>
-            <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+            <div class="theme-progress-track h-3 w-full rounded-full">
+              <div class="theme-bar-primary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(reportData.data.tables.branch_performance, 'total_revenue'))">
               </div>
             </div>
@@ -267,13 +490,13 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Payment Mix</h3>
           <p class="text-sm text-slate-500">How customers paid in the selected window.</p>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <div class="reports-scroll mt-5 space-y-4 overflow-y-auto">
           @for(method of reportData.data.charts.payment_mix; track method.payment_method){
           <div class="space-y-2">
             <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
@@ -281,8 +504,8 @@
               <span class="text-slate-500">Php {{extras.formatCurrency(method.total_revenue)}} |
                 {{method.transaction_count}} txns</span>
             </div>
-            <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+            <div class="theme-progress-track h-3 w-full rounded-full">
+              <div class="theme-bar-secondary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(method.total_revenue, getMaxByKey(reportData.data.charts.payment_mix, 'total_revenue'))">
               </div>
             </div>
@@ -293,21 +516,21 @@
     </section>
 
     <section class="grid gap-4 xl:grid-cols-2">
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Category Movement</h3>
           <p class="text-sm text-slate-500">Most active product categories for the selected period.</p>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <div class="reports-scroll mt-5 space-y-4 overflow-y-auto">
           @for(category of reportData.data.charts.category_mix; track category.category){
           <div class="space-y-2">
             <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span class="font-medium text-slate-700">{{extras.toTitleCaseSafe(category.category)}}</span>
               <span class="text-slate-500">{{category.quantity_sold}} units | {{category.transaction_count}} txns</span>
             </div>
-            <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400"
+            <div class="theme-progress-track h-3 w-full rounded-full">
+              <div class="theme-bar-tertiary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(category.quantity_sold, getMaxByKey(reportData.data.charts.category_mix, 'quantity_sold'))">
               </div>
             </div>
@@ -316,7 +539,7 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Top-Selling Medicines</h3>
@@ -328,7 +551,7 @@
           </button>
         </div>
 
-        <div class="mt-5 space-y-3">
+        <div class="reports-scroll mt-5 space-y-3 overflow-y-auto">
           @for(item of reportData.data.tables.top_medicines; track item.medicine_id){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -349,7 +572,7 @@
     </section>
 
     <section class="grid gap-4 xl:grid-cols-2">
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel reports-panel-wide rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Inventory Watch</h3>
@@ -361,7 +584,7 @@
           </button>
         </div>
 
-        <div class="mt-5 space-y-3">
+        <div class="reports-scroll mt-5 space-y-3 overflow-y-auto">
           @for(item of reportData.data.tables.inventory_watch; track item.medicine_id + '-' + item.branch_name){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -385,7 +608,7 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="reports-panel reports-panel-wide rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Recent Transactions</h3>
@@ -397,7 +620,7 @@
           </button>
         </div>
 
-        <div class="mt-5 space-y-3">
+        <div class="reports-scroll mt-5 space-y-3 overflow-y-auto">
           @for(transaction of reportData.data.tables.recent_transactions; track transaction.transaction_id){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -405,12 +628,110 @@
                 <p class="font-semibold text-slate-800">{{transaction.branch_name || 'Unknown Branch'}}</p>
                 <p class="text-xs text-slate-500">{{transaction.cashier_name || 'Unknown Cashier'}} |
                   {{transaction.payment_method}}</p>
+                @if(transaction.reference_number){
+                <p class="mt-1 text-xs text-slate-500">Ref: {{transaction.reference_number}}</p>
+                }
               </div>
               <div class="text-left sm:text-right">
                 <p class="font-semibold text-emerald-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
                 <p class="text-xs text-slate-500">{{recentTransactionTimeLabel(transaction)}}</p>
               </div>
             </div>
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <span class="text-xs text-slate-500">
+                {{transaction.payment_method}}{{transaction.reference_number ? ' | Ref: ' + transaction.reference_number : ''}}
+              </span>
+              <button (click)="openRecentTransactionReceipt(transaction)"
+                class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+                View Receipt
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-2">
+      <article class="reports-panel reports-panel-wide rounded-3xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Prescription Transactions</h3>
+            <p class="text-sm text-slate-500">Stored separately from normal sales transactions.</p>
+          </div>
+          <button (click)="exportCsv('prescribed_transactions')"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="reports-scroll mt-5 space-y-3 overflow-y-auto">
+          @for(transaction of reportData.data.tables.prescribed_transactions; track transaction.transaction_id){
+          <div class="rounded-2xl border border-blue-200 bg-white p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{transaction.patient_name || 'Unnamed Patient'}}</p>
+                <p class="text-xs text-slate-500">{{transaction.branch_name || 'Unknown Branch'}} | {{transaction.cashier_name || 'Unknown Cashier'}}</p>
+              </div>
+              <div class="text-left sm:text-right">
+                <p class="font-semibold text-blue-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
+                <p class="text-xs text-slate-500">{{regulatedTransactionTimeLabel(transaction)}}</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="text-xs text-slate-500">{{transaction.payment_method}}</span>
+              <button (click)="openRegulatedTransaction(transaction)"
+                class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
+                View
+              </button>
+            </div>
+          </div>
+          }
+          @if(!reportData.data.tables.prescribed_transactions.length){
+          <div class="rounded-2xl border border-dashed border-blue-200 bg-white p-6 text-center text-sm text-slate-500">
+            No prescription transactions found in the selected period.
+          </div>
+          }
+        </div>
+      </article>
+
+      <article class="reports-panel reports-panel-wide rounded-3xl border border-red-200 bg-red-50/50 p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Dangerous Drug Transactions</h3>
+            <p class="text-sm text-slate-500">Tracked separately from normal sales transactions.</p>
+          </div>
+          <button (click)="exportCsv('dangerous_transactions')"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Export
+          </button>
+        </div>
+
+        <div class="reports-scroll mt-5 space-y-3 overflow-y-auto">
+          @for(transaction of reportData.data.tables.dangerous_transactions; track transaction.transaction_id){
+          <div class="rounded-2xl border border-red-200 bg-white p-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800">{{transaction.patient_name || 'Unnamed Patient'}}</p>
+                <p class="text-xs text-slate-500">{{transaction.branch_name || 'Unknown Branch'}} | {{transaction.cashier_name || 'Unknown Cashier'}}</p>
+              </div>
+              <div class="text-left sm:text-right">
+                <p class="font-semibold text-red-700">Php {{extras.formatCurrency(transaction.total_amount)}}</p>
+                <p class="text-xs text-slate-500">{{regulatedTransactionTimeLabel(transaction)}}</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+              <span class="text-xs text-slate-500">{{transaction.payment_method}}</span>
+              <button (click)="openRegulatedTransaction(transaction)"
+                class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700">
+                View
+              </button>
+            </div>
+          </div>
+          }
+          @if(!reportData.data.tables.dangerous_transactions.length){
+          <div class="rounded-2xl border border-dashed border-red-200 bg-white p-6 text-center text-sm text-slate-500">
+            No dangerous drug transactions found in the selected period.
           </div>
           }
         </div>
@@ -418,6 +739,7 @@
     </section>
   </div>
 </main>
+}
 
 @if(isBirModalOpen){
 <div  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
@@ -428,11 +750,11 @@
       </button>
 
       <div class="pr-8">
-        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">Generate BIR Annual Tax
-          Declaration</p>
-        <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">BIR Form 1702-RT</h2>
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">Generate BIR 0605 Payment
+          Summary</p>
+        <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">BIR Form 0605</h2>
         <p class="mt-2 text-sm text-slate-500">
-          Select branch and taxable year to generate the official annual declaration summary.
+          Select branch and taxable year to generate the current BIR 0605 payment-style summary.
         </p>
       </div>
     </div>
@@ -463,11 +785,11 @@
 
           <button (click)="generateBirAnnualDeclaration()"
             class="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800">
-            Generate BIR Annual Tax Declaration
+            Generate BIR Form 0605 Summary
           </button>
 
           <p class="text-xs leading-relaxed text-slate-500">
-            The system blocks generation for an unfinished year and uses your selected branch records.
+            The system blocks generation for an unfinished year and uses your selected branch records as the source summary.
           </p>
         </div>
       </div>
@@ -493,6 +815,38 @@
               <span class="font-bold text-slate-900">{{birReport.tin_number || 'N/A'}}</span>
             </div>
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Return Period:</span>
+              <span class="font-bold text-slate-900">{{birReport.return_period ? extras.formatDate(birReport.return_period) : birReport.taxable_year}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Due Date:</span>
+              <span class="font-bold text-slate-900">{{birReport.due_date ? extras.formatDate(birReport.due_date) : 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">ATC:</span>
+              <span class="font-bold text-slate-900">{{birReport.atc || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Tax Type Code:</span>
+              <span class="font-bold text-slate-900">{{birReport.tax_type_code || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Payment Type:</span>
+              <span class="font-bold text-slate-900">{{birReport.type_of_payment || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Line of Business:</span>
+              <span class="font-bold text-slate-900">{{birReport.line_of_business || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-slate-500">Telephone Number:</span>
+              <span class="font-bold text-slate-900">{{birReport.telephone_number || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <span class="text-slate-500">Registered Address:</span>
+              <span class="font-bold text-slate-900 sm:max-w-[60%] sm:text-right">{{birReport.registered_address || 'N/A'}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <span class="text-slate-500">Taxable Year:</span>
               <span class="font-bold text-slate-900">{{birReport.taxable_year}}</span>
             </div>
@@ -502,49 +856,49 @@
 
           <div class="space-y-3">
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Gross Sales/Receipts:</span>
+              <span>Basic Tax / Deposit / Advance Payment:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.basic_tax_payment ?? birReport.income_tax_due)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Surcharge:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.surcharge ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Interest:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.interest ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Compromise:</span>
+              <span class="font-bold">Php {{extras.formatCurrency(birReport.compromise ?? 0)}}</span>
+            </div>
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <span>Gross Sales / Receipts Reference:</span>
               <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_sales_receipts)}}</span>
             </div>
             <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Sales Discounts:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.sales_discounts)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Net Sales/Receipts:</span>
+              <span>Net Sales / Receipts Reference:</span>
               <span class="font-bold">Php {{extras.formatCurrency(birReport.net_sales_receipts)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Cost of Sales:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.cost_of_sales)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Gross Income:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.gross_income)}}</span>
-            </div>
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <span>Less: Deductions:</span>
-              <span class="font-bold">Php {{extras.formatCurrency(birReport.deductions)}}</span>
             </div>
             <div class="my-4 border-t border-dashed border-slate-400"></div>
             <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
-              <span class="font-semibold">Taxable Net Income:</span>
-              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.taxable_net_income)}}</span>
+              <span class="font-semibold">Computed Annual Tax Due Reference:</span>
+              <span class="text-lg font-bold">Php {{extras.formatCurrency(birReport.income_tax_due)}}</span>
             </div>
             <div class="flex flex-col gap-1 text-base sm:flex-row sm:items-center sm:justify-between">
-              <span class="font-semibold">INCOME TAX DUE ({{birReport.income_tax_rate * 100}}%):</span>
+              <span class="font-semibold">TOTAL AMOUNT PAYABLE:</span>
               <span class="text-lg font-bold text-emerald-700">Php
-                {{extras.formatCurrency(birReport.income_tax_due)}}</span>
+                {{extras.formatCurrency(birReport.total_amount_payable ?? birReport.income_tax_due)}}</span>
             </div>
           </div>
         </div>
         } @else {
         <div
           class="flex h-full min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-[#d6c3a1] bg-white/60 p-6 text-center">
-          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">BIR Form 1702-RT</p>
-          <h3 class="mt-3 text-xl font-semibold text-slate-900">No annual declaration generated yet</h3>
+          <p class="text-xs uppercase tracking-[0.25em] text-slate-500">BIR Form 0605</p>
+          <h3 class="mt-3 text-xl font-semibold text-slate-900">No BIR 0605 summary generated yet</h3>
           <p class="mt-2 max-w-md text-sm text-slate-500">
             Choose a branch and a completed taxable year, then generate the report to preview the print-ready BIR
-            declaration summary.
+            0605 payment summary.
           </p>
         </div>
         }
@@ -574,3 +928,304 @@
   </div>
 </div>
 }
+
+@if(selectedRegulatedTransaction; as selectedTransaction){
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+    <div class="relative border-b border-slate-200 px-4 py-4 sm:px-6">
+      <button class="absolute right-8 top-7 text-gray-500 hover:text-red-500" (click)="closeRegulatedTransaction()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+      <p class="text-xs font-semibold uppercase tracking-[0.25em]"
+        [ngClass]="selectedTransaction.regulated_classification === 'dangerous' ? 'text-red-700' : selectedTransaction.regulated_classification === 'mixed' ? 'text-amber-700' : 'text-blue-700'">
+        {{selectedTransaction.regulated_classification === 'dangerous' ? 'Dangerous Drug Transaction' : selectedTransaction.regulated_classification === 'mixed' ? 'Prescription + Dangerous Drug Transaction' : 'Prescription Transaction'}}
+      </p>
+      <h2 class="mt-2 text-xl font-bold text-slate-900">Transaction #{{selectedTransaction.transaction_id}}</h2>
+      <p class="mt-2 text-sm text-slate-500">
+        {{selectedTransaction.branch_name || 'Unknown Branch'}} | {{selectedTransaction.cashier_name || 'Unknown Cashier'}} | {{regulatedTransactionTimeLabel(selectedTransaction)}}
+      </p>
+    </div>
+
+    <div class="overflow-y-auto p-4 sm:p-6">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for(entry of regulatedDetailEntries(selectedTransaction); track entry.label){
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{{entry.label}}</p>
+          <p class="mt-2 text-sm text-slate-800">{{entry.value}}</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6">
+      <button class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        (click)="closeRegulatedTransaction()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isReceiptOpen && selectedReceiptTransaction){
+<div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-2xl sm:rounded-[2rem]">
+    <div class="relative overflow-hidden bg-white px-4 py-5 sm:px-6 sm:py-6">
+      <button (click)="closeReceipt()" class="absolute right-4 top-4 text-slate-500 hover:text-red-500 sm:right-5 sm:top-5">
+        <ion-icon name="close-outline" class="text-2xl"></ion-icon>
+      </button>
+      <div class="pr-10">
+      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-600">Transaction Receipt</p>
+      <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Receipt #{{selectedReceiptTransaction.transaction_id}}</h2>
+      <p class="mt-2 text-sm text-slate-800">
+        {{userData.data?.data?.company_name || ''}} | {{selectedReceiptTransaction.branch?.branch_name || 'Assigned Branch'}}
+      </p>
+      </div>
+    </div>
+
+    <div class="overflow-y-auto bg-[#f6f1e7] p-3 sm:p-6">
+      <div class="mx-auto w-full max-w-sm rounded-[1.35rem] border border-[#dcc7a2] bg-[#fffef9] p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:rounded-[1.75rem] sm:p-6">
+        <div class="rounded-2xl border border-dashed border-[#d9c5a2] bg-[#fffaf0] px-3 py-3 sm:px-4 sm:py-4">
+          <pre class="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[12px] leading-5 text-slate-800 sm:text-[13px]">@for(line of receiptPreviewLines(); track $index){<span>{{line}}</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
+      <button (click)="closeReceipt()" class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+        Close
+      </button>
+      <button (click)="downloadReceipt()"
+        class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+        Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isTransactionRecordsModalOpen){
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
+  <div class="flex h-auto max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+    <div class="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Transaction Ledger</p>
+          <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Transaction Records</h2>
+          <p class="mt-2 text-sm text-slate-500">
+            Search, filter, and review transaction history for the current reporting scope.
+          </p>
+        </div>
+        <button class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+          (click)="closeTransactionRecordsModal()">
+          Close
+        </button>
+      </div>
+
+      <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.8fr))]">
+        <div
+          class="flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3">
+          <ion-icon name="search-outline" class="text-slate-500"></ion-icon>
+          <input
+            class="h-full w-full bg-transparent text-sm outline-none"
+            [value]="transactionRecordsFilters.search"
+            (input)="changeTransactionRecordSearch($event)"
+            placeholder="Search transaction ID, reference, cashier, branch, patient...">
+        </div>
+
+        <select
+          class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500"
+          [value]="transactionRecordsFilters.payment_method"
+          (change)="changeTransactionRecordSelect($event, 'payment_method')">
+          <option value="">All Payments</option>
+          <option value="Cash">Cash</option>
+          <option value="Card">Card</option>
+          <option value="Gcash">Gcash</option>
+        </select>
+
+        <select
+          class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500"
+          [value]="transactionRecordsFilters.classification"
+          (change)="changeTransactionRecordSelect($event, 'classification')">
+          <option value="all">All Types</option>
+          <option value="regular">Regular</option>
+          <option value="controlled">Prescription</option>
+          <option value="dangerous">Dangerous Drug</option>
+          <option value="mixed">Mixed Regulated</option>
+        </select>
+
+        <select
+          class="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500"
+          [value]="transactionRecordsFilters.sort"
+          (change)="changeTransactionRecordSelect($event, 'sort')">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="amount_desc">Amount High to Low</option>
+          <option value="amount_asc">Amount Low to High</option>
+          <option value="id_desc">Transaction ID Desc</option>
+          <option value="id_asc">Transaction ID Asc</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6">
+      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">
+          {{transactionRecordsMeta.total}} records found
+        </p>
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">
+          Page {{transactionRecordsMeta.current_page}} of {{transactionRecordsMeta.last_page}}
+        </p>
+      </div>
+
+      @if(isTransactionRecordsLoading){
+      <div class="rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+        Loading transaction records...
+      </div>
+      } @else if(!transactionRecords.length){
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+        No transaction records matched the current filters.
+      </div>
+      } @else {
+      <div class="hidden overflow-hidden rounded-3xl border border-slate-200 bg-white lg:block">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <tr>
+                <th class="px-4 py-3">Transaction</th>
+                <th class="px-4 py-3">Branch / Cashier</th>
+                <th class="px-4 py-3">Type</th>
+                <th class="px-4 py-3">Payment</th>
+                <th class="px-4 py-3">Amount</th>
+                <th class="px-4 py-3">Date</th>
+                <th class="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for(record of transactionRecords; track record.transaction_id){
+              <tr class="align-top">
+                <td class="px-4 py-4">
+                  <p class="font-semibold text-slate-900">#{{record.transaction_id}}</p>
+                  @if(record.patient_name){
+                  <p class="mt-1 text-xs text-slate-500">Patient: {{record.patient_name}}</p>
+                  } @else {
+                  <p class="mt-1 text-xs text-slate-500">Walk-in / standard sale</p>
+                  }
+                </td>
+                <td class="px-4 py-4">
+                  <p class="font-medium text-slate-800">{{record.branch_name || 'Unknown Branch'}}</p>
+                  <p class="mt-1 text-xs text-slate-500">{{record.cashier_name || 'Unknown Cashier'}}</p>
+                </td>
+                <td class="px-4 py-4">
+                  <span class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                    [ngClass]="transactionRecordClassificationClass(record)">
+                    {{transactionRecordClassificationLabel(record)}}
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-slate-700">
+                  <p>{{record.payment_method}}</p>
+                  @if(record.reference_number){
+                  <p class="mt-1 text-xs text-slate-500">Ref: {{record.reference_number}}</p>
+                  }
+                </td>
+                <td class="px-4 py-4">
+                  <p class="font-semibold text-slate-900">Php {{extras.formatCurrency(record.total_amount)}}</p>
+                  <p class="mt-1 text-xs text-slate-500">Discount Php {{extras.formatCurrency(record.discount)}}</p>
+                </td>
+                <td class="px-4 py-4 text-slate-700">{{extras.formatDateWithTime(record.created_at)}}</td>
+                <td class="px-4 py-4 text-right">
+                  <button (click)="openRecentTransactionReceipt(record)"
+                    class="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                    View Receipt
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="space-y-3 lg:hidden">
+        @for(record of transactionRecords; track record.transaction_id){
+        <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-semibold text-slate-900">#{{record.transaction_id}}</p>
+              <p class="mt-1 text-xs text-slate-500">{{extras.formatDateWithTime(record.created_at)}}</p>
+            </div>
+            <span class="rounded-full px-2.5 py-1 text-xs font-semibold"
+              [ngClass]="transactionRecordClassificationClass(record)">
+              {{transactionRecordClassificationLabel(record)}}
+            </span>
+          </div>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Branch</p>
+              <p class="mt-1 text-sm text-slate-800">{{record.branch_name || 'Unknown Branch'}}</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Cashier</p>
+              <p class="mt-1 text-sm text-slate-800">{{record.cashier_name || 'Unknown Cashier'}}</p>
+            </div>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Payment</p>
+              <p class="mt-1 text-sm text-slate-800">{{record.payment_method}}</p>
+              @if(record.reference_number){
+              <p class="mt-1 text-xs text-slate-500">Ref: {{record.reference_number}}</p>
+              }
+              </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount</p>
+              <p class="mt-1 text-sm font-semibold text-slate-900">Php {{extras.formatCurrency(record.total_amount)}}</p>
+            </div>
+          </div>
+
+          @if(record.patient_name){
+          <div class="mt-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Patient</p>
+            <p class="mt-1 text-sm text-slate-800">{{record.patient_name}}</p>
+          </div>
+          }
+
+          <div class="mt-4 flex items-center justify-between">
+            <p class="text-xs text-slate-500">Discount Php {{extras.formatCurrency(record.discount)}}</p>
+            <button (click)="openRecentTransactionReceipt(record)"
+              class="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+              View Receipt
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500">
+          Showing page {{transactionRecordsMeta.current_page}} of {{transactionRecordsMeta.last_page}}
+        </p>
+        <div class="flex gap-2">
+          <button
+            class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            [disabled]="transactionRecordsMeta.current_page <= 1 || isTransactionRecordsLoading"
+            (click)="goToTransactionRecordsPage(transactionRecordsMeta.current_page - 1)">
+            Previous
+          </button>
+          <button
+            class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            [disabled]="transactionRecordsMeta.current_page >= transactionRecordsMeta.last_page || isTransactionRecordsLoading"
+            (click)="goToTransactionRecordsPage(transactionRecordsMeta.current_page + 1)">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+

@@ -193,7 +193,7 @@
           <ion-icon name="person-outline"></ion-icon>
           <span>Profile</span>
         </button>
-        @if(checker('settings')){
+        @if(canOpenSettings()){
         <button (click)="goToSettings()"
           class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-100">
           <ion-icon name="settings-outline"></ion-icon>

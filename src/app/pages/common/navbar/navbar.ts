@@ -54,4 +54,8 @@ export class Navbar implements OnInit {
     }
     return !!this.permissionMap[permission];
   }
+
+  canOpenSettings(): boolean {
+    return Boolean(this.userData.data);
+  }
 }

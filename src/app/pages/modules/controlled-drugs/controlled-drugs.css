@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.controlled-action {
+  @apply inline-flex min-w-[8.25rem] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-semibold transition-all duration-200;
+}
+
+.controlled-action ion-icon {
+  @apply text-sm;
+}
+
+.controlled-action-neutral {
+  @apply border-slate-200 bg-white text-slate-700 shadow-sm hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50;
+}
+
+.controlled-action-danger {
+  @apply border-red-200 bg-[linear-gradient(135deg,#fff1f2_0%,#fef2f2_100%)] text-red-700 shadow-sm hover:-translate-y-px hover:border-red-300 hover:bg-red-50;
+}
+
+.controlled-action-mobile {
+  @apply h-9 min-w-0 px-3 text-xs;
+}

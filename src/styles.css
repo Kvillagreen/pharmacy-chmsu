@@ -140,3 +140,495 @@
   --color-navbar-border: var(--navbar-border);
   --radius: var(--radius);
 }
+
+:root[data-branch-theme],
+body[data-branch-theme] {
+  background: var(--body);
+  color: var(--card-foreground);
+}
+
+:root[data-branch-theme] body,
+body[data-branch-theme] {
+  background-color: var(--body) !important;
+}
+
+:root[data-branch-theme] .bg-white,
+:root[data-branch-theme] .bg-white\/80,
+:root[data-branch-theme] .bg-white\/85,
+:root[data-branch-theme] .bg-white\/90,
+:root[data-branch-theme] .bg-white\/95,
+:root[data-branch-theme] .bg-navbar,
+body[data-branch-theme] .bg-white,
+body[data-branch-theme] .bg-white\/80,
+body[data-branch-theme] .bg-white\/85,
+body[data-branch-theme] .bg-white\/90,
+body[data-branch-theme] .bg-white\/95,
+body[data-branch-theme] .bg-navbar {
+  background-color: var(--card) !important;
+}
+
+:root[data-branch-theme] .bg-slate-50,
+:root[data-branch-theme] .bg-slate-50\/50,
+:root[data-branch-theme] .bg-slate-50\/80,
+:root[data-branch-theme] .bg-gray-50,
+body[data-branch-theme] .bg-slate-50,
+body[data-branch-theme] .bg-slate-50\/50,
+body[data-branch-theme] .bg-slate-50\/80,
+body[data-branch-theme] .bg-gray-50 {
+  background-color: var(--secondary) !important;
+}
+
+:root[data-branch-theme] .bg-slate-100,
+:root[data-branch-theme] .bg-slate-100\/95,
+:root[data-branch-theme] .bg-gray-100,
+:root[data-branch-theme] .bg-gray-100\/95,
+body[data-branch-theme] .bg-slate-100,
+body[data-branch-theme] .bg-slate-100\/95,
+body[data-branch-theme] .bg-gray-100,
+body[data-branch-theme] .bg-gray-100\/95 {
+  background-color: var(--muted) !important;
+}
+
+:root[data-branch-theme] .border-white\/60,
+:root[data-branch-theme] .border-white\/70,
+:root[data-branch-theme] .border-slate-100,
+:root[data-branch-theme] .border-slate-200,
+:root[data-branch-theme] .border-gray-200,
+:root[data-branch-theme] .border-gray-300,
+:root[data-branch-theme] .border-navbar-border,
+body[data-branch-theme] .border-white\/60,
+body[data-branch-theme] .border-white\/70,
+body[data-branch-theme] .border-slate-100,
+body[data-branch-theme] .border-slate-200,
+body[data-branch-theme] .border-gray-200,
+body[data-branch-theme] .border-gray-300,
+body[data-branch-theme] .border-navbar-border {
+  border-color: var(--border) !important;
+}
+
+:root[data-branch-theme] .text-slate-950,
+:root[data-branch-theme] .text-gray-950,
+:root[data-branch-theme] .text-slate-900,
+:root[data-branch-theme] .text-gray-900,
+:root[data-branch-theme] .text-slate-800,
+:root[data-branch-theme] .text-gray-800,
+:root[data-branch-theme] .text-black,
+:root[data-branch-theme] .text-sidebar-foreground,
+body[data-branch-theme] .text-gray-950,
+body[data-branch-theme] .text-slate-950,
+body[data-branch-theme] .text-gray-900,
+body[data-branch-theme] .text-slate-900,
+body[data-branch-theme] .text-slate-800,
+body[data-branch-theme] .text-gray-800,
+body[data-branch-theme] .text-black,
+body[data-branch-theme] .text-sidebar-foreground {
+  color: var(--card-foreground) !important;
+}
+
+:root[data-branch-theme] .text-slate-700,
+:root[data-branch-theme] .text-slate-600,
+:root[data-branch-theme] .text-slate-500,
+:root[data-branch-theme] .text-slate-400,
+:root[data-branch-theme] .text-gray-700,
+:root[data-branch-theme] .text-gray-600,
+:root[data-branch-theme] .text-gray-500,
+:root[data-branch-theme] .text-gray-400,
+:root[data-branch-theme] .text-muted-foreground,
+body[data-branch-theme] .text-slate-700,
+body[data-branch-theme] .text-slate-600,
+body[data-branch-theme] .text-slate-500,
+body[data-branch-theme] .text-slate-400,
+body[data-branch-theme] .text-gray-700,
+body[data-branch-theme] .text-gray-600,
+body[data-branch-theme] .text-gray-500,
+body[data-branch-theme] .text-gray-400,
+body[data-branch-theme] .text-muted-foreground {
+  color: var(--muted-foreground) !important;
+}
+
+:root[data-branch-theme] .text-slate-300,
+:root[data-branch-theme] .text-slate-200,
+:root[data-branch-theme] .text-gray-300,
+:root[data-branch-theme] .text-gray-200,
+body[data-branch-theme] .text-slate-300,
+body[data-branch-theme] .text-slate-200,
+body[data-branch-theme] .text-gray-300,
+body[data-branch-theme] .text-gray-200 {
+  color: color-mix(in srgb, var(--muted-foreground) 65%, var(--card) 35%) !important;
+}
+
+.table-sort-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
+}
+
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  opacity: 0.65;
+  cursor: pointer;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.table-sort-button ion-icon {
+  font-size: 0.75rem;
+}
+
+.table-sort-button:hover {
+  color: var(--primary);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.table-sort-button.is-active {
+  color: var(--primary);
+  opacity: 1;
+}
+
+.app-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--secondary) 82%, white 18%) 0%,
+    color-mix(in srgb, var(--muted) 92%, white 8%) 50%,
+    color-mix(in srgb, var(--secondary) 82%, white 18%) 100%
+  );
+  background-size: 200% 100%;
+  animation: app-skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.app-skeleton-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.app-skeleton-card {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+@keyframes app-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+:root[data-branch-theme] .hover\:bg-slate-50:hover,
+:root[data-branch-theme] .hover\:bg-slate-100:hover,
+:root[data-branch-theme] .hover\:bg-slate-200:hover,
+:root[data-branch-theme] .hover\:bg-gray-100:hover,
+:root[data-branch-theme] .hover\:bg-gray-200:hover,
+body[data-branch-theme] .hover\:bg-slate-50:hover,
+body[data-branch-theme] .hover\:bg-slate-100:hover,
+body[data-branch-theme] .hover\:bg-slate-200:hover,
+body[data-branch-theme] .hover\:bg-gray-100:hover,
+body[data-branch-theme] .hover\:bg-gray-200:hover {
+  background-color: var(--secondary) !important;
+}
+
+:root[data-branch-theme] .bg-emerald-50,
+:root[data-branch-theme] .bg-emerald-50\/50,
+:root[data-branch-theme] .bg-emerald-50\/80,
+:root[data-branch-theme] .bg-emerald-100,
+:root[data-branch-theme] .bg-emerald-100\/80,
+:root[data-branch-theme] .bg-green-50,
+:root[data-branch-theme] .bg-green-100,
+:root[data-branch-theme] .bg-teal-50,
+:root[data-branch-theme] .bg-teal-100,
+:root[data-branch-theme] .bg-blue-100,
+:root[data-branch-theme] .bg-indigo-100,
+body[data-branch-theme] .bg-emerald-50,
+body[data-branch-theme] .bg-emerald-50\/50,
+body[data-branch-theme] .bg-emerald-50\/80,
+body[data-branch-theme] .bg-emerald-100,
+body[data-branch-theme] .bg-emerald-100\/80,
+body[data-branch-theme] .bg-green-50,
+body[data-branch-theme] .bg-green-100,
+body[data-branch-theme] .bg-teal-50,
+body[data-branch-theme] .bg-teal-100,
+body[data-branch-theme] .bg-blue-100,
+body[data-branch-theme] .bg-indigo-100 {
+  background-color: var(--accent) !important;
+}
+
+:root[data-branch-theme] .bg-emerald-500,
+:root[data-branch-theme] .bg-emerald-600,
+:root[data-branch-theme] .bg-emerald-700,
+:root[data-branch-theme] .bg-green-500,
+:root[data-branch-theme] .bg-green-600,
+:root[data-branch-theme] .bg-green-700,
+:root[data-branch-theme] .bg-teal-500,
+:root[data-branch-theme] .bg-teal-600,
+:root[data-branch-theme] .bg-teal-700,
+:root[data-branch-theme] .bg-blue-500,
+:root[data-branch-theme] .bg-blue-600,
+:root[data-branch-theme] .bg-blue-700,
+:root[data-branch-theme] .bg-slate-900,
+:root[data-branch-theme] .bg-slate-800,
+:root[data-branch-theme] .bg-primary,
+body[data-branch-theme] .bg-emerald-500,
+body[data-branch-theme] .bg-emerald-600,
+body[data-branch-theme] .bg-emerald-700,
+body[data-branch-theme] .bg-green-500,
+body[data-branch-theme] .bg-green-600,
+body[data-branch-theme] .bg-green-700,
+body[data-branch-theme] .bg-teal-500,
+body[data-branch-theme] .bg-teal-600,
+body[data-branch-theme] .bg-teal-700,
+body[data-branch-theme] .bg-blue-500,
+body[data-branch-theme] .bg-blue-600,
+body[data-branch-theme] .bg-blue-700,
+body[data-branch-theme] .bg-slate-900,
+body[data-branch-theme] .bg-slate-800,
+body[data-branch-theme] .bg-primary {
+  background-color: var(--primary) !important;
+}
+
+:root[data-branch-theme] .bg-primary\/10,
+body[data-branch-theme] .bg-primary\/10 {
+  background-color: color-mix(in srgb, var(--primary) 10%, white) !important;
+}
+
+:root[data-branch-theme] .text-emerald-800,
+:root[data-branch-theme] .text-emerald-900,
+:root[data-branch-theme] .text-emerald-700,
+:root[data-branch-theme] .text-emerald-600,
+:root[data-branch-theme] .text-emerald-500,
+:root[data-branch-theme] .text-green-800,
+:root[data-branch-theme] .text-green-700,
+:root[data-branch-theme] .text-green-600,
+:root[data-branch-theme] .text-green-500,
+:root[data-branch-theme] .text-teal-800,
+:root[data-branch-theme] .text-teal-700,
+:root[data-branch-theme] .text-teal-600,
+:root[data-branch-theme] .text-blue-900,
+:root[data-branch-theme] .text-blue-700,
+:root[data-branch-theme] .text-blue-600,
+:root[data-branch-theme] .text-indigo-700,
+:root[data-branch-theme] .text-primary,
+:root[data-branch-theme] .text-cyan-600,
+body[data-branch-theme] .text-emerald-900,
+body[data-branch-theme] .text-emerald-800,
+body[data-branch-theme] .text-emerald-700,
+body[data-branch-theme] .text-emerald-600,
+body[data-branch-theme] .text-emerald-500,
+body[data-branch-theme] .text-green-800,
+body[data-branch-theme] .text-green-700,
+body[data-branch-theme] .text-green-600,
+body[data-branch-theme] .text-green-500,
+body[data-branch-theme] .text-teal-800,
+body[data-branch-theme] .text-teal-700,
+body[data-branch-theme] .text-teal-600,
+body[data-branch-theme] .text-blue-900,
+body[data-branch-theme] .text-blue-700,
+body[data-branch-theme] .text-blue-600,
+body[data-branch-theme] .text-indigo-700,
+body[data-branch-theme] .text-primary,
+body[data-branch-theme] .text-cyan-600 {
+  color: var(--accent-foreground) !important;
+}
+
+:root[data-branch-theme] .border-blue-100,
+:root[data-branch-theme] .border-emerald-200,
+:root[data-branch-theme] .border-indigo-200,
+:root[data-branch-theme] .border-green-100,
+:root[data-branch-theme] .border-green-200,
+:root[data-branch-theme] .border-teal-100,
+:root[data-branch-theme] .border-teal-200,
+body[data-branch-theme] .border-blue-100,
+body[data-branch-theme] .border-emerald-200,
+body[data-branch-theme] .border-indigo-200,
+body[data-branch-theme] .border-green-100,
+body[data-branch-theme] .border-green-200,
+body[data-branch-theme] .border-teal-100,
+body[data-branch-theme] .border-teal-200 {
+  border-color: var(--accent) !important;
+}
+
+:root[data-branch-theme] .border-green-800,
+:root[data-branch-theme] .border-green-500,
+:root[data-branch-theme] .border-green-600,
+:root[data-branch-theme] .border-green-700,
+:root[data-branch-theme] .border-blue-500,
+:root[data-branch-theme] .border-blue-600,
+:root[data-branch-theme] .border-blue-700,
+:root[data-branch-theme] .border-emerald-600,
+:root[data-branch-theme] .border-emerald-700,
+:root[data-branch-theme] .border-emerald-500,
+:root[data-branch-theme] .border-teal-500,
+:root[data-branch-theme] .border-teal-600,
+:root[data-branch-theme] .border-teal-700,
+:root[data-branch-theme] .border-slate-900,
+body[data-branch-theme] .border-green-800,
+body[data-branch-theme] .border-green-500,
+body[data-branch-theme] .border-green-600,
+body[data-branch-theme] .border-green-700,
+body[data-branch-theme] .border-blue-500,
+body[data-branch-theme] .border-blue-600,
+body[data-branch-theme] .border-blue-700,
+body[data-branch-theme] .border-emerald-600,
+body[data-branch-theme] .border-emerald-700,
+body[data-branch-theme] .border-emerald-500,
+body[data-branch-theme] .border-teal-500,
+body[data-branch-theme] .border-teal-600,
+body[data-branch-theme] .border-teal-700,
+body[data-branch-theme] .border-slate-900 {
+  border-color: var(--primary) !important;
+}
+
+:root[data-branch-theme] .hover\:bg-green-50:hover,
+:root[data-branch-theme] .hover\:bg-emerald-700:hover,
+:root[data-branch-theme] .hover\:bg-emerald-600:hover,
+:root[data-branch-theme] .hover\:bg-emerald-500:hover,
+:root[data-branch-theme] .hover\:bg-green-700:hover,
+:root[data-branch-theme] .hover\:bg-green-600:hover,
+:root[data-branch-theme] .hover\:bg-green-500:hover,
+:root[data-branch-theme] .hover\:bg-teal-700:hover,
+:root[data-branch-theme] .hover\:bg-teal-600:hover,
+:root[data-branch-theme] .hover\:bg-teal-500:hover,
+:root[data-branch-theme] .hover\:bg-blue-600:hover,
+:root[data-branch-theme] .hover\:bg-blue-500:hover,
+:root[data-branch-theme] .hover\:bg-slate-800:hover,
+:root[data-branch-theme] .hover\:bg-slate-900:hover,
+:root[data-branch-theme] .hover\:bg-primary\/90:hover,
+:root[data-branch-theme] .hover\:bg-primary\/80:hover,
+body[data-branch-theme] .hover\:bg-green-50:hover,
+body[data-branch-theme] .hover\:bg-emerald-700:hover,
+body[data-branch-theme] .hover\:bg-emerald-600:hover,
+body[data-branch-theme] .hover\:bg-emerald-500:hover,
+body[data-branch-theme] .hover\:bg-green-700:hover,
+body[data-branch-theme] .hover\:bg-green-600:hover,
+body[data-branch-theme] .hover\:bg-green-500:hover,
+body[data-branch-theme] .hover\:bg-teal-700:hover,
+body[data-branch-theme] .hover\:bg-teal-600:hover,
+body[data-branch-theme] .hover\:bg-teal-500:hover,
+body[data-branch-theme] .hover\:bg-blue-600:hover,
+body[data-branch-theme] .hover\:bg-blue-500:hover,
+body[data-branch-theme] .hover\:bg-slate-800:hover,
+body[data-branch-theme] .hover\:bg-slate-900:hover,
+body[data-branch-theme] .hover\:bg-primary\/90:hover,
+body[data-branch-theme] .hover\:bg-primary\/80:hover {
+  background-color: var(--primary) !important;
+  filter: brightness(0.95);
+}
+
+:root[data-branch-theme] .hover\:text-emerald-800:hover,
+:root[data-branch-theme] .hover\:text-emerald-700:hover,
+:root[data-branch-theme] .hover\:text-green-800:hover,
+:root[data-branch-theme] .hover\:text-green-700:hover,
+:root[data-branch-theme] .hover\:text-teal-800:hover,
+:root[data-branch-theme] .hover\:text-teal-700:hover,
+body[data-branch-theme] .hover\:text-emerald-800:hover,
+body[data-branch-theme] .hover\:text-emerald-700:hover,
+body[data-branch-theme] .hover\:text-green-800:hover,
+body[data-branch-theme] .hover\:text-green-700:hover,
+body[data-branch-theme] .hover\:text-teal-800:hover,
+body[data-branch-theme] .hover\:text-teal-700:hover {
+  color: var(--accent-foreground) !important;
+}
+
+:root[data-branch-theme] .hover\:text-red-500:hover,
+body[data-branch-theme] .hover\:text-red-500:hover {
+  color: color-mix(in srgb, var(--destructive) 85%, #ffffff 15%) !important;
+}
+
+:root[data-branch-theme] .focus\:border-emerald-500:focus,
+:root[data-branch-theme] .focus\:border-green-500:focus,
+:root[data-branch-theme] .focus\:border-teal-500:focus,
+:root[data-branch-theme] .focus-within\:border-emerald-500:focus-within,
+:root[data-branch-theme] .focus-within\:border-green-500:focus-within,
+:root[data-branch-theme] .focus-within\:border-teal-500:focus-within,
+body[data-branch-theme] .focus\:border-emerald-500:focus,
+body[data-branch-theme] .focus\:border-green-500:focus,
+body[data-branch-theme] .focus\:border-teal-500:focus,
+body[data-branch-theme] .focus-within\:border-emerald-500:focus-within,
+body[data-branch-theme] .focus-within\:border-green-500:focus-within,
+body[data-branch-theme] .focus-within\:border-teal-500:focus-within {
+  border-color: var(--primary) !important;
+}
+
+:root[data-branch-theme] .focus\:ring-emerald-100:focus,
+:root[data-branch-theme] .focus\:ring-green-100:focus,
+:root[data-branch-theme] .focus\:ring-teal-100:focus,
+:root[data-branch-theme] .focus\:ring-emerald-500:focus,
+:root[data-branch-theme] .focus\:ring-green-500:focus,
+:root[data-branch-theme] .focus-within\:ring-emerald-100:focus-within,
+:root[data-branch-theme] .focus-within\:ring-green-100:focus-within,
+:root[data-branch-theme] .focus-within\:ring-teal-100:focus-within,
+body[data-branch-theme] .focus\:ring-emerald-100:focus,
+body[data-branch-theme] .focus\:ring-green-100:focus,
+body[data-branch-theme] .focus\:ring-teal-100:focus,
+body[data-branch-theme] .focus\:ring-emerald-500:focus,
+body[data-branch-theme] .focus\:ring-green-500:focus,
+body[data-branch-theme] .focus-within\:ring-emerald-100:focus-within,
+body[data-branch-theme] .focus-within\:ring-green-100:focus-within,
+body[data-branch-theme] .focus-within\:ring-teal-100:focus-within {
+  --tw-ring-color: var(--accent) !important;
+}
+
+:root[data-branch-theme] .text-card-foreground,
+body[data-branch-theme] .text-card-foreground {
+  color: var(--card-foreground) !important;
+}
+
+:root[data-branch-theme] input:not([type='checkbox']):not([type='radio']),
+:root[data-branch-theme] select,
+:root[data-branch-theme] textarea,
+body[data-branch-theme] input:not([type='checkbox']):not([type='radio']),
+body[data-branch-theme] select,
+body[data-branch-theme] textarea {
+  background-color: var(--input-background);
+  border-color: var(--border);
+}
+
+:root[data-branch-theme] input:focus,
+:root[data-branch-theme] select:focus,
+:root[data-branch-theme] textarea:focus,
+body[data-branch-theme] input:focus,
+body[data-branch-theme] select:focus,
+body[data-branch-theme] textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+:root[data-branch-theme] .app-search-input:focus,
+body[data-branch-theme] .app-search-input:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-branch-theme] .app-search-shell:focus-within,
+body[data-branch-theme] .app-search-shell:focus-within {
+  border-color: inherit !important;
+  box-shadow: none !important;
+}
+
+:root[data-branch-theme] aside,
+:root[data-branch-theme] header,
+body[data-branch-theme] aside,
+body[data-branch-theme] header {
+  border-color: var(--border);
+}
+
+:root[data-branch-theme] .navbar-button:not(.active):hover,
+body[data-branch-theme] .navbar-button:not(.active):hover {
+  background-color: var(--secondary) !important;
+}

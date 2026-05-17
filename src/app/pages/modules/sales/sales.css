@@ -1,0 +1,355 @@
+.sales-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.sales-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.sales-order-list {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sales-cart-item {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, #ffffff 18%);
+  background: color-mix(in srgb, var(--secondary) 58%, var(--card) 42%);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+}
+
+.sales-cart-avatar {
+  border: 1px solid color-mix(in srgb, var(--border) 76%, #ffffff 24%);
+  background: color-mix(in srgb, var(--muted) 74%, var(--card) 26%);
+  color: color-mix(in srgb, var(--card-foreground) 78%, var(--muted-foreground) 22%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.sales-cart-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sales-cart-title {
+  color: var(--card-foreground);
+  letter-spacing: -0.015em;
+  line-height: 1.2rem;
+}
+
+.sales-cart-generic {
+  color: color-mix(in srgb, var(--card-foreground) 72%, var(--muted-foreground) 28%);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sales-cart-meta {
+  color: var(--muted-foreground);
+  line-height: 1rem;
+  font-weight: 500;
+}
+
+.sales-cart-price {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: color-mix(in srgb, var(--primary) 70%, var(--muted-foreground) 30%);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.sales-cart-price-label {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.sales-cart-price-value {
+  color: var(--card-foreground);
+  font-weight: 700;
+}
+
+.sales-cart-actions {
+  flex-wrap: nowrap;
+}
+
+.sales-cart-stepper {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, #ffffff 22%);
+  background: color-mix(in srgb, var(--card) 78%, var(--secondary) 22%);
+  color: var(--card-foreground);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.sales-cart-stepper:hover {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border) 72%);
+  background: color-mix(in srgb, var(--secondary) 72%, var(--card) 28%);
+  transform: translateY(-1px);
+}
+
+.sales-cart-stepper:disabled {
+  box-shadow: none;
+}
+
+.sales-cart-qty {
+  border-color: color-mix(in srgb, var(--border) 76%, #ffffff 24%);
+  background: color-mix(in srgb, var(--card) 92%, var(--secondary) 8%);
+  color: var(--card-foreground);
+  font-weight: 600;
+}
+
+.sales-cart-remove {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.sales-cart-remove:hover {
+  filter: brightness(0.98);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(220, 38, 38, 0.22);
+}
+
+.sales-branch-group-header {
+  border: 1px solid color-mix(in srgb, var(--border) 76%, #ffffff 24%);
+  background: color-mix(in srgb, var(--secondary) 72%, var(--card) 28%);
+}
+
+.sales-category-chip {
+  border-color: color-mix(in srgb, var(--border) 88%, #ffffff 12%);
+  background: color-mix(in srgb, var(--secondary) 72%, var(--card) 28%);
+  color: var(--muted-foreground);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.sales-category-chip:hover {
+  background: var(--secondary);
+  color: var(--card-foreground);
+}
+
+.sales-category-chip-active {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border) 55%);
+  background: color-mix(in srgb, var(--primary) 14%, var(--card) 86%);
+  color: var(--primary);
+}
+
+.sales-medicine-card {
+  background: color-mix(in srgb, var(--secondary) 52%, var(--card) 48%);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.sales-medicine-card:hover {
+  background: color-mix(in srgb, var(--secondary) 68%, var(--card) 32%);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.sales-medicine-category {
+  background: color-mix(in srgb, var(--muted) 84%, var(--card) 16%);
+  color: var(--muted-foreground);
+}
+
+.sales-header-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, #ffffff 18%);
+  border-radius: 1rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 94%, #ffffff 6%) 0%,
+    color-mix(in srgb, var(--secondary) 68%, var(--card) 32%) 100%
+  );
+  padding: 0.9rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.sales-header-copy {
+  min-width: 0;
+}
+
+.sales-header-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted-foreground) 88%, #ffffff 12%);
+}
+
+.sales-header-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.sales-header-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: color-mix(in srgb, var(--foreground) 90%, #0f172a 10%);
+}
+
+.sales-header-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border) 82%);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card) 90%);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--primary) 76%, #1e293b 24%);
+}
+
+.sales-header-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.sales-nav-button {
+  border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--border) 62%);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card) 90%);
+  color: var(--primary);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.sales-nav-button-pill {
+  display: inline-flex;
+  height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sales-nav-button ion-icon {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.sales-nav-button:hover {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border) 45%);
+  background: color-mix(in srgb, var(--primary) 16%, var(--card) 84%);
+  color: var(--primary);
+}
+
+.sales-add-button {
+  background: color-mix(in srgb, var(--primary) 16%, var(--card) 84%);
+  color: var(--primary);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.sales-add-button:hover {
+  background: color-mix(in srgb, var(--primary) 24%, var(--card) 76%);
+  color: var(--primary);
+}
+
+.sales-add-button:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  box-shadow: none;
+}
+
+.sales-method-tile {
+  border-color: color-mix(in srgb, var(--border) 76%, #0f172a 24%);
+  background: color-mix(in srgb, var(--card) 78%, var(--secondary) 22%);
+  color: color-mix(in srgb, var(--foreground) 86%, #334155 14%);
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.sales-method-tile:hover {
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border) 64%);
+  background: color-mix(in srgb, var(--secondary) 62%, var(--card) 38%);
+  color: var(--foreground);
+}
+
+.sales-method-tile-active {
+  border-color: color-mix(in srgb, var(--primary) 58%, var(--border) 42%);
+  background: color-mix(in srgb, var(--primary) 16%, var(--card) 84%);
+  color: color-mix(in srgb, var(--primary) 74%, #111827 26%);
+}
+
+.sales-payment-option {
+  border-color: color-mix(in srgb, var(--border) 82%, #ffffff 18%);
+  background: color-mix(in srgb, var(--card) 86%, var(--secondary) 14%);
+  color: color-mix(in srgb, var(--foreground) 90%, #334155 10%);
+}
+
+.sales-payment-option:hover {
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--border) 66%);
+  background: color-mix(in srgb, var(--secondary) 56%, var(--card) 44%);
+  color: var(--foreground);
+}
+
+.peer:checked + .sales-payment-option {
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--border) 40%);
+  background: color-mix(in srgb, var(--primary) 16%, var(--card) 84%);
+  color: color-mix(in srgb, var(--primary) 76%, #111827 24%);
+}
+
+@media (min-width: 640px) {
+  .sales-header-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .sales-header-title-row {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sales-header-nav {
+    display: flex;
+    flex: none;
+    gap: 0.75rem;
+  }
+
+  .sales-nav-button-pill {
+    width: auto;
+    min-width: 7rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .sales-panel {
+    height: calc(100vh - 10rem);
+    min-height: 40rem;
+    max-height: 48rem;
+  }
+}
+
+.sales-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sales-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.sales-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.sales-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

@@ -5,7 +5,6 @@ import { NgModule } from '@angular/core';
 import { Dashboard } from './pages/modules/dashboard/dashboard';
 import { Sales } from './pages/modules/sales/sales';
 import { OfflineOrders } from './pages/modules/offline-orders/offline-orders';
-import { HmoPhilhealth } from './pages/modules/hmo-philhealth/hmo-philhealth';
 import { Inventory } from './pages/modules/inventory/inventory';
 import { Fefo } from './pages/modules/fefo/fefo';
 import { ControlledDrugs } from './pages/modules/controlled-drugs/controlled-drugs';
@@ -29,9 +28,9 @@ export const routes: Routes = [
   /**
    * Public routes
    */
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: Login, canActivate: [PreventLoginGuard] },
-  { path: 'register', component: Register, canActivate: [PreventLoginGuard] },
+  { path: '', component: Login, canActivate: [PreventLoginGuard] },
+  { path: 'home', component: Login, canActivate: [PreventLoginGuard] },
+  { path: 'login', redirectTo: '', pathMatch: 'full' },
   { path: 'admin/login', component: AdminLogin, canActivate: [PreventLoginGuard] },
   {
     path: 'admin',
@@ -68,12 +67,6 @@ export const routes: Routes = [
     component: OfflineOrders,
     canActivate: [AuthGuard],
     data: { permission: 'sms' }
-  },
-  {
-    path: 'hmo-philhealth',
-    component: HmoPhilhealth,
-    canActivate: [AuthGuard],
-    data: { permission: 'claims' }
   },
   {
     path: 'inventory',
@@ -114,14 +107,13 @@ export const routes: Routes = [
   {
     path: 'settings',
     component: Settings,
-    canActivate: [AuthGuard],
-    data: { permission: 'settings' }
+    canActivate: [AuthGuard]
   },
 
   /**
    * Wildcard route
    */
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

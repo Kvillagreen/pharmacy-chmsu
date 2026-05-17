@@ -1,4 +1,61 @@
 <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+  @if(isLoading){
+  <div class="space-y-5 sm:space-y-6">
+    <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div class="max-w-3xl space-y-3">
+        <div class="dashboard-skeleton h-8 w-64 rounded-2xl"></div>
+        <div class="dashboard-skeleton h-4 w-full max-w-2xl rounded-2xl"></div>
+      </div>
+
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div class="dashboard-skeleton h-12 w-full rounded-xl sm:w-52"></div>
+        <div class="dashboard-skeleton h-12 w-full rounded-xl sm:w-40"></div>
+      </div>
+    </section>
+
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 w-full">
+      @for(card of [1,2,3,4,5]; track $index){
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div class="space-y-3">
+          <div class="dashboard-skeleton h-4 w-24 rounded-xl"></div>
+          <div class="dashboard-skeleton h-9 w-32 rounded-xl"></div>
+          <div class="dashboard-skeleton h-3 w-28 rounded-xl"></div>
+        </div>
+      </article>
+      }
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      @for(panel of [1,2,3,4,5,6]; track $index){
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="space-y-3">
+          <div class="dashboard-skeleton h-5 w-40 rounded-xl"></div>
+          <div class="dashboard-skeleton h-4 w-64 rounded-xl"></div>
+        </div>
+        <div class="mt-5 space-y-3">
+          @for(row of [1,2,3,4]; track $index){
+          <div class="dashboard-skeleton h-14 w-full rounded-2xl"></div>
+          }
+        </div>
+      </article>
+      }
+    </section>
+
+    <section>
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="space-y-3">
+          <div class="dashboard-skeleton h-5 w-44 rounded-xl"></div>
+          <div class="dashboard-skeleton h-4 w-72 rounded-xl"></div>
+        </div>
+        <div class="mt-5 space-y-3">
+          @for(row of [1,2,3,4,5]; track $index){
+          <div class="dashboard-skeleton h-20 w-full rounded-2xl"></div>
+          }
+        </div>
+      </article>
+    </section>
+  </div>
+  } @else {
   <div class="space-y-5 sm:space-y-6 ">
     <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div class="max-w-3xl">
@@ -72,7 +129,7 @@
     </section>
 
     <section class="w-full rounded-3xl grid grid-cols-1 xl:grid-cols-2 gap-4">
-      <article class="rounded-3xl h-full  border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Revenue Trend</h3>
@@ -84,18 +141,20 @@
         </div>
 
         <div class="mt-6">
-          <div class="flex h-full items-end gap-2 overflow-x-auto rounded-2xl bg-slate-50 p-3 sm:h-72 sm:p-4">
+          <div class="revenue-chart theme-chart-surface rounded-[1.75rem] p-3 sm:p-4">
+            <div class="revenue-chart-scroll flex items-end gap-3 overflow-x-auto pb-2">
             @for(point of dashboardData.data.charts.daily_revenue; track point.date){
-            <div class="flex min-w-14 flex-1 flex-col items-center justify-end gap-2 sm:min-w-12">
+            <div class="flex min-w-16 flex-1 flex-col items-center justify-end gap-2 sm:min-w-14">
               <div class="text-center text-[10px] font-semibold text-slate-500">Php
                 {{extras.formatCurrency(point.total_revenue)}}</div>
               <div
-                class="w-full rounded-t-xl bg-linear-to-t from-emerald-600 via-emerald-500 to-emerald-300 transition-all"
-                [style.height.%]="getBarHeight(point.total_revenue)">
+                class="revenue-bar theme-bar-primary w-full max-w-12 rounded-t-[1rem] transition-all"
+                [style.height.px]="getBarHeight(point.total_revenue)">
               </div>
               <div class="text-[11px] font-medium text-slate-500">{{point.label}}</div>
             </div>
             }
+            </div>
           </div>
         </div>
       </article>
@@ -126,7 +185,7 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="dashboard-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Branch Performance Table</h3>
@@ -134,7 +193,7 @@
           </div>
         </div>
 
-        <div class="mt-5 hidden overflow-x-auto md:block">
+        <div class="dashboard-scroll mt-5 hidden overflow-auto md:block">
           <table class="min-w-full text-left text-sm">
             <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -151,8 +210,8 @@
                 <td class="px-3 py-3 text-right text-slate-700">Php {{extras.formatCurrency(branch.total_revenue)}}</td>
                 <td class="px-3 py-3 text-right text-slate-700">{{branch.transaction_count}}</td>
                 <td class="px-3 py-3">
-                  <div class="h-3 w-full rounded-full bg-slate-100">
-                    <div class="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-400"
+                  <div class="theme-progress-track h-3 w-full rounded-full">
+                    <div class="theme-bar-secondary h-3 rounded-full"
                       [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(dashboardData.data.tables.branch_table, 'total_revenue'))">
                     </div>
                   </div>
@@ -169,7 +228,7 @@
           </table>
         </div>
 
-        <div class="mt-5 space-y-3 md:hidden">
+        <div class="dashboard-scroll mt-5 space-y-3 overflow-y-auto md:hidden">
           @for(branch of dashboardData.data.tables.branch_table; track branch.branch_id){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -179,8 +238,8 @@
               </div>
               <p class="text-right text-sm font-semibold text-slate-800">Php {{extras.formatCurrency(branch.total_revenue)}}</p>
             </div>
-            <div class="mt-3 h-3 w-full rounded-full bg-slate-200">
-              <div class="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-400"
+            <div class="theme-progress-track mt-3 h-3 w-full rounded-full">
+              <div class="theme-bar-secondary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(branch.total_revenue, getMaxByKey(dashboardData.data.tables.branch_table, 'total_revenue'))">
               </div>
             </div>
@@ -194,13 +253,13 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="dashboard-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Payment Mix</h3>
           <p class="text-sm text-slate-500">How customers are paying during the selected range.</p>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <div class="dashboard-scroll mt-5 space-y-4 overflow-y-auto">
           @for(method of dashboardData.data.charts.payment_mix; track method.payment_method){
           <div class="space-y-2">
             <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
@@ -208,8 +267,8 @@
               <span class="text-slate-500">Php {{extras.formatCurrency(method.total_revenue)}} |
                 {{method.transaction_count}} txns</span>
             </div>
-            <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+            <div class="theme-progress-track h-3 w-full rounded-full">
+              <div class="theme-bar-primary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(method.total_revenue, getMaxByKey(dashboardData.data.charts.payment_mix, 'total_revenue'))">
               </div>
             </div>
@@ -221,21 +280,21 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="dashboard-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Category Movement</h3>
           <p class="text-sm text-slate-500">Product categories with the highest quantity sold.</p>
         </div>
 
-        <div class="mt-5 space-y-4">
+        <div class="dashboard-scroll mt-5 space-y-4 overflow-y-auto">
           @for(category of dashboardData.data.charts.category_mix; track category.category){
           <div class="space-y-2">
             <div class="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span class="font-medium text-slate-700">{{extras.toTitleCaseSafe(category.category)}}</span>
               <span class="text-slate-500">{{category.quantity_sold}} units | {{category.transaction_count}} txns</span>
             </div>
-            <div class="h-3 w-full rounded-full bg-slate-100">
-              <div class="h-3 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-400"
+            <div class="theme-progress-track h-3 w-full rounded-full">
+              <div class="theme-bar-tertiary h-3 rounded-full"
                 [style.width.%]="getPercentWidth(category.quantity_sold, getMaxByKey(dashboardData.data.charts.category_mix, 'quantity_sold'))">
               </div>
             </div>
@@ -247,7 +306,7 @@
         </div>
       </article>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="dashboard-panel rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Top-Selling Medicines</h3>
@@ -255,7 +314,7 @@
           </div>
         </div>
 
-        <div class="mt-5 hidden overflow-x-auto md:block">
+        <div class="dashboard-scroll mt-5 hidden overflow-auto md:block">
           <table class="min-w-full text-left text-sm">
             <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -287,7 +346,7 @@
           </table>
         </div>
 
-        <div class="mt-5 space-y-3 md:hidden">
+        <div class="dashboard-scroll mt-5 space-y-3 overflow-y-auto md:hidden">
           @for(medicine of dashboardData.data.tables.top_medicines; track medicine.medicine_id){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -313,13 +372,13 @@
     </section>
 
     <section>
-      <article class="w-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <article class="dashboard-panel dashboard-panel-wide w-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div>
           <h3 class="text-lg font-semibold text-slate-900">Recent Transactions</h3>
           <p class="text-sm text-slate-500">Latest completed sales in the current dashboard scope.</p>
         </div>
 
-        <div class="mt-5 space-y-3">
+        <div class="dashboard-scroll mt-5 space-y-3 overflow-y-auto">
           @for(transaction of dashboardData.data.tables.recent_transactions; track transaction.transaction_id){
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -344,4 +403,5 @@
       </article>
     </section>
   </div>
+  }
 </main>
