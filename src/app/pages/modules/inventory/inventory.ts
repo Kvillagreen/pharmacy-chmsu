@@ -130,6 +130,7 @@ export class Inventory implements OnInit {
     'mg/mL',
   ];
   medicineCategoryOptions: string[] = [];
+  minimumShelfLifeMonths = 12;
 
   constructor(
     private userService: UserService,
@@ -457,14 +458,17 @@ export class Inventory implements OnInit {
       return;
     }
 
-    if (received > expiry) {
-      Extras.showToast('Invalid: Received date is after expiry date', 'warning');
+    if (!this.validateInventoryDates(received, expiry, new Date(this.medicineData.inputData.mfg_date))) {
       return;
     }
 
-    this.medicineData.inputData.branch_id = Number(
-      this.medicineData.inputData?.branch_id ?? this.getSelectedBranchId() ?? this.getAssignedBranchId()
-    );
+    const branchId = this.resolveInventoryBranchId();
+    if (!branchId) {
+      Extras.showToast('Please select a valid branch before adding inventory.', 'warning');
+      return;
+    }
+
+    this.medicineData.inputData.branch_id = branchId;
     const payload = { ...this.medicineData.inputData };
     if (payload.received_date instanceof Date) {
       payload.received_date = payload.received_date.toISOString().split('T')[0];
@@ -516,14 +520,17 @@ export class Inventory implements OnInit {
       return;
     }
 
-    if (received > expiry) {
-      Extras.showToast('Invalid: Received date is after expiry date', 'warning');
+    if (!this.validateInventoryDates(received, expiry, new Date(this.medicineData.inputData.mfg_date))) {
       return;
     }
 
-    this.medicineData.inputData.branch_id = Number(
-      this.medicineData.inputData?.branch_id ?? this.getSelectedBranchId() ?? this.getAssignedBranchId()
-    );
+    const branchId = this.resolveInventoryBranchId();
+    if (!branchId) {
+      Extras.showToast('Please select a valid branch before updating inventory.', 'warning');
+      return;
+    }
+
+    this.medicineData.inputData.branch_id = branchId;
     const payload = { ...this.medicineData.inputData };
     if (payload.received_date instanceof Date) {
       payload.received_date = payload.received_date.toISOString().split('T')[0];
@@ -728,5 +735,69 @@ export class Inventory implements OnInit {
       .split(',')
       .map((item) => item.trim())
       .filter((item) => item !== '');
+  }
+
+  private resolveInventoryBranchId(): number {
+    const candidateIds = [
+      Number(this.medicineData.inputData?.branch_id ?? 0),
+      this.getSelectedBranchId(),
+      this.getAssignedBranchId(),
+    ];
+
+    return candidateIds.find((branchId) => Number.isFinite(branchId) && branchId > 0) ?? 0;
+  }
+
+  private validateInventoryDates(received: Date, expiry: Date, mfg: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const minimumExpiry = new Date(today);
+    minimumExpiry.setMonth(minimumExpiry.getMonth() + this.minimumShelfLifeMonths);
+
+    received.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    mfg.setHours(0, 0, 0, 0);
+
+    if (expiry <= today) {
+      Extras.showToast('The system should not accept expired medicines.', 'warning');
+      return false;
+    }
+
+    if (expiry < minimumExpiry) {
+      Extras.showToast(`Stocks with less than ${this.minimumShelfLifeMonths} months of remaining shelf life are not accepted.`, 'warning');
+      return false;
+    }
+
+    if (received < today) {
+      Extras.showToast('Received date must be greater than or equal to the present date.', 'warning');
+      return false;
+    }
+
+    if (mfg > today) {
+      Extras.showToast('Manufacturing date cannot be in the future.', 'warning');
+      return false;
+    }
+
+    if (mfg >= received) {
+      Extras.showToast('Manufacturing date must be before the received date.', 'warning');
+      return false;
+    }
+
+    if (expiry <= mfg) {
+      Extras.showToast('Expiry date must be after the manufacturing date.', 'warning');
+      return false;
+    }
+
+    if (received > expiry) {
+      Extras.showToast('Invalid: Received date is after expiry date', 'warning');
+      return false;
+    }
+
+    if (mfg > expiry) {
+      Extras.showToast('Manufacturing date cannot be after the expiry date.', 'warning');
+      return false;
+    }
+
+    return true;
   }
 }
