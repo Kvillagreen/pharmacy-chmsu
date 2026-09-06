@@ -129,6 +129,12 @@ export class Inventory implements OnInit {
     '%',
     'mg/mL',
   ];
+  stockContainerOptions = [
+    { value: 'none', label: 'None' },
+    { value: 'boxes', label: 'Boxes' },
+    { value: 'bulk', label: 'Bulk' },
+    { value: 'custom', label: 'Custom' },
+  ];
   medicineCategoryOptions: string[] = [];
   minimumShelfLifeMonths = 12;
 
@@ -146,6 +152,7 @@ export class Inventory implements OnInit {
   isUpdate = signal(false);
   isDelete = signal(false);
   isExportModalOpen = signal(false);
+  isArchiveHistoryOpen = signal(false);
   isTransfer = signal(false);
   endpoint = 'medicine';
 
@@ -157,6 +164,7 @@ export class Inventory implements OnInit {
   branchData: BranchData = {
     data: [],
   };
+  archivedMedicines: any[] = [];
 
   exportConfig = {
     fromDate: '',
@@ -169,6 +177,7 @@ export class Inventory implements OnInit {
       { key: 'type', label: 'Type', checked: true },
       { key: 'dosage', label: 'Dosage', checked: true },
       { key: 'unit', label: 'Unit', checked: true },
+      { key: 'batch_number', label: 'Batch Number', checked: true },
       { key: 'price', label: 'Unit Price', checked: true },
       { key: 'stocks', label: 'Stocks', checked: true },
       { key: 'reorder_level', label: 'Minimum Stocks', checked: true },
@@ -362,6 +371,34 @@ export class Inventory implements OnInit {
     this.isExportModalOpen.set(false);
   }
 
+  async openArchiveHistoryModal() {
+    this.archivedMedicines = [];
+    this.isArchiveHistoryOpen.set(true);
+
+    try {
+      const params = [`company_id=${this.userData.data.data.company_id}`];
+      const selectedBranch = this.getSelectedBranchId();
+      if (selectedBranch) {
+        params.push(`branch_id=${selectedBranch}`);
+      }
+
+      const res = await this.userService.getUser(`medicine/archived/list?${params.join('&')}`, '', this.userData.token);
+      if (res.status === 200 && res.data?.success) {
+        this.archivedMedicines = Array.isArray(res.data.data) ? res.data.data : [];
+      }
+    } catch (e) {
+      console.log(e);
+      Extras.showToast('Failed to load archived medicines.', 'warning');
+    } finally {
+      this.cd.detectChanges();
+    }
+  }
+
+  closeArchiveHistoryModal() {
+    this.isArchiveHistoryOpen.set(false);
+    this.archivedMedicines = [];
+  }
+
   async exportCsv() {
     if (!this.exportConfig.fromDate || !this.exportConfig.toDate) {
       Extras.showToast('Please select a from date and to date.', 'warning');
@@ -412,7 +449,7 @@ export class Inventory implements OnInit {
     try {
       const res = await this.userService.deleteUser(`medicine/${this.medicineData.inputData.medicine_id}`, '', this.userData.token);
       if (res.status === 200 && res.data.success) {
-        Extras.showToast('Medicine deleted successfully!', 'success');
+        Extras.showToast('Medicine archived successfully!', 'success');
         this.medicineData.inputData = [];
         this.isDelete.set(false);
         this.getMedicine();
@@ -427,6 +464,7 @@ export class Inventory implements OnInit {
   }
 
   async create() {
+    this.applyContainerStockCount();
     const received = new Date(this.medicineData.inputData.received_date);
     const expiry = new Date(this.medicineData.inputData.expiry_date);
 
@@ -449,6 +487,7 @@ export class Inventory implements OnInit {
       !this.medicineData.inputData.type ||
       !this.medicineData.inputData.dosage ||
       !this.medicineData.inputData.unit ||
+      !this.medicineData.inputData.batch_number ||
       !this.medicineData.inputData.received_date ||
       !this.medicineData.inputData.expiry_date ||
       !this.medicineData.inputData.mfg_date ||
@@ -495,6 +534,7 @@ export class Inventory implements OnInit {
   }
 
   async update() {
+    this.applyContainerStockCount();
     const received = new Date(this.medicineData.inputData.received_date);
     const expiry = new Date(this.medicineData.inputData.expiry_date);
 
@@ -511,6 +551,7 @@ export class Inventory implements OnInit {
       !this.medicineData.inputData.type ||
       !this.medicineData.inputData.dosage ||
       !this.medicineData.inputData.unit ||
+      !this.medicineData.inputData.batch_number ||
       !this.medicineData.inputData.received_date ||
       !this.medicineData.inputData.expiry_date ||
       !this.medicineData.inputData.mfg_date ||
@@ -661,6 +702,7 @@ export class Inventory implements OnInit {
       type: item?.type ?? '',
       dosage: item?.dosage ?? '',
       unit: item?.unit ?? '',
+      batch_number: item?.batch_number ?? '',
       price: item?.price ?? '',
       stocks: item?.stocks ?? '',
       reorder_level: item?.reorder_level ?? '',
@@ -799,5 +841,46 @@ export class Inventory implements OnInit {
     }
 
     return true;
+  }
+
+  onContainerTypeChange() {
+    const type = String(this.medicineData.inputData?.container_type ?? 'none');
+    if (type === 'none') {
+      this.medicineData.inputData.container_name = '';
+      this.medicineData.inputData.container_count = null;
+      this.medicineData.inputData.pcs_per_container = null;
+      return;
+    }
+
+    if (type === 'boxes') {
+      this.medicineData.inputData.container_name = 'Boxes';
+    } else if (type === 'bulk') {
+      this.medicineData.inputData.container_name = 'Bulk';
+    }
+  }
+
+  shouldShowContainerStockFields(): boolean {
+    return ['boxes', 'bulk', 'custom'].includes(String(this.medicineData.inputData?.container_type ?? 'none'));
+  }
+
+  getComputedContainerStocks(): number {
+    if (!this.shouldShowContainerStockFields()) {
+      return Number(this.medicineData.inputData?.stocks ?? 0);
+    }
+
+    const count = Number(this.medicineData.inputData?.container_count ?? 0);
+    const pcs = Number(this.medicineData.inputData?.pcs_per_container ?? 0);
+    return Math.max(0, count * pcs);
+  }
+
+  applyContainerStockCount() {
+    if (!this.medicineData.inputData) {
+      this.medicineData.inputData = {};
+    }
+
+    this.medicineData.inputData.container_type ||= 'none';
+    if (this.shouldShowContainerStockFields()) {
+      this.medicineData.inputData.stocks = this.getComputedContainerStocks();
+    }
   }
 }

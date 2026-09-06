@@ -240,7 +240,7 @@ export class Login implements OnInit, OnDestroy {
       const res = await this.userService.getUser(this.buildCatalogQuery());
       if (res.status === 200 && res.data?.success) {
         this.catalogData = {
-          data: res.data?.data ?? [],
+          data: this.mergeCatalogMedicines(res.data?.data ?? []),
           meta: {
             current_page: Number(res.data?.meta?.current_page ?? 1),
             last_page: Number(res.data?.meta?.last_page ?? 1),
@@ -277,6 +277,24 @@ export class Login implements OnInit, OnDestroy {
       this.catalogPage += 1;
       this.loadCatalog();
     }
+  }
+
+  private mergeCatalogMedicines(items: any[]): any[] {
+    const grouped = new Map<string, any>();
+
+    for (const item of items ?? []) {
+      const key = `${Number(item?.branch_id ?? 0)}:${Number(item?.medicine_id ?? 0)}`;
+      const existing = grouped.get(key);
+
+      if (!existing) {
+        grouped.set(key, { ...item, stocks: Number(item?.stocks ?? 0) });
+        continue;
+      }
+
+      existing.stocks = Number(existing.stocks ?? 0) + Number(item?.stocks ?? 0);
+    }
+
+    return Array.from(grouped.values());
   }
 
   prevCatalogPage() {

@@ -8,7 +8,6 @@ import { OfflineOrders } from './pages/modules/offline-orders/offline-orders';
 import { Inventory } from './pages/modules/inventory/inventory';
 import { Fefo } from './pages/modules/fefo/fefo';
 import { ControlledDrugs } from './pages/modules/controlled-drugs/controlled-drugs';
-import { Delivery } from './pages/modules/delivery/delivery';
 import { Users } from './pages/modules/users/users';
 import { Settings } from './pages/modules/settings/settings';
 import { Reports } from './pages/modules/reports/reports';
@@ -88,9 +87,8 @@ export const routes: Routes = [
   },
   {
     path: 'delivery',
-    component: Delivery,
-    canActivate: [AuthGuard],
-    data: { permission: 'delivery' }
+    redirectTo: 'dashboard',
+    pathMatch: 'full'
   },
   {
     path: 'reports',

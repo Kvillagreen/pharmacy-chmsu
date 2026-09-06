@@ -316,7 +316,7 @@ export class OfflineOrders implements OnInit {
   }
 
   get pharmacyName(): string {
-    return String(this.getUserField('company_name') ?? 'KMV Pharmacy').trim() || 'KMV Pharmacy';
+    return String(this.getUserField('company_name') ?? 'Sto. Rosario Drug Store').trim() || 'Sto. Rosario Drug Store';
   }
 
   get hasBranchName(): boolean {

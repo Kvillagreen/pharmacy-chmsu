@@ -9,6 +9,9 @@ import { BirAnnualDeclarationData, ReportsData, ReportsRegulatedTransaction, Rep
 import { BranchData } from '../../../../models/BranchModel';
 import { IonIcon } from '@ionic/angular/standalone';
 import jsPDF from 'jspdf';
+
+type ReportExportType = 'branch_performance' | 'top_medicines' | 'inventory_watch' | 'recent_transactions' | 'prescribed_transactions' | 'dangerous_transactions' | 'stock_transfers';
+
 @Component({
   selector: 'app-reports',
   imports: [CommonModule, FormsModule, IonIcon],
@@ -27,10 +30,18 @@ export class Reports implements OnInit, OnDestroy {
   private highlightCarouselTimer: ReturnType<typeof setInterval> | null = null;
   isBirModalOpen = false;
   isReceiptOpen = false;
+  isExportModalOpen = false;
+  isExporting = false;
+  selectedExportType: ReportExportType | null = null;
+  exportDateForm = {
+    startDate: '',
+    endDate: '',
+  };
   isTransactionRecordsModalOpen = false;
   isTransactionRecordsLoading = false;
   selectedRegulatedTransaction: ReportsRegulatedTransaction | null = null;
   selectedReceiptTransaction: any = null;
+  voidingTransactionId: number | null = null;
   transactionRecords: ReportsTransactionRecord[] = [];
   transactionRecordsMeta = {
     current_page: 1,
@@ -63,6 +74,8 @@ export class Reports implements OnInit, OnDestroy {
         company_id: 0,
         branch_id: 0,
         days: 7,
+        start_date: '',
+        end_date: '',
         label: 'All Branches',
       },
       summary: {
@@ -91,6 +104,7 @@ export class Reports implements OnInit, OnDestroy {
         recent_transactions: [],
         prescribed_transactions: [],
         dangerous_transactions: [],
+        stock_transfers: [],
       },
       analysis: {
         headline: '',
@@ -117,7 +131,7 @@ export class Reports implements OnInit, OnDestroy {
     this.stopHighlightCarousel();
   }
 
-  buildQuery(): string | null {
+  buildQuery(startDate = '', endDate = ''): string | null {
     const companyId = this.userData.data?.data?.company_id;
     const storedBranch = this.encryptData.decryptData('branch');
     const selectedBranch = Number(storedBranch?.selectedBranch ?? 0);
@@ -126,7 +140,18 @@ export class Reports implements OnInit, OnDestroy {
       return null;
     }
 
-    return `reports?company_id=${companyId}&branch_id=${selectedBranch}&days=${this.selectedDays}`;
+    const params = new URLSearchParams({
+      company_id: String(companyId),
+      branch_id: String(selectedBranch),
+      days: String(this.selectedDays),
+    });
+
+    if (startDate && endDate) {
+      params.set('start_date', startDate);
+      params.set('end_date', endDate);
+    }
+
+    return `reports?${params.toString()}`;
   }
 
   async getReports() {
@@ -338,29 +363,130 @@ export class Reports implements OnInit, OnDestroy {
     return transaction?.created_at_label || this.extras.timeAgo(transaction?.created_at);
   }
 
-  exportCsv(type: 'branch_performance' | 'top_medicines' | 'inventory_watch' | 'recent_transactions' | 'prescribed_transactions' | 'dangerous_transactions') {
-    const tables = this.reportData.data.tables;
+  exportCsv(type: ReportExportType) {
+    this.openExportModal(type);
+  }
+
+  openExportModal(type: ReportExportType) {
+    const today = new Date().toISOString().slice(0, 10);
+    this.selectedExportType = type;
+    this.exportDateForm = {
+      startDate: this.reportData.data.scope.start_date || today,
+      endDate: this.reportData.data.scope.end_date || today,
+    };
+    this.isExportModalOpen = true;
+  }
+
+  closeExportModal() {
+    if (this.isExporting) {
+      return;
+    }
+
+    this.isExportModalOpen = false;
+    this.selectedExportType = null;
+    this.exportDateForm = { startDate: '', endDate: '' };
+  }
+
+  async confirmExportCsv() {
+    if (!this.selectedExportType) {
+      return;
+    }
+
+    if (!this.exportDateForm.startDate || !this.exportDateForm.endDate) {
+      this.extras.showToast('Please select both start date and end date.', 'warning');
+      return;
+    }
+
+    if (this.exportDateForm.startDate > this.exportDateForm.endDate) {
+      this.extras.showToast('Start date must be earlier than or equal to end date.', 'warning');
+      return;
+    }
+
+    const endpoint = this.buildQuery(this.exportDateForm.startDate, this.exportDateForm.endDate);
+    if (!endpoint) {
+      this.extras.showToast('Reports session data is incomplete. Please log in again.', 'warning');
+      return;
+    }
+
+    this.isExporting = true;
+    try {
+      const res = await this.userService.getUser(endpoint, '', this.userData.token);
+      if (res.status !== 200) {
+        this.extras.showToast('Failed to load export data.', 'warning');
+        return;
+      }
+
+      const exportData = res.data?.data ?? this.reportData.data;
+      const { rows, filename } = this.buildExportRows(
+        this.selectedExportType,
+        exportData.tables,
+        this.exportDateForm.startDate,
+        this.exportDateForm.endDate
+      );
+
+      this.downloadCsvRows(rows, filename);
+      this.isExporting = false;
+      this.closeExportModal();
+    } catch (e) {
+      console.log(e);
+      this.extras.showToast('Failed to export report CSV.', 'warning');
+    } finally {
+      this.isExporting = false;
+      this.cd.detectChanges();
+    }
+  }
+
+  exportTypeLabel(type = this.selectedExportType): string {
+    switch (type) {
+      case 'branch_performance':
+        return 'Branch Performance';
+      case 'top_medicines':
+        return 'Top-Selling Medicines';
+      case 'inventory_watch':
+        return 'Inventory Watch';
+      case 'recent_transactions':
+        return 'Recent Transactions';
+      case 'prescribed_transactions':
+        return 'Prescription Transactions';
+      case 'dangerous_transactions':
+        return 'Dangerous Drug Transactions';
+      case 'stock_transfers':
+        return 'Stock Transfer Report';
+      default:
+        return 'Report';
+    }
+  }
+
+  private buildExportRows(type: ReportExportType, tables: any, startDate: string, endDate: string): { rows: any[]; filename: string } {
     let rows: any[] = [];
     let filename = `${type}.csv`;
 
     if (type === 'branch_performance') {
-      rows = tables.branch_performance.map((item) => ({
+      rows = tables.branch_performance.map((item: any) => ({
         Branch: item.branch_name,
         Revenue: item.total_revenue,
         Transactions: item.transaction_count,
+        FirstCreatedAt: item.first_created_at ?? '',
+        LastCreatedAt: item.last_created_at ?? '',
+        FilterStartDate: startDate,
+        FilterEndDate: endDate,
       }));
       filename = 'branch-performance-report.csv';
     } else if (type === 'top_medicines') {
-      rows = tables.top_medicines.map((item) => ({
+      rows = tables.top_medicines.map((item: any) => ({
         Medicine: item.medicine_name,
         Generic: item.generic_name,
         Category: item.category,
         UnitsSold: item.quantity_sold,
         Orders: item.transactions_count,
+        FirstCreatedAt: item.first_created_at ?? '',
+        LastCreatedAt: item.last_created_at ?? '',
+        FilterStartDate: startDate,
+        FilterEndDate: endDate,
       }));
       filename = 'top-medicines-report.csv';
     } else if (type === 'inventory_watch') {
-      rows = tables.inventory_watch.map((item) => ({
+      rows = tables.inventory_watch.map((item: any) => ({
         Medicine: item.medicine_name,
         Generic: item.generic_name,
         Branch: item.branch_name,
@@ -368,35 +494,65 @@ export class Reports implements OnInit, OnDestroy {
         ReorderLevel: item.reorder_level,
         Status: item.status,
         ExpiryDate: item.expiry_date ?? '',
+        CreatedAt: item.created_at ?? '',
       }));
       filename = 'inventory-watch-report.csv';
+    } else if (type === 'stock_transfers') {
+      rows = tables.stock_transfers.map((item: any) => ({
+        TransferId: item.inventory_transfer_id,
+        Medicine: item.medicine_name,
+        Generic: item.generic_name,
+        BatchNumber: item.batch_number ?? '',
+        FromBranch: item.from_branch_name,
+        ToBranch: item.to_branch_name,
+        Quantity: item.quantity,
+        Status: item.status,
+        RequestedBy: item.requested_by,
+        ResolvedBy: item.resolved_by ?? '',
+        CreatedAt: item.created_at,
+        ResolvedAt: item.resolved_at ?? '',
+      }));
+      filename = 'stock-transfer-report.csv';
     } else if (type === 'recent_transactions') {
-      rows = tables.recent_transactions.map((item) => ({
+      rows = tables.recent_transactions.map((item: any) => ({
         TransactionId: item.transaction_id,
+        Type: this.transactionClassificationLabel(item),
         Branch: item.branch_name,
         Cashier: item.cashier_name,
+        Patient: item.patient_name ?? '',
         PaymentMethod: item.payment_method,
-        ReferenceNumber: item.reference_number ?? '',
+        ReferenceNumber: this.formatCsvTextCell(item.reference_number),
         TotalAmount: item.total_amount,
         Discount: item.discount,
         CreatedAt: item.created_at,
       }));
       filename = 'recent-transactions-report.csv';
     } else if (type === 'prescribed_transactions' || type === 'dangerous_transactions') {
-      rows = tables[type].map((item) => ({
+      rows = tables[type].map((item: any) => ({
         TransactionId: item.transaction_id,
         Type: item.regulated_classification,
         Branch: item.branch_name,
         Cashier: item.cashier_name,
         Patient: item.patient_name,
         PaymentMethod: item.payment_method,
-        ReferenceNumber: item.reference_number ?? '',
+        ReferenceNumber: this.formatCsvTextCell(item.reference_number),
         TotalAmount: item.total_amount,
         CreatedAt: item.created_at,
       }));
       filename = `${type}.csv`;
     }
 
+    filename = this.appendDateRangeToFilename(filename, startDate, endDate);
+
+    return { rows, filename };
+  }
+
+  private formatCsvTextCell(value: unknown): string {
+    const text = String(value ?? '').trim();
+    return text ? `\t${text}` : '';
+  }
+
+  private downloadCsvRows(rows: any[], filename: string) {
     if (!rows.length) {
       this.extras.showToast('No rows available for CSV export', 'warning');
       return;
@@ -421,6 +577,14 @@ export class Reports implements OnInit, OnDestroy {
     window.URL.revokeObjectURL(url);
   }
 
+  private appendDateRangeToFilename(filename: string, startDate: string, endDate: string): string {
+    const extensionIndex = filename.lastIndexOf('.');
+    const baseName = extensionIndex >= 0 ? filename.slice(0, extensionIndex) : filename;
+    const extension = extensionIndex >= 0 ? filename.slice(extensionIndex) : '.csv';
+
+    return `${baseName}-${startDate}-to-${endDate}${extension}`;
+  }
+
   printReport() {
     window.print();
   }
@@ -442,7 +606,7 @@ export class Reports implements OnInit, OnDestroy {
       }
 
     if (year >= currentYear) {
-      this.extras.showToast('You can only generate the BIR 0605 summary for a completed taxable year.', 'warning');
+      this.extras.showToast('You can only generate the BIR 2306 summary for a completed taxable year.', 'warning');
       return;
     }
 
@@ -456,13 +620,13 @@ export class Reports implements OnInit, OnDestroy {
       }
     } catch (e: any) {
       console.log(e);
-      this.extras.showToast(e?.error?.message ?? 'Failed to generate BIR 0605 summary', 'warning');
+      this.extras.showToast(e?.error?.message ?? 'Failed to generate BIR 2306 summary', 'warning');
     }
   }
 
   printBirReport() {
     if (!this.birReportData?.data) {
-      this.extras.showToast('Generate the BIR 0605 summary first.', 'warning');
+      this.extras.showToast('Generate the BIR 2306 summary first.', 'warning');
       return;
     }
 
@@ -483,7 +647,7 @@ export class Reports implements OnInit, OnDestroy {
     const report = this.birReportData?.data;
 
     if (!report) {
-      this.extras.showToast('Generate the BIR 0605 summary first.', 'warning');
+      this.extras.showToast('Generate the BIR 2306 summary first.', 'warning');
       return;
     }
 
@@ -528,7 +692,7 @@ export class Reports implements OnInit, OnDestroy {
       pdf.save(this.buildBirPdfFilename());
     } catch (error) {
       console.error(error);
-      this.extras.showToast('Failed to download BIR 0605 PDF report.', 'warning');
+      this.extras.showToast('Failed to download BIR 2306 PDF report.', 'warning');
     }
   }
 
@@ -662,6 +826,10 @@ export class Reports implements OnInit, OnDestroy {
   }
 
   transactionRecordClassificationLabel(record: ReportsTransactionRecord): string {
+    return this.transactionClassificationLabel(record);
+  }
+
+  transactionClassificationLabel(record: { regulated_classification?: string | null }): string {
     if (!record.regulated_classification) {
       return 'Regular';
     }
@@ -679,6 +847,49 @@ export class Reports implements OnInit, OnDestroy {
   }
 
   transactionRecordClassificationClass(record: ReportsTransactionRecord): string {
+    return this.transactionClassificationClass(record);
+  }
+
+  isTransactionVoided(record: ReportsTransactionRecord): boolean {
+    return String(record?.status ?? '').toLowerCase() === 'voided';
+  }
+
+  async voidTransaction(record: ReportsTransactionRecord) {
+    if (!record?.transaction_id || this.isTransactionVoided(record)) {
+      return;
+    }
+
+    const confirmed = confirm(`Void transaction #${record.transaction_id}? This will restore the deducted stock.`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.voidingTransactionId = Number(record.transaction_id);
+
+    try {
+      const res = await this.userService.postUser(
+        `transaction/${record.transaction_id}/void`,
+        { void_reason: 'Voided from transaction records.' },
+        this.userData.token
+      );
+
+      if (res.status === 200 && res.data?.success) {
+        this.extras.showToast('Transaction voided successfully.', 'success');
+        await this.loadTransactionRecords(this.transactionRecordsMeta.current_page);
+        return;
+      }
+
+      this.extras.showToast(res.data?.message ?? 'Unable to void transaction.', 'warning');
+    } catch (e: any) {
+      console.log(e);
+      this.extras.showToast(e?.error?.message ?? 'Unable to void transaction.', 'warning');
+    } finally {
+      this.voidingTransactionId = null;
+      this.cd.detectChanges();
+    }
+  }
+
+  transactionClassificationClass(record: { regulated_classification?: string | null }): string {
     if (!record.regulated_classification) {
       return 'bg-slate-100 text-slate-700';
     }
@@ -819,7 +1030,7 @@ export class Reports implements OnInit, OnDestroy {
     return `
       <html>
         <head>
-          <title>BIR Form 0605 Payment Summary</title>
+          <title>BIR Form 2306 Payment Summary</title>
           <style>
             body { font-family: "Courier New", monospace; padding: 24px; color: #0f172a; }
             .receipt { max-width: 760px; margin: 0 auto; border: 1px solid #cbd5e1; padding: 24px; }
@@ -836,7 +1047,7 @@ export class Reports implements OnInit, OnDestroy {
           <div class="receipt">
             <div class="center">
               <div>BIR FORM ${report.form_no}</div>
-              <h2>BIR 0605 Payment Summary</h2>
+              <h2>BIR 2306 Payment Summary</h2>
               <div>Generated ${new Date(report.generated_at).toLocaleString()}</div>
             </div>
             <div class="line"></div>
@@ -872,7 +1083,7 @@ export class Reports implements OnInit, OnDestroy {
   private buildBirPdfFilename(): string {
     const report = this.birReportData?.data;
     if (!report) {
-      return 'BIR-0605-Payment-Summary.pdf';
+      return 'BIR-2306-Payment-Summary.pdf';
     }
 
     const safeName = String(report.taxpayer_name ?? 'Taxpayer')
@@ -880,7 +1091,7 @@ export class Reports implements OnInit, OnDestroy {
       .replace(/^-+|-+$/g, '')
       .slice(0, 60);
 
-    return `BIR-0605-${report.taxable_year}-${safeName || 'Taxpayer'}.pdf`;
+    return `BIR-2306-${report.taxable_year}-${safeName || 'Taxpayer'}.pdf`;
   }
 
   private buildBirPdfLines(width: number): string[] {
@@ -1035,8 +1246,10 @@ export class Reports implements OnInit, OnDestroy {
     const lines: string[] = [];
     const divider = '='.repeat(width);
     const sectionDivider = '-'.repeat(width);
-    const companyName = this.safeReceiptText(this.userData.data?.data?.company_name || 'KMV Pharmacy');
+    const companyName = this.safeReceiptText(this.userData.data?.data?.company_name || 'Sto. Rosario Drug Store');
     const branchName = this.safeReceiptText(receipt?.branch?.branch_name || receipt?.branch_name || 'Assigned Branch');
+    const branchAddress = this.safeReceiptText(receipt?.branch?.branch_address || this.userData.data?.data?.branch_address || '');
+    const branchContact = this.safeReceiptText(receipt?.branch?.branch_contact || this.userData.data?.data?.branch_contact || '');
     const cashierName = this.safeReceiptText(
       `${receipt?.user?.first_name || ''} ${receipt?.user?.last_name || ''}`.trim() ||
       receipt?.cashier_name ||
@@ -1044,14 +1257,24 @@ export class Reports implements OnInit, OnDestroy {
     );
     const items = Array.isArray(receipt?.items) ? receipt.items : [];
     const transactionType = this.safeReceiptText(receipt?.transaction_type || 'regular').toUpperCase();
+    const pharmacistName = this.getReceiptPharmacistName(receipt);
 
     lines.push(this.centerReceiptText(companyName, width));
     lines.push(this.centerReceiptText(branchName, width));
+    if (branchAddress) {
+      lines.push(...this.wrapReceiptText(branchAddress, width));
+    }
+    if (branchContact) {
+      lines.push(this.centerReceiptText(`Contact: ${branchContact}`, width));
+    }
     lines.push(this.centerReceiptText('OFFICIAL SALES RECEIPT', width));
     lines.push(divider);
     lines.push(...this.buildReceiptKeyValueLines('Receipt No', receipt?.transaction_id ?? 'N/A', width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Date', this.formatReceiptDate(receipt?.created_at), width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Cashier', cashierName, width, 18));
+    if (pharmacistName) {
+      lines.push(...this.buildReceiptKeyValueLines('Pharmacist', pharmacistName, width, 18));
+    }
     lines.push(...this.buildReceiptKeyValueLines('Payment', receipt?.payment_method || 'N/A', width, 18));
     if (receipt?.reference_number) {
       lines.push(...this.buildReceiptKeyValueLines('Reference', receipt.reference_number, width, 18));
@@ -1089,12 +1312,25 @@ export class Reports implements OnInit, OnDestroy {
       const lineTotal = quantity * unitPrice;
 
       lines.push(...this.wrapReceiptText(medicineName, width));
+      const batchNumber = item?.batch_number || item?.batch?.batch_number || item?.batch_id || '';
+      if (batchNumber) {
+        lines.push(...this.buildReceiptKeyValueLines('Batch', batchNumber, width, 12));
+      }
+      const mfgDate = item?.mfg_date || item?.batch?.mfg_date;
+      if (mfgDate) {
+        lines.push(...this.buildReceiptKeyValueLines('Mfg', this.formatReceiptShortDate(mfgDate), width, 12));
+      }
+      const expiryDate = item?.expiry_date || item?.batch?.expiry_date;
+      if (expiryDate) {
+        lines.push(...this.buildReceiptKeyValueLines('Expiry', this.formatReceiptShortDate(expiryDate), width, 12));
+      }
       lines.push(this.buildReceiptItemLine(quantity, unitPrice, lineTotal, width));
     });
 
     lines.push(sectionDivider);
     lines.push(...this.buildReceiptKeyValueLines('Subtotal', this.formatReceiptCurrency(receipt?.sub_total), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Discount', this.formatReceiptCurrency(receipt?.discount), width, 20));
+    lines.push(...this.buildReceiptKeyValueLines('VAT 12%', this.formatReceiptCurrency(receipt?.vat_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Total', this.formatReceiptCurrency(receipt?.total_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Amount Paid', this.formatReceiptCurrency(receipt?.used_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Change', this.formatReceiptCurrency(receipt?.change), width, 20));
@@ -1126,6 +1362,15 @@ export class Reports implements OnInit, OnDestroy {
     const right = this.formatReceiptCurrency(total);
     const available = Math.max(1, width - right.length);
     return `${this.safeReceiptText(left).slice(0, available).padEnd(available, ' ')}${right}`;
+  }
+
+  private getReceiptPharmacistName(receipt: any): string {
+    return this.safeReceiptText(
+      receipt?.pharmacist_signature ||
+      receipt?.regulated_details?.prescription_details?.pharmacist_signature ||
+      receipt?.regulated_details?.pharmacist_signature ||
+      ''
+    );
   }
 
   private buildReceiptKeyValueLines(label: string, value: string | number, width: number, valueColumn: number): string[] {
@@ -1206,5 +1451,9 @@ export class Reports implements OnInit, OnDestroy {
 
   private formatReceiptDate(value: string): string {
     return value ? this.extras.formatDateWithTime(value) : 'Date Unavailable';
+  }
+
+  private formatReceiptShortDate(value: string): string {
+    return value ? this.extras.formatDate(value) : 'N/A';
   }
 }

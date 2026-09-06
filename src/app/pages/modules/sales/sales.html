@@ -43,35 +43,9 @@
           <input (input)="changeText($event)" [value]="searchQuery" class="app-search-input h-full w-full bg-transparent outline-none"
             placeholder="Search by ID, generic, or brand name...">
         </div>
-        <div class="flex max-h-28 overflow-y-auto p-1 text-xs space-x-2 overflow-x-auto">
-          @if(salesData.selectedCategory==''){
-          <div (click)="filter(''); salesData.selectedCategory=''"
-            class="sales-category-chip sales-category-chip-active flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-2.5 py-1 font-semibold">
-            <p>All</p>
-          </div>
-          }@else{
-          <div (click)="filter(''); salesData.selectedCategory=''"
-            class="sales-category-chip flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-2.5 py-1 font-semibold">
-            <p>All</p>
-          </div>
-          }
-          @for(data of salesData.categoryData; track $index){
-          @if(salesData.selectedCategory === data){
-          <div (click)="filter(`search=${data}`); salesData.selectedCategory = data"
-            class="sales-category-chip sales-category-chip-active flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-3 py-1 font-semibold">
-            <p>{{data}}</p>
-          </div>
-          }@else{
-          <div (click)="filter(`search=${data}`); salesData.selectedCategory=data"
-            class="sales-category-chip flex cursor-pointer items-center justify-center overflow-clip rounded-md border px-3 py-1 font-semibold">
-            <p>{{extras.toTitleCaseSafe(data)}}</p>
-          </div>
-          }
-          }
-        </div>
         <div class="sales-header-toolbar col-span-full mb-1">
           <div class="sales-header-copy">
-            <p class="sales-header-eyebrow">Medicine Catalog</p>
+            <p class="sales-header-eyebrow">{{medicineData.data.data?.[0]?.branch_name || userData.data?.data?.branch_name || 'Selected Branch'}}</p>
             <div class="sales-header-title-row">
               <h2 class="sales-header-title">List of Medicines</h2>
               <span class="sales-header-badge">
@@ -123,6 +97,9 @@
               {{data.dosage+' '+data.unit}}
             </h4>
             <div class="mt-1 text-xs text-muted-foreground">{{extras.toTitleCaseSafe(data.type)}}</div>
+            <div class="mt-1 text-xs font-medium text-muted-foreground">
+              Exp. Date: {{expiryDateSummary(data)}}
+            </div>
 
             <div class="mt-auto flex items-end justify-between gap-3 pt-3">
               <div>
@@ -160,6 +137,7 @@
           {{(medicineData.salesData.length)}} Items
         </div>
       </div>
+      @if(!isRegularTransaction()){
       <div class="border-b border-gray-200 bg-white p-4 space-y-4">
         <div
           class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3 py-2">
@@ -173,6 +151,7 @@
           </span>
         </div>
       </div>
+      }
       <div class="sales-scroll overflow-y-auto p-4">
         @if(!medicineData.salesData.length) {
         <div class="flex h-full min-h-60 flex-col items-center justify-center space-y-3 text-muted-foreground">
@@ -278,26 +257,32 @@
       </div>
 
       <div class="relative inset-0 flex flex-col space-y-4 border-t border-border bg-muted/30 p-4">
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div (click)="isDiscount.set(true); salesData.selectedDiscount='DISC'"
-            [ngClass]="salesData.selectedDiscount === 'DISC' ? 'sales-method-tile-active' : 'sales-method-tile'"
-            class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
-            <div class="text-xl font-semibold">%</div>
-            <span>DISCOUNT</span>
-          </div>
-
-          <div (click)="isDiscount.set(true); salesData.selectedDiscount='SCPWD'; customDiscountPrice(null)"
-            [ngClass]="salesData.selectedDiscount === 'SCPWD' ? 'sales-method-tile-active' : 'sales-method-tile'"
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <div (click)="isDiscount.set(true); salesData.selectedDiscount='SC'; customDiscountPrice(null)"
+            [ngClass]="salesData.selectedDiscount === 'SC' ? 'sales-method-tile-active' : 'sales-method-tile'"
             class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
             <ion-icon name="people-outline" class="text-xl font-semibold"></ion-icon>
-            <span>SC/PWD</span>
+            <span>SC</span>
+          </div>
+
+          <div (click)="isDiscount.set(true); salesData.selectedDiscount='PWD'; customDiscountPrice(null)"
+            [ngClass]="salesData.selectedDiscount === 'PWD' ? 'sales-method-tile-active' : 'sales-method-tile'"
+            class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
+            <ion-icon name="accessibility-outline" class="text-xl font-semibold"></ion-icon>
+            <span>PWD</span>
           </div>
 
           <div (click)=" salesData.selectedDiscount=''; customDiscountPrice(null); "
             [ngClass]="salesData.selectedDiscount === '' ? 'sales-method-tile-active' : 'sales-method-tile'"
             class="inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
             <ion-icon name="checkbox-outline" class="text-xl font-semibold"></ion-icon>
-            <span>No Discount</span>
+            <span class="leading-none">No Discount</span>
+          </div>
+
+          <div (click)="clearCurrentOrder()"
+            class="sales-method-tile inline-flex h-10 items-center justify-center space-x-2 rounded-xl border text-xs" type="button">
+            <ion-icon name="ban-outline" class="text-xl font-semibold"></ion-icon>
+            <span>Void</span>
           </div>
         </div>
 
@@ -310,20 +295,57 @@
             <span>Discount</span>
             <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
           </div>
+          <div class="flex justify-between text-muted-foreground">
+            <span>VAT Included (12%)</span>
+            <span>Php {{extras.formatCurrency(getVatAmount())}}</span>
+          </div>
           <div class="flex justify-between border-t border-border pt-2 text-lg font-bold text-slate-900">
             <span>Total</span>
             <span>Php {{extras.formatCurrency(getTotalPrice())}}</span>
           </div>
         </div>
 
-        <button (click)="isPay.set(true)"
+        <button (click)="openBranchPickerForCheckout()"
           class="inline-flex h-12 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-lg font-medium text-gray-50 hover:bg-primary/80 disabled:bg-primary/60"
-          [disabled]="this.getTotalPrice() <= 0 || isAllBranchesScope()">{{isAllBranchesScope() ? 'Select Branch To
+          [disabled]="this.getTotalPrice() <= 0">{{isAllBranchesScope() ? 'Select Branch To
           Checkout' : ('Pay ' + (this.getTotalPrice() | currency:'PHP'))}}</button>
       </div>
     </div>
   </div>
 </main>
+}
+
+@if(isBranchPickerOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-3 backdrop-blur-sm sm:px-4">
+  <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+    <div class="flex items-start justify-between gap-4 border-b border-gray-200 p-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Select Branch</h2>
+        <p class="text-sm text-slate-500">Choose the branch where this checkout will be processed.</p>
+      </div>
+      <button (click)="closeBranchPicker()" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-red-500">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="max-h-[60vh] space-y-2 overflow-y-auto p-4">
+      @for(branch of branchData.data; track branch.branchId || branch.branch_id){
+      <button type="button" (click)="selectCheckoutBranch(branch)"
+        class="flex w-full items-start justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:border-primary hover:bg-white">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-900">{{branch.branchName || branch.branch_name}}</p>
+          <p class="mt-1 text-sm text-slate-500">{{branch.branchAddress || branch.branch_address || 'No address added'}}</p>
+        </div>
+        <ion-icon name="chevron-forward-outline" class="mt-1 shrink-0 text-xl text-slate-400"></ion-icon>
+      </button>
+      }
+      @if(!branchData.data?.length){
+      <div class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-slate-500">
+        No branches are available for checkout.
+      </div>
+      }
+    </div>
+  </div>
+</div>
 }
 
 @if(isDiscount()) {
@@ -333,36 +355,18 @@
       <button (click)="isDiscount.set(false)" class="absolute top-4 right-4 text-gray-500 hover:text-red-500">
         X
       </button>
-      @if(this.salesData.selectedDiscount === 'DISC') {
-      <h2 class="text-lg font-bold">Apply Custom Discount</h2>
-      <p class="text-sm text-gray-600">Enter the discount amount you want to apply to the current order.</p>
-      }@else{
-      <h2 class="text-lg font-bold">Apply SC/PWD Discount</h2>
-      <p class="text-sm text-gray-600">Enter the Senior Citizen or PWD ID number to apply the discount to the current
-        order.</p>
-      }
+      <h2 class="text-lg font-bold">Apply {{salesData.selectedDiscount}} Discount</h2>
+      <p class="text-sm text-gray-600">Enter the valid {{salesData.selectedDiscount}} ID number to apply the discount.</p>
     </div>
 
     <form class="flex h-full w-full flex-col gap-y-3 overflow-y-auto p-4">
-      @if(this.salesData.selectedDiscount === 'SCPWD') {
       <p class="flex w-full flex-col gap-3 border-b border-gray-300 pb-8 text-gray-800">
-        <label class="font-bold">SC/PWD ID Number *</label>
-        <input [value]="salesModel.scpwd_id_number" (input)="salesModel.scpwd_id_number = $event.target.value"
-          type="text" class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs focus:outline-green-700"
-          placeholder="Input Senior Citizen or PWD id number eg. 12345678">
-        <span class="text-xs">Required for verification and reporting</span>
+        <label class="font-bold">{{salesData.selectedDiscount}} ID Number *</label>
+        <input [value]="salesModel.scpwd_id_number" (input)="updateScPwdIdNumber($event)"
+          type="text" maxlength="13" class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs uppercase focus:outline-green-700"
+          [placeholder]="salesData.selectedDiscount === 'SC' ? 'OSCA-12345678' : '042507000123'">
+        <span class="text-xs">{{salesData.selectedDiscount === 'SC' ? 'Senior Citizen ID: OSCA-########.' : 'PWD ID: 12 digits.'}}</span>
       </p>
-      }
-
-      @if(this.salesData.selectedDiscount === 'DISC') {
-      <p class="flex w-full flex-col gap-3 pb-3 text-gray-800">
-        <label class="font-bold">Custom Discount (Less Amount)</label>
-        <input [value]="salesModel.discount" type="number" min="0" max="100" (input)="customDiscountPrice($event)"
-          name="customDiscount"
-          class="h-10 w-full rounded-md border border-gray-300 px-2 text-xs focus:outline-green-700"
-          placeholder="Input custom discount amount eg. 200">
-      </p>
-      }
 
       <div
         class="flex h-40 w-full flex-col justify-center rounded-md border-b border-gray-300 bg-gray-200 p-4 text-gray-800">
@@ -374,6 +378,10 @@
         <div class="flex w-full justify-between pb-1 italic text-red-400">
           <span>Discount: </span>
           <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
+        </div>
+        <div class="flex w-full justify-between pb-1 text-gray-600">
+          <span>VAT Included (12%): </span>
+          <span>Php {{extras.formatCurrency(getVatAmount())}}</span>
         </div>
         <div class="flex w-full justify-between border-t border-gray-300 pt-1">
           <span class="font-bold">Total:</span>
@@ -454,12 +462,12 @@
             }
           </label>
           <input type="text" [value]="salesModel.reference_number || ''" (input)="updateReferenceNumber($event)"
-            [disabled]="!requiresReferenceNumber()" maxlength="120"
+            [disabled]="!requiresReferenceNumber()" inputmode="numeric" maxlength="12"
             class="h-12 w-full rounded-xl border border-slate-300 px-3 text-sm uppercase focus:outline-green-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-            [placeholder]="requiresReferenceNumber() ? 'Enter payment reference number' : 'Available for Card or Gcash only'">
+            [placeholder]="referenceNumberPlaceholder()">
           <p class="text-xs text-slate-500">
             @if(requiresReferenceNumber()){
-            Save the bank terminal or GCash confirmation reference for audit tracking.
+            Enter the 12-digit {{salesModel.payment_method}} reference number for audit tracking.
             } @else {
             Select Card or Gcash to record a payment reference.
             }
@@ -494,6 +502,57 @@
               placeholder="Enter complete patient address"
               class="min-h-20 rounded-md border border-slate-200 px-3 py-2 focus:outline-slate-600"></textarea>
           </div>
+        </div>
+      </div>
+      }
+
+      @if(shouldShowDocumentUploader()){
+      <div class="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="text-sm font-bold text-slate-900">Transaction Documents</p>
+            <p class="text-xs text-slate-600">Upload PDF, JPG, or PNG files. Maximum size is 5MB per file.</p>
+          </div>
+          <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="salesModel.documents_submitted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">
+            {{salesModel.documents_submitted ? 'Documents attached' : 'Documents needed'}}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label class="flex min-h-32 cursor-pointer flex-col justify-between rounded-xl border border-dashed border-blue-300 bg-blue-50 p-4 hover:bg-blue-100">
+            <span>
+              <span class="block text-sm font-semibold text-blue-900">{{requiresDangerousDrugDetails() ? 'Yellow Prescription' : 'Prescription'}}</span>
+              <span class="mt-1 block text-xs text-blue-700">PDF or image copy</span>
+            </span>
+            <span class="mt-4 flex items-center justify-between gap-2 text-xs text-blue-900">
+              <span class="truncate">{{selectedFileName('prescription')}}</span>
+              <ion-icon name="cloud-upload-outline" class="shrink-0 text-xl"></ion-icon>
+            </span>
+            <input type="file" class="hidden" accept=".pdf,image/jpeg,image/png" (change)="onDocumentSelected($event, 'prescription')">
+          </label>
+
+          @if(requiresDangerousDrugDetails()){
+          <label class="flex min-h-32 cursor-pointer flex-col justify-between rounded-xl border border-dashed border-red-300 bg-red-50 p-4 hover:bg-red-100">
+            <span>
+              <span class="block text-sm font-semibold text-red-900">Valid ID / Supporting Image</span>
+              <span class="mt-1 block text-xs text-red-700">PDF or image copy</span>
+            </span>
+            <span class="mt-4 flex items-center justify-between gap-2 text-xs text-red-900">
+              <span class="truncate">{{selectedFileName('member_id_image')}}</span>
+              <ion-icon name="image-outline" class="shrink-0 text-xl"></ion-icon>
+            </span>
+            <input type="file" class="hidden" accept=".pdf,image/jpeg,image/png" (change)="onDocumentSelected($event, 'member_id_image')">
+          </label>
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-xs">
+          @if(selectedDocuments.prescription){
+          <button type="button" (click)="removeSelectedDocument('prescription')" class="rounded-lg bg-blue-100 px-3 py-1.5 font-semibold text-blue-800 hover:bg-blue-200">Remove Prescription</button>
+          }
+          @if(requiresDangerousDrugDetails() && selectedDocuments.member_id_image){
+          <button type="button" (click)="removeSelectedDocument('member_id_image')" class="rounded-lg bg-red-100 px-3 py-1.5 font-semibold text-red-800 hover:bg-red-200">Remove ID Image</button>
+          }
         </div>
       </div>
       }
@@ -591,13 +650,15 @@
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">PTR Number</label>
-            <input [(ngModel)]="salesModel.prescriber_ptr_number" name="prescriber_ptr_number" type="text"
-              class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+            <input [value]="salesModel.prescriber_ptr_number" (input)="updatePtrNumber($event)"
+              name="prescriber_ptr_number" type="text" maxlength="16" placeholder="PTR-2026-1234567"
+              class="h-10 rounded-md border border-red-200 px-3 uppercase focus:outline-red-600">
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">Yellow Prescription Serial No.</label>
-            <input [(ngModel)]="salesModel.yellow_prescription_serial_number" name="yellow_prescription_serial_number"
-              type="text" class="h-10 rounded-md border border-red-200 px-3 focus:outline-red-600">
+            <input [value]="salesModel.yellow_prescription_serial_number" (input)="updateYellowPrescriptionSerialNumber($event)"
+              name="yellow_prescription_serial_number" type="text" maxlength="13" placeholder="YP20260001234"
+              class="h-10 rounded-md border border-red-200 px-3 uppercase focus:outline-red-600">
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium">Quantity in Words</label>
@@ -640,6 +701,10 @@
       <div class="flex w-full justify-between italic text-red-400">
         <span>Discount: </span>
         <span>Php {{extras.formatCurrency(this.salesModel.discount ? this.salesModel.discount : 0)}}</span>
+      </div>
+      <div class="flex w-full justify-between text-gray-600">
+        <span>VAT Included (12%): </span>
+        <span>Php {{extras.formatCurrency(getVatAmount())}}</span>
       </div>
 
       <div class="flex w-full justify-between border-t border-gray-300 pt-1 font-medium">

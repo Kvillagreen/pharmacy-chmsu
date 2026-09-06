@@ -101,7 +101,90 @@
       </div>
 
       <div class="border-t border-gray-300 p-3 sm:p-4">
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+          <table class="min-w-full divide-y divide-gray-200 bg-white text-sm">
+            <thead class="bg-gray-100 text-xs font-bold uppercase tracking-wide text-slate-600">
+              <tr>
+                <th class="px-4 py-3 text-left">User Data</th>
+                <th class="px-4 py-3 text-left">Role</th>
+                <th class="px-4 py-3 text-left">Branch</th>
+                <th class="px-4 py-3 text-left">Permissions</th>
+                <th class="px-4 py-3 text-left">Last Login</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for(item of getRows(); track $index){
+              @if(item){
+              <tr class="align-top hover:bg-gray-50">
+                <td class="px-4 py-3">
+                  <div class="flex min-w-72 items-start gap-3">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-gray-50">
+                      {{extras.toUpperCaseSafe((item?.first_name ? item?.first_name[0] : '') + (item?.last_name ? item?.last_name[0] : ''))}}
+                    </div>
+                    <div class="min-w-0 space-y-1 text-xs">
+                      <p><span class="font-semibold text-slate-600">Name:</span>
+                        <span class="font-semibold text-slate-900">{{extras.toTitleCaseSafe((item?.first_name ? item?.first_name : '') + ' ' + (item?.last_name ? item?.last_name : ''))}}</span>
+                      </p>
+                      <p><span class="font-semibold text-slate-600">Email:</span>
+                        <span class="text-slate-700">{{item?.email || ''}}</span>
+                      </p>
+                      <p><span class="font-semibold text-slate-600">Address:</span>
+                        <span class="text-slate-700">{{extras.toTitleCaseSafe(item?.address ? item?.address : 'No address added')}}</span>
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <p class="font-semibold text-slate-800">{{extras.formatRole(item?.role)}}</p>
+                  <p class="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                    {{extras.toTitleCaseSafe(item?.status)}}
+                  </p>
+                </td>
+                <td class="px-4 py-3 text-xs">
+                  <p><span class="font-semibold text-slate-600">Branch:</span>
+                    <span class="font-medium text-slate-800">{{extras.toTitleCaseSafe(item?.branch_name)}}</span>
+                  </p>
+                  <p class="mt-1"><span class="font-semibold text-slate-600">Branch address:</span>
+                    <span class="text-slate-600">{{extras.toTitleCaseSafe(item?.branch_address || 'No branch address')}}</span>
+                  </p>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex max-w-sm flex-wrap gap-1">
+                    @for(data of item.permissions; track $index){
+                    <span class="rounded-md border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs">
+                      {{extras.toTitleCaseSafe(data?.permission_name)}}
+                    </span>
+                    }
+                    @if(!item.permissions?.length){
+                    <span class="rounded-md border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500">
+                      No permissions
+                    </span>
+                    }
+                  </div>
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-500">
+                  {{ (item?.login_at ? extras.formatDateWithTime(item?.login_at) : 'Not yet logged in') }}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex justify-end gap-2">
+                    <button type="button" (click)="openPermissionsModal(item)" class="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200">Permissions</button>
+                    <button type="button" (click)="openBranchModal(item)" class="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200">Branch</button>
+                    <button type="button" (click)="openEditModal(item)" class="rounded-md bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50">Edit</button>
+                    <button type="button" (click)="openDeleteModal(item)" class="rounded-md bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              } @else {
+              <tr>
+                <td colspan="6" class="h-12 px-4 py-3"></td>
+              </tr>
+              }
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="hidden">
           <div
             class="flex min-h-[28rem] w-full flex-col rounded-xl border border-gray-300 bg-gray-50 shadow-sm"
             *ngFor="let item of getRows(); let i = index" [ngClass]="i === 6 ? 'rounded-b-md' : 'rounded-none'">

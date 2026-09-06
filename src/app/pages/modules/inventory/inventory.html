@@ -48,9 +48,15 @@
           <ion-icon name="download-outline"></ion-icon>
           <span>Export</span>
         </button>
+        <button
+          (click)="openArchiveHistoryModal()"
+          class="inline-flex items-center justify-center font-semibold h-10 px-4 rounded-md gap-x-2 hover:bg-gray-300 w-full sm:w-auto">
+          <ion-icon name="time-outline"></ion-icon>
+          <span>View History</span>
+        </button>
 
         <button
-          (click)="loadMedicineCategories(); isCreate.set(true); this.medicineData.inputData=[]"
+          (click)="loadMedicineCategories(); isCreate.set(true); this.medicineData.inputData={container_type:'none', is_dangerous:false, needs_protection:false}"
           class="inline-flex items-center text-gray-50 justify-center font-semibold h-10 px-4 rounded-md gap-x-2 bg-primary hover:bg-primary/90 w-full sm:w-auto">
           <ion-icon name="add-outline"></ion-icon>
           <span>Add New Product</span>
@@ -108,7 +114,7 @@
       <!-- Desktop Table -->
       <div class="hidden lg:block overflow-x-auto">
         <!-- HEADER -->
-        <div class="w-full p-2 bg-gray-100 h-10 grid justify-center items-center text-center text-xs grid-cols-7 font-bold border-y border-gray-300">
+        <div class="w-full p-2 bg-gray-100 h-10 grid justify-center items-center text-center text-xs grid-cols-8 font-bold border-y border-gray-300">
           <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
             <span>PRODUCT ID</span>
             <span class="table-sort-stack">
@@ -156,6 +162,10 @@
           </div>
 
           <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
+            <span>DETAILS</span>
+          </div>
+
+          <div class="flex items-center justify-center px-4 gap-x-1 w-full h-full">
             <span>TOTAL STOCKS</span>
             <span class="table-sort-stack">
               <button type="button" class="table-sort-button" [class.is-active]="isSortActive('stocks')"
@@ -181,7 +191,7 @@
         <!-- DATA ROWS -->
         <div *ngFor="let item of getRows(); let i = index"
           [ngClass]="i === 9 ? 'rounded-b-md' : 'rounded-none'"
-          class="hover:bg-gray-50 w-full py-4 px-2 grid justify-center items-center text-center text-xs grid-cols-7 font-semibold border-b border-gray-300">
+          class="hover:bg-gray-50 w-full py-4 px-2 grid justify-center items-center text-center text-xs grid-cols-8 font-semibold border-b border-gray-300">
 
           <div class="flex items-center justify-center flex-col px-4 h-10">
             {{ item?.medicine_id ? 'PR-' + item.medicine_id : '' }}
@@ -201,6 +211,13 @@
 
           <div class="flex items-center justify-center flex-col px-4 h-full text-center">
             <p>{{ item?.price ? 'Php ' + item.price : '' }}</p>
+          </div>
+
+          <div class="flex items-center justify-center flex-col px-4 h-full text-center">
+            <p *ngIf="item?.batch_number">Batch: {{ item.batch_number }}</p>
+            <p *ngIf="item?.expiry_date" class="font-medium">Exp. Date: {{ extras.formatDate(item.expiry_date) }}</p>
+            <p *ngIf="item?.mfg_date" class="font-medium">Mfg Date: {{ extras.formatDate(item.mfg_date) }}</p>
+            <p *ngIf="item?.received_date" class="font-medium">Rcv Date: {{ extras.formatDate(item.received_date) }}</p>
           </div>
 
           <div class="flex flex-col items-center justify-center px-4 h-full text-center">
@@ -240,8 +257,8 @@
               <ion-icon name="create-outline"
                 (click)="loadMedicineCategories(); this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
             </div>
-            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-red-400">
-              <ion-icon name="trash-outline"
+            <div *ngIf="item" class="rounded-md size-8 flex justify-center items-center text-amber-600">
+              <ion-icon name="archive-outline"
                 (click)="this.medicineData.inputData = item; isDelete.set(true)"></ion-icon>
             </div>
           </div>
@@ -273,8 +290,8 @@
                   <ion-icon name="create-outline"
                     (click)="loadMedicineCategories(); this.medicineData.inputData = item; isUpdate.set(true)"></ion-icon>
                 </div>
-                <div class="rounded-md size-8 flex justify-center items-center text-red-400">
-                  <ion-icon name="trash-outline"
+                <div class="rounded-md size-8 flex justify-center items-center text-amber-600">
+                  <ion-icon name="archive-outline"
                     (click)="this.medicineData.inputData = item; isDelete.set(true)"></ion-icon>
                 </div>
               </div>
@@ -294,6 +311,13 @@
               <div>
                 <p class="text-xs text-muted-foreground">Unit Price</p>
                 <p class="font-medium">{{ item?.price ? 'Php ' + item.price : '' }}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-xs text-muted-foreground">Details</p>
+                <p class="font-medium">Batch: {{ item?.batch_number || '-' }}</p>
+                <p class="text-xs text-gray-500">Exp. Date: {{ item?.expiry_date ? extras.formatDate(item.expiry_date) : '-' }}</p>
+                <p class="text-xs text-gray-500">Mfg Date: {{ item?.mfg_date ? extras.formatDate(item.mfg_date) : '-' }}</p>
+                <p class="text-xs text-gray-500">Rcv Date: {{ item?.received_date ? extras.formatDate(item.received_date) : '-' }}</p>
               </div>
               <div>
                 <p class="text-xs text-muted-foreground">Stocks</p>
@@ -497,41 +521,101 @@
             <input type="text" required name="location" placeholder="Location eg. shelf 3-A"
               class="input w-full" [(ngModel)]="medicineData.inputData.location" />
           </div>
+
         </div>
       </div>
 
       <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-        <p class="text-gray-800 text-base sm:text-lg font-semibold">Stock & Batch Details</p>
-        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
-          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
-            <label class="text-sm">Total Stocks</label>
-            <input type="number" min="0" required name="stocks" placeholder="Total stocks eg. 32"
-              class="input w-full" [(ngModel)]="medicineData.inputData.stocks" />
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-gray-800 text-base sm:text-lg font-semibold">Stock & Batch Details</p>
+            <p class="mt-1 text-xs sm:text-sm text-gray-500">Enter batch identity, stock limits, and important dates.</p>
           </div>
+        </div>
 
-          <div class="xl:col-span-6 flex flex-col items-start gap-y-1">
-            <label class="text-sm">Minimum Stocks</label>
-            <input type="number" min="0" required name="reorder_level" placeholder="Minimum stocks eg. 40"
-              class="input w-full" [(ngModel)]="medicineData.inputData.reorder_level" />
-          </div>
+        <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <section class="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <p class="text-sm font-semibold text-slate-800">Stock Counts</p>
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Total Stocks</label>
+                <input type="number" min="0" required name="stocks" placeholder="Total stocks eg. 32"
+                  class="input w-full bg-white" [(ngModel)]="medicineData.inputData.stocks"
+                  [readonly]="shouldShowContainerStockFields()" />
+              </div>
 
-          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
-            <label class="text-sm">Received Date</label>
-            <input type="date" required name="received_date" class="input w-full"
-              [(ngModel)]="medicineData.inputData.received_date" />
-          </div>
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Minimum Stocks</label>
+                <input type="number" min="0" required name="reorder_level" placeholder="Minimum stocks eg. 40"
+                  class="input w-full bg-white" [(ngModel)]="medicineData.inputData.reorder_level" />
+              </div>
 
-          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
-            <label class="text-sm">Expiry Date</label>
-            <input type="date" required name="expiry_date" class="input w-full"
-              [(ngModel)]="medicineData.inputData.expiry_date" />
-          </div>
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Stock Container</label>
+                <select name="container_type" class="input w-full bg-white" [(ngModel)]="medicineData.inputData.container_type"
+                  (ngModelChange)="onContainerTypeChange()">
+                  @for(option of stockContainerOptions; track option.value){
+                  <option [value]="option.value">{{option.label}}</option>
+                  }
+                </select>
+              </div>
 
-          <div class="xl:col-span-4 flex flex-col items-start gap-y-1">
-            <label class="text-sm">Manufacturing Date</label>
-            <input type="date" required name="mfg_date" class="input w-full"
-              [(ngModel)]="medicineData.inputData.mfg_date" />
-          </div>
+              @if(shouldShowContainerStockFields()){
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Container Name</label>
+                <input type="text" name="container_name" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.container_name"
+                  [readonly]="medicineData.inputData.container_type !== 'custom'"
+                  placeholder="Boxes, bulk, or custom label" />
+              </div>
+
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Number of Containers</label>
+                <input type="number" min="0" name="container_count" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.container_count" (ngModelChange)="applyContainerStockCount()" />
+              </div>
+
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Pcs per Container</label>
+                <input type="number" min="0" name="pcs_per_container" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.pcs_per_container" (ngModelChange)="applyContainerStockCount()" />
+              </div>
+
+              <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:col-span-2">
+                Computed total stocks: {{getComputedContainerStocks()}} pcs
+              </div>
+              }
+            </div>
+          </section>
+
+          <section class="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <p class="text-sm font-semibold text-slate-800">Batch Information</p>
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="flex flex-col items-start gap-y-1 sm:col-span-2">
+                <label class="text-sm font-medium text-slate-700">Batch Number</label>
+                <input type="text" required name="batch_number" placeholder="Raw batch number eg. 230145"
+                  class="input w-full bg-white" [(ngModel)]="medicineData.inputData.batch_number" />
+              </div>
+
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Rcv Date</label>
+                <input type="date" required name="received_date" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.received_date" />
+              </div>
+
+              <div class="flex flex-col items-start gap-y-1">
+                <label class="text-sm font-medium text-slate-700">Exp. Date</label>
+                <input type="date" required name="expiry_date" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.expiry_date" />
+              </div>
+
+              <div class="flex flex-col items-start gap-y-1 sm:col-span-2">
+                <label class="text-sm font-medium text-slate-700">Mfg Date</label>
+                <input type="date" required name="mfg_date" class="input w-full bg-white"
+                  [(ngModel)]="medicineData.inputData.mfg_date" />
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -674,12 +758,12 @@
 <div class="fixed top-0 right-0 w-screen h-screen flex items-center justify-center backdrop-blur-sm bg-black/30 z-99 p-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
     <div class="flex items-center justify-center mb-4">
-      <ion-icon name="trash-outline" class="text-red-500 text-4xl"></ion-icon>
-      <h2 class="text-lg font-semibold ml-1">Confirm Deletion</h2>
+      <ion-icon name="archive-outline" class="text-amber-500 text-4xl"></ion-icon>
+      <h2 class="text-lg font-semibold ml-1">Confirm Archive</h2>
     </div>
 
     <p class="text-sm text-gray-500 mb-6 wrap-break-words">
-      Are you sure you want to delete these
+      Are you sure you want to archive this medicine?
       <br> Medicine Name: {{this.medicineData.inputData.medicine_name}}
       <br> Generic Name: {{this.medicineData.inputData.generic_name}}
     </p>
@@ -693,8 +777,74 @@
       <button
         (click)="delete()"
         class="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm w-full sm:w-auto">
-        Delete
+        Archive
       </button>
+    </div>
+  </div>
+</div>
+}
+
+@if(isArchiveHistoryOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+  <div class="flex max-h-[85vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-xl">
+    <div class="flex items-start justify-between gap-4 border-b border-gray-200 p-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Archived Medicines</h2>
+        <p class="text-sm text-slate-500">Medicines archived from inventory, including their batch details.</p>
+      </div>
+      <button (click)="closeArchiveHistoryModal()" class="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-red-500">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="overflow-y-auto p-4">
+      <div class="hidden overflow-hidden rounded-xl border border-gray-200 md:block">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Medicine</th>
+              <th class="px-4 py-3">Branch</th>
+              <th class="px-4 py-3">Batch</th>
+              <th class="px-4 py-3">Expiry</th>
+              <th class="px-4 py-3">Stocks</th>
+              <th class="px-4 py-3">Archived</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for(item of archivedMedicines; track item.inventory_id || item.batch_id){
+            <tr>
+              <td class="px-4 py-3">
+                <p class="font-semibold text-slate-900">{{extras.toTitleCaseSafe(item.medicine_name)}}</p>
+                <p class="text-xs text-slate-500">{{extras.toTitleCaseSafe(item.generic_name)}}</p>
+              </td>
+              <td class="px-4 py-3">{{extras.toTitleCaseSafe(item.branch_name || '-')}}</td>
+              <td class="px-4 py-3">{{item.batch_number || item.batch_id || '-'}}</td>
+              <td class="px-4 py-3">{{item.expiry_date ? extras.formatDate(item.expiry_date) : '-'}}</td>
+              <td class="px-4 py-3">{{item.stocks ?? 0}}</td>
+              <td class="px-4 py-3">{{item.archived_at ? extras.formatDateWithTime(item.archived_at) : '-'}}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="space-y-3 md:hidden">
+        @for(item of archivedMedicines; track item.inventory_id || item.batch_id){
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="font-semibold text-slate-900">{{extras.toTitleCaseSafe(item.medicine_name)}}</p>
+          <p class="text-sm text-slate-500">{{extras.toTitleCaseSafe(item.generic_name)}}</p>
+          <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+            <div><p class="text-slate-500">Branch</p><p class="font-medium">{{extras.toTitleCaseSafe(item.branch_name || '-')}}</p></div>
+            <div><p class="text-slate-500">Batch</p><p class="font-medium">{{item.batch_number || item.batch_id || '-'}}</p></div>
+            <div><p class="text-slate-500">Expiry</p><p class="font-medium">{{item.expiry_date ? extras.formatDate(item.expiry_date) : '-'}}</p></div>
+            <div><p class="text-slate-500">Stocks</p><p class="font-medium">{{item.stocks ?? 0}}</p></div>
+          </div>
+        </div>
+        }
+      </div>
+      @if(!archivedMedicines.length){
+      <div class="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-slate-500">
+        No archived medicines found.
+      </div>
+      }
     </div>
   </div>
 </div>

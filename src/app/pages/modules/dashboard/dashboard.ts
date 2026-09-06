@@ -19,6 +19,7 @@ export class Dashboard implements OnInit {
   selectedDays = 7;
   maxRevenuePoint = 0;
   isLoading = true;
+  voidingTransactionId: number | null = null;
   userData: UserData = {
     data: {},
     token: '',
@@ -146,6 +147,44 @@ export class Dashboard implements OnInit {
 
   isPositive(value: number): boolean {
     return Number(value) >= 0;
+  }
+
+  isTransactionVoided(transaction: any): boolean {
+    return String(transaction?.status ?? '').toLowerCase() === 'voided' || Boolean(transaction?.voided_at);
+  }
+
+  async voidTransaction(transaction: any) {
+    const transactionId = Number(transaction?.transaction_id ?? 0);
+    if (!transactionId || this.isTransactionVoided(transaction)) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Void transaction #${transactionId}? This will restore the sold stocks.`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.voidingTransactionId = transactionId;
+    try {
+      const res = await this.userService.postUser(
+        `transaction/${transactionId}/void`,
+        { void_reason: 'Voided from dashboard recent transactions.' },
+        this.userData.token
+      );
+
+      if (res.status === 200 && res.data?.success) {
+        this.extras.showToast('Transaction voided successfully.', 'success');
+        await this.getDashboard();
+      } else {
+        this.extras.showToast(res.data?.message ?? 'Failed to void transaction.', 'warning');
+      }
+    } catch (e: any) {
+      console.log(e);
+      this.extras.showToast(e?.error?.message ?? 'Failed to void transaction.', 'danger');
+    } finally {
+      this.voidingTransactionId = null;
+      this.cd.detectChanges();
+    }
   }
 
   private normalizeDashboardResponse(response: any): DashboardData {

@@ -21,12 +21,13 @@
     <div class="flex items-center gap-2 min-w-0" [ngClass]="extras.isSidebarCollapsed() ? 'lg:justify-center lg:w-full' : ''">
       <img
         src="pharmacy-mark.svg"
-        alt="Pharmacy Web logo"
+        alt="Sto. Rosario Drug Store logo"
         class="size-10 shrink-0 rounded-xl shadow-sm" />
       <p
-        class="font-bold text-base sm:text-lg tracking-tight text-sidebar-foreground truncate"
+        class="min-w-0 font-bold text-sm sm:text-base leading-tight tracking-normal text-sidebar-foreground"
         [ngClass]="extras.isSidebarCollapsed() ? 'lg:hidden' : ''">
-        Pharmacy Web
+        <span class="block">Sto. Rosario</span>
+        <span class="block">Drug Store</span>
       </p>
     </div>
 
@@ -146,7 +147,7 @@
         <span class="truncate" [ngClass]="extras.isSidebarCollapsed() ? 'lg:hidden' : ''">Controlled Drugs</span>
       </a>
 
-      <a *ngIf="checker('delivery')"
+      <a *ngIf="false"
         class="navbar-button"
         [ngClass]="extras.isSidebarCollapsed() ? 'lg:justify-center lg:px-0' : ''"
         routerLink="/delivery"

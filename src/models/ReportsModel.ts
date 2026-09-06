@@ -2,6 +2,8 @@ export interface ReportsScope {
   company_id: number;
   branch_id: number;
   days: number;
+  start_date?: string;
+  end_date?: string;
   label: string;
 }
 
@@ -58,6 +60,8 @@ export interface ReportsBranchPerformance {
   branch_name: string;
   total_revenue: number;
   transaction_count: number;
+  first_created_at?: string | null;
+  last_created_at?: string | null;
 }
 
 export interface ReportsTopMedicine {
@@ -67,6 +71,8 @@ export interface ReportsTopMedicine {
   category: string;
   quantity_sold: number;
   transactions_count: number;
+  first_created_at?: string | null;
+  last_created_at?: string | null;
 }
 
 export interface ReportsInventoryWatch {
@@ -78,7 +84,25 @@ export interface ReportsInventoryWatch {
   reorder_level: number;
   price: number;
   expiry_date: string | null;
+  created_at?: string | null;
   status: string;
+}
+
+export interface ReportsStockTransfer {
+  inventory_transfer_id: number;
+  medicine_name: string;
+  generic_name: string;
+  batch_number: string | number;
+  expiry_date: string | null;
+  mfg_date: string | null;
+  from_branch_name: string;
+  to_branch_name: string;
+  quantity: number;
+  status: string;
+  requested_by: string;
+  resolved_by?: string | null;
+  created_at: string;
+  resolved_at?: string | null;
 }
 
 export interface ReportsRecentTransaction {
@@ -87,6 +111,9 @@ export interface ReportsRecentTransaction {
   cashier_name: string;
   payment_method: string;
   reference_number?: string | null;
+  transaction_type?: string | null;
+  regulated_classification?: string | null;
+  patient_name?: string | null;
   total_amount: number;
   discount: number;
   created_at: string;
@@ -103,6 +130,9 @@ export interface ReportsRegulatedTransaction {
   discount: number;
   patient_name: string;
   created_at: string;
+  prescription_url?: string | null;
+  member_id_image_url?: string | null;
+  documents_submitted?: boolean;
   regulated_details: Record<string, any> | null;
 }
 
@@ -129,6 +159,7 @@ export interface ReportsDataPayload {
     recent_transactions: ReportsRecentTransaction[];
     prescribed_transactions: ReportsRegulatedTransaction[];
     dangerous_transactions: ReportsRegulatedTransaction[];
+    stock_transfers: ReportsStockTransfer[];
   };
   analysis: ReportsAnalysis;
 }
@@ -193,8 +224,12 @@ export interface ReportsTransactionRecord {
   patient_name: string | null;
   sub_total: number;
   discount: number;
+  vat_amount?: number;
   total_amount: number;
   used_amount: number;
   change: number;
+  status?: string;
+  voided_at?: string;
+  void_reason?: string;
   created_at: string;
 }

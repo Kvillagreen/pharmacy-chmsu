@@ -32,6 +32,8 @@ export class Fefo implements OnInit {
   isExportModalOpen = signal(false);
   isLocationModalOpen = signal(false);
   isPullOutModalOpen = signal(false);
+  isHistoryModalOpen = signal(false);
+  isArchivedBatchesModalOpen = signal(false);
   userData: UserData = {
     token: '',
     data: []
@@ -47,7 +49,7 @@ export class Fefo implements OnInit {
       { key: 'type', label: 'Type', checked: true },
       { key: 'dosage', label: 'Dosage', checked: true },
       { key: 'unit', label: 'Unit', checked: true },
-      { key: 'batch_id', label: 'Batch Number', checked: true },
+      { key: 'batch_number', label: 'Batch Number', checked: true },
       { key: 'stocks', label: 'Stocks', checked: true },
       { key: 'location', label: 'Location', checked: true },
       { key: 'received_date', label: 'Received Date', checked: true },
@@ -63,6 +65,8 @@ export class Fefo implements OnInit {
     batch_id: 0,
     location: '',
   };
+  batchHistory: any[] = [];
+  archivedBatches: any[] = [];
   ngOnInit(): void {
     this.userData.data= this.encryptData.decryptData('user')
     this.getMedicine()
@@ -265,7 +269,7 @@ export class Fefo implements OnInit {
       type: item?.type ?? '',
       dosage: item?.dosage ?? '',
       unit: item?.unit ?? '',
-      batch_id: item?.batch_id ?? '',
+      batch_number: item?.batch_number ?? item?.batch_id ?? '',
       stocks: item?.stocks ?? '',
       location: item?.location ?? '',
       received_date: item?.received_date ?? '',
@@ -334,6 +338,68 @@ export class Fefo implements OnInit {
     this.isPullOutModalOpen.set(true);
   }
 
+  async openHistoryModal(item: any) {
+    if (!item?.batch_id) {
+      Extras.showToast('This batch has no history record.', 'warning');
+      return;
+    }
+
+    this.selectedBatch = item;
+    this.batchHistory = [];
+    this.isHistoryModalOpen.set(true);
+
+    try {
+      const res = await this.userService.getUser(`fefo/${item.batch_id}`, '', this.encryptData.decryptData('user').token);
+      if (res.status === 200 && res.data?.success) {
+        this.batchHistory = Array.isArray(res.data?.data?.history) ? res.data.data.history : [];
+      }
+    } catch (e) {
+      console.log(e);
+      Extras.showToast('Failed to load batch history.', 'warning');
+    } finally {
+      this.cd.detectChanges();
+    }
+  }
+
+  closeHistoryModal() {
+    this.isHistoryModalOpen.set(false);
+    this.batchHistory = [];
+    this.selectedBatch = null;
+  }
+
+  async openArchivedBatchesModal() {
+    this.archivedBatches = [];
+    this.isArchivedBatchesModalOpen.set(true);
+
+    try {
+      const params = [`company_id=${this.userData.data.data.company_id}`];
+      const storedBranch = this.encryptData.decryptData('branch');
+      const selectedBranch = Number(storedBranch?.selectedBranch ?? 0);
+      if (selectedBranch) {
+        params.push(`branch_id=${selectedBranch}`);
+      }
+
+      const res = await this.userService.getUser(`fefo/archived/list?${params.join('&')}`, '', this.encryptData.decryptData('user').token);
+      if (res.status === 200 && res.data?.success) {
+        this.archivedBatches = Array.isArray(res.data.data) ? res.data.data : [];
+      }
+    } catch (e) {
+      console.log(e);
+      Extras.showToast('Failed to load archived batches.', 'warning');
+    } finally {
+      this.cd.detectChanges();
+    }
+  }
+
+  closeArchivedBatchesModal() {
+    this.isArchivedBatchesModalOpen.set(false);
+    this.archivedBatches = [];
+  }
+
+  archiveLabel(item: any): string {
+    return 'Archive Batch';
+  }
+
   closePullOutModal() {
     this.isPullOutModalOpen.set(false);
     this.selectedBatch = null;
@@ -378,7 +444,7 @@ export class Fefo implements OnInit {
       );
 
       if (res.status === 200 && res.data.success) {
-        Extras.showToast('Expired batch pulled out successfully.', 'success');
+        Extras.showToast('Batch archived successfully.', 'success');
         this.closePullOutModal();
         this.getMedicine();
       }

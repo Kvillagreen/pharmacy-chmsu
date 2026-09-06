@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { IonIcon } from '@ionic/angular/standalone';
 import { MedicineData } from '../../../../models/MedicineModel';
+import { BranchData } from '../../../../models/BranchModel';
 import { UserService } from '../../../../services/services';
 import { EncryptData } from '../../../../environment/encrypt-data';
 import { ChangeDetectorRef } from '@angular/core';
@@ -9,6 +10,8 @@ import { Extras } from '../../../../extras/extras';
 import { SalesModel, SalesData } from '../../../../models/SalesModel';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { BranchThemeService } from '../../../theme/branch-theme.service';
+import { normalizeBranchThemeKey } from '../../../theme/branch-theme';
 import jsPDF from 'jspdf';
 
 @Component({
@@ -34,11 +37,11 @@ export class Sales implements OnInit {
     selectedTransaction: 'regular',
     discountData: [
       {
-        type: 'SCPWD',
+        type: 'SC',
         discount: 0.2,
       },
       {
-        type: 'DISC',
+        type: 'PWD',
         discount: 0.2,
       },
     ],
@@ -46,6 +49,10 @@ export class Sales implements OnInit {
   };
 
   userData: UserData = {
+    data: [],
+  };
+
+  branchData: BranchData = {
     data: [],
   };
 
@@ -72,11 +79,16 @@ export class Sales implements OnInit {
   ];
 
   stockMap: { [key: string]: any } = {};
+  selectedDocuments: Record<'prescription' | 'member_id_image', File | null> = {
+    prescription: null,
+    member_id_image: null,
+  };
   isLoading = true;
   hasLoaded = false;
   isDiscount = signal(false);
   isPay = signal(false);
   isReceiptOpen = signal(false);
+  isBranchPickerOpen = signal(false);
   pageNumber = 1;
   sort = '';
   searchQuery = '';
@@ -86,6 +98,7 @@ export class Sales implements OnInit {
   constructor(
     private userService: UserService,
     private encryptData: EncryptData,
+    private branchThemeService: BranchThemeService,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -100,6 +113,7 @@ export class Sales implements OnInit {
   createInitialSalesModel(): SalesModel {
     return {
       discount: 0,
+      vat_amount: 0,
       sub_total: 0,
       total_amount: 0,
       scpwd_id_number: '',
@@ -224,15 +238,21 @@ export class Sales implements OnInit {
     if (total < 0) total = 0;
 
     this.salesModel.total_amount = total;
+    this.getVatAmount();
     return total;
+  }
+
+  getVatAmount(): number {
+    const taxableTotal = Math.max(this.getSubTotalPrice() - Number(this.salesModel.discount || 0), 0);
+    const vat = Number(((taxableTotal * 12) / 112).toFixed(2));
+    this.salesModel.vat_amount = vat;
+    return vat;
   }
 
   customDiscountPrice(event: any): number {
     let discount = 0;
 
-    if (this.salesData.selectedDiscount === 'DISC') {
-      discount = Number(event?.target?.value || 0);
-    } else if (this.salesData.selectedDiscount) {
+    if (this.salesData.selectedDiscount) {
       const found = this.salesData.discountData.find(
         (x: any) => x.type === this.salesData.selectedDiscount
       );
@@ -247,29 +267,20 @@ export class Sales implements OnInit {
   saveDiscount() {
     this.salesModel.discount_type = this.salesData.selectedDiscount;
 
-    if (this.salesModel.discount_type === 'DISC') {
-      if (Number(this.salesModel.discount) <= 0 || !this.salesModel.discount) {
-        Extras.showToast('Please enter a valid discount amount!', 'warning');
+    if (this.salesModel.discount_type === 'SC' || this.salesModel.discount_type === 'PWD') {
+      if (!this.salesModel.scpwd_id_number || this.salesModel.scpwd_id_number.trim() === '') {
+        Extras.showToast('Please enter a valid ID number!', 'warning');
         return;
       }
 
-      this.isDiscount.set(false);
-      this.salesModel.discount = Number(this.salesModel.discount);
-      this.salesModel.discount_type = 'Discount';
-      Extras.showToast('Discount saved successfully!', 'success');
-      return;
-    }
-
-    if (this.salesModel.discount_type === 'SCPWD') {
-      if (!this.salesModel.scpwd_id_number || this.salesModel.scpwd_id_number.trim() === '') {
-        Extras.showToast('Please enter a valid SC/PWD ID number!', 'warning');
+      if (!this.isDiscountIdNumber(this.salesModel.scpwd_id_number, this.salesModel.discount_type)) {
+        Extras.showToast(this.salesModel.discount_type === 'SC' ? 'SC ID must use OSCA-########.' : 'PWD ID must be 12 digits.', 'warning');
         return;
       }
 
       this.isDiscount.set(false);
       this.salesModel.discount = Number(this.salesModel.sub_total) * 0.2;
-      this.salesModel.discount_type = 'SCPWD';
-      Extras.showToast('SC/PWD discount applied successfully!', 'success');
+      Extras.showToast(`${this.salesModel.discount_type} discount applied successfully!`, 'success');
     }
   }
 
@@ -438,7 +449,7 @@ export class Sales implements OnInit {
       const res = await this.userService.getUser(endpoint, null, this.userData.token);
 
       if (res.status === 200) {
-        const apiData = res.data.data || [];
+        const apiData = this.mergeCatalogMedicines(res.data.data || []);
 
         apiData.forEach((item: any) => {
           const stockKey = this.getCartItemKey(item);
@@ -511,6 +522,17 @@ export class Sales implements OnInit {
     return arr;
   }
 
+  clearCurrentOrder() {
+    this.medicineData.salesData = [];
+    this.salesModel.discount = 0;
+    this.salesModel.discount_type = '';
+    this.salesModel.scpwd_id_number = '';
+    this.salesData.selectedDiscount = '';
+    this.syncStocksWithSales();
+    this.saveSales();
+    this.cd.detectChanges();
+  }
+
   getSalesGroupsByBranch() {
     const grouped = new Map<string, { branchName: string; items: any[]; totalQuantity: number }>();
 
@@ -536,6 +558,61 @@ export class Sales implements OnInit {
 
   isAllBranchesScope(): boolean {
     return this.getSelectedBranchId() === 0;
+  }
+
+  async openBranchPickerForCheckout() {
+    if (!this.isAllBranchesScope()) {
+      this.isPay.set(true);
+      return;
+    }
+
+    await this.getBranchList();
+    this.isBranchPickerOpen.set(true);
+    this.cd.detectChanges();
+  }
+
+  closeBranchPicker() {
+    this.isBranchPickerOpen.set(false);
+  }
+
+  async getBranchList() {
+    try {
+      const companyId = Number(this.userData.data?.data?.company_id ?? 0);
+      if (!companyId) {
+        this.branchData.data = [];
+        return;
+      }
+
+      const res = await this.userService.getUser(`branch/${companyId}`, '', this.userData.token);
+      if (res.status === 200) {
+        this.branchData.data = Array.isArray(res.data?.data?.branches) ? res.data.data.branches : [];
+      }
+    } catch (e) {
+      console.log(e);
+      this.branchData.data = [];
+      Extras.showToast('Failed to load branch list.', 'warning');
+    }
+  }
+
+  selectCheckoutBranch(branch: any) {
+    const selectedBranch = Number(branch?.branchId ?? branch?.branch_id ?? 0);
+    if (!selectedBranch) {
+      Extras.showToast('Please select a valid branch.', 'warning');
+      return;
+    }
+
+    const payload = {
+      selectedBranch,
+      selectedBranchName: branch?.branchName ?? branch?.branch_name ?? '',
+      selectedBranchThemeKey: normalizeBranchThemeKey(
+        branch?.theme_key ?? branch?.themeKey ?? this.userData.data?.data?.theme_key ?? 'emerald'
+      ),
+    };
+
+    this.encryptData.encryptAndStoreData('branch', payload);
+    this.branchThemeService.syncFromStoredState(this.encryptData.decryptData('user'), payload);
+    this.isBranchPickerOpen.set(false);
+    window.location.reload();
   }
 
   setTransactionType(type: string) {
@@ -564,15 +641,36 @@ export class Sales implements OnInit {
   onDocumentSelected(event: Event, type: 'prescription' | 'member_id_image') {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
 
+    if (file && !allowedTypes.includes(file.type)) {
+      Extras.showToast('Only PDF, JPG, and PNG files are allowed.', 'warning');
+      target.value = '';
+      this.selectedDocuments[type] = null;
+      this.updateDocumentStatus();
+      return;
+    }
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      Extras.showToast('Document file size must be 5MB or less.', 'warning');
+      target.value = '';
+      this.selectedDocuments[type] = null;
+      this.updateDocumentStatus();
+      return;
+    }
+
+    this.selectedDocuments[type] = file;
     this.updateDocumentStatus();
   }
 
   removeSelectedDocument(type: 'prescription' | 'member_id_image') {
+    this.selectedDocuments[type] = null;
     this.updateDocumentStatus();
   }
 
   clearTransactionDocuments() {
+    this.selectedDocuments.prescription = null;
+    this.selectedDocuments.member_id_image = null;
     this.updateDocumentStatus();
   }
 
@@ -582,7 +680,12 @@ export class Sales implements OnInit {
       return;
     }
 
-    this.salesModel.documents_submitted = false;
+    if (this.requiresDangerousDrugDetails()) {
+      this.salesModel.documents_submitted = Boolean(this.selectedDocuments.prescription && this.selectedDocuments.member_id_image);
+      return;
+    }
+
+    this.salesModel.documents_submitted = Boolean(this.selectedDocuments.prescription);
   }
 
   documentStatusLabel(): string {
@@ -618,11 +721,11 @@ export class Sales implements OnInit {
   }
 
   selectedFileName(type: 'prescription' | 'member_id_image'): string {
-    return 'No file selected';
+    return this.selectedDocuments[type]?.name ?? 'No file selected';
   }
 
   shouldShowDocumentUploader(): boolean {
-    return false;
+    return !this.isRegularTransaction();
   }
 
   private validateTransactionDetails(): boolean {
@@ -640,6 +743,7 @@ export class Sales implements OnInit {
 
     if (this.requiresPrescriptionDetails()) {
       validators.push(
+        { valid: !!this.selectedDocuments.prescription, message: 'Prescription PDF or image is required.' },
         { valid: this.salesModel.patient_age !== null && Number(this.salesModel.patient_age) >= 0, message: 'Patient age is required.' },
         { valid: !!this.salesModel.prescriber_name?.trim(), message: 'Prescriber full name is required.' },
         { valid: !!this.salesModel.prescriber_prc_license_number?.trim(), message: 'PRC license number is required.' },
@@ -655,11 +759,15 @@ export class Sales implements OnInit {
 
     if (this.requiresDangerousDrugDetails()) {
       validators.push(
+        { valid: !!this.selectedDocuments.prescription, message: 'Yellow prescription PDF or image is required.' },
+        { valid: !!this.selectedDocuments.member_id_image, message: 'Valid ID PDF or image is required.' },
         { valid: !!this.salesModel.prescriber_name?.trim(), message: 'Physician full name is required.' },
         { valid: !!this.salesModel.prescriber_clinic_address?.trim(), message: 'Clinic address is required.' },
         { valid: !!this.salesModel.prescriber_s2_license_number?.trim(), message: 'S-2 license number is required.' },
         { valid: !!this.salesModel.prescriber_ptr_number?.trim(), message: 'PTR number is required.' },
+        { valid: this.isPtrNumber(this.salesModel.prescriber_ptr_number ?? ''), message: 'PTR number must use PTR-YYYY-####### format.' },
         { valid: !!this.salesModel.yellow_prescription_serial_number?.trim(), message: 'Yellow prescription serial number is required.' },
+        { valid: this.isYellowPrescriptionSerialNumber(this.salesModel.yellow_prescription_serial_number ?? ''), message: 'Yellow prescription serial number must use YP followed by 11 digits.' },
         { valid: !!this.salesModel.dangerous_quantity_in_words?.trim(), message: 'Exact quantity in words is required.' },
         { valid: !!this.salesModel.dangerous_quantity_in_figures?.trim(), message: 'Exact quantity in figures is required.' },
         { valid: !!this.salesModel.dangerous_total_dosage?.trim(), message: 'Total dosage is required.' },
@@ -695,6 +803,7 @@ export class Sales implements OnInit {
     this.salesModel.user_id = this.userData.data.data.user_id;
     this.salesModel.branch_id = this.getSelectedBranchId();
     this.salesModel.request_token = crypto.randomUUID();
+    this.getTotalPrice();
     this.salesModel.change = this.extras.computeChange(
       Number(this.salesModel.total_amount),
       Number(this.salesModel.used_amount)
@@ -708,6 +817,7 @@ export class Sales implements OnInit {
       transaction_type: this.salesModel.transaction_type,
       total_amount: this.salesModel.total_amount,
       sub_total: this.salesModel.sub_total,
+      vat_amount: this.salesModel.vat_amount ?? this.getVatAmount(),
       change: this.salesModel.change,
       used_amount: this.salesModel.used_amount,
       payment_method: this.salesModel.payment_method,
@@ -757,6 +867,14 @@ export class Sales implements OnInit {
       formData.append(`items[${index}][medicine_id]`, String(item.medicine_id));
       formData.append(`items[${index}][quantity]`, String(item.quantity));
     });
+
+    if (!this.isRegularTransaction() && this.selectedDocuments.prescription) {
+      formData.append('prescription', this.selectedDocuments.prescription);
+    }
+
+    if (this.requiresDangerousDrugDetails() && this.selectedDocuments.member_id_image) {
+      formData.append('member_id_image', this.selectedDocuments.member_id_image);
+    }
 
     return formData;
   }
@@ -858,11 +976,93 @@ export class Sales implements OnInit {
       return 'Prescription details are required before checkout.';
     }
 
-    return 'Standard checkout with no extra regulated-drug form.';
+    return '';
   }
 
   requiresReferenceNumber(method = this.salesModel.payment_method): boolean {
     return method === 'Card' || method === 'Gcash';
+  }
+
+  private isScPwdIdNumber(value: string): boolean {
+    const normalized = String(value ?? '').trim().toUpperCase();
+    return /^\d{12}$/.test(normalized) || /^OSCA-\d{8}$/.test(normalized);
+  }
+
+  private isDiscountIdNumber(value: string, type: string): boolean {
+    const normalized = String(value ?? '').trim().toUpperCase();
+    if (type === 'SC') {
+      return /^OSCA-\d{8}$/.test(normalized);
+    }
+
+    if (type === 'PWD') {
+      return /^\d{12}$/.test(normalized);
+    }
+
+    return this.isScPwdIdNumber(normalized);
+  }
+
+  private isPaymentReferenceNumber(value: string): boolean {
+    return /^\d{12}$/.test(String(value ?? '').trim());
+  }
+
+  private isYellowPrescriptionSerialNumber(value: string): boolean {
+    return /^YP\d{11}$/.test(String(value ?? '').trim().toUpperCase());
+  }
+
+  private isPtrNumber(value: string): boolean {
+    return /^PTR-\d{4}-\d{7}$/.test(String(value ?? '').trim().toUpperCase());
+  }
+
+  private digitsOnly(value: string, maxLength: number): string {
+    return String(value ?? '').replace(/\D/g, '').slice(0, maxLength);
+  }
+
+  private formatSalesCode(value: string, maxLength: number): string {
+    return String(value ?? '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]/g, '')
+      .slice(0, maxLength);
+  }
+
+  updateScPwdIdNumber(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const rawValue = target.value ?? '';
+    const formatted = /^\d/.test(rawValue)
+      ? this.digitsOnly(rawValue, 12)
+      : this.formatSalesCode(rawValue, 13);
+
+    this.salesModel.scpwd_id_number = formatted;
+    target.value = formatted;
+  }
+
+  updatePtrNumber(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const formatted = this.formatSalesCode(target.value ?? '', 16);
+    this.salesModel.prescriber_ptr_number = formatted;
+    target.value = formatted;
+  }
+
+  updateYellowPrescriptionSerialNumber(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const formatted = String(target.value ?? '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 13);
+
+    this.salesModel.yellow_prescription_serial_number = formatted;
+    target.value = formatted;
+  }
+
+  referenceNumberPlaceholder(): string {
+    if (this.salesModel.payment_method === 'Card') {
+      return 'Card reference eg. 000123456789';
+    }
+
+    if (this.salesModel.payment_method === 'Gcash') {
+      return 'GCash reference eg. 724598163421';
+    }
+
+    return 'Available for Card or Gcash only';
   }
 
   onPaymentMethodChange(method: string) {
@@ -875,10 +1075,9 @@ export class Sales implements OnInit {
 
   updateReferenceNumber(event: Event) {
     const target = event.target as HTMLInputElement;
-    this.salesModel.reference_number = (target.value ?? '')
-      .toUpperCase()
-      .replace(/[^A-Z0-9\-_]/g, '')
-      .slice(0, 120);
+    const formatted = this.digitsOnly(target.value ?? '', 12);
+    this.salesModel.reference_number = formatted;
+    target.value = formatted;
   }
 
   async pay() {
@@ -897,13 +1096,13 @@ export class Sales implements OnInit {
       return;
     }
 
-    if (this.salesModel.discount_type === 'DISC' && !this.salesModel.discount) {
-      this.extras.showToast('Please input the discounted price', 'warning');
+    if ((this.salesModel.discount_type === 'SC' || this.salesModel.discount_type === 'PWD') && !this.salesModel.scpwd_id_number) {
+      this.extras.showToast('Please input the discount ID number', 'warning');
       return;
     }
 
-    if (this.salesModel.discount_type === 'SCPWD' && !this.salesModel.scpwd_id_number) {
-      this.extras.showToast('Please input SCPWD ID number', 'warning');
+    if ((this.salesModel.discount_type === 'SC' || this.salesModel.discount_type === 'PWD') && !this.isDiscountIdNumber(this.salesModel.scpwd_id_number ?? '', this.salesModel.discount_type)) {
+      this.extras.showToast(this.salesModel.discount_type === 'SC' ? 'SC ID must use OSCA-########.' : 'PWD ID must be 12 digits.', 'warning');
       return;
     }
 
@@ -919,6 +1118,11 @@ export class Sales implements OnInit {
 
     if (this.requiresReferenceNumber() && !this.salesModel.reference_number?.trim()) {
       this.extras.showToast('Reference number is required for card or Gcash payments', 'warning');
+      return;
+    }
+
+    if (this.requiresReferenceNumber() && !this.isPaymentReferenceNumber(this.salesModel.reference_number ?? '')) {
+      this.extras.showToast(`${this.salesModel.payment_method} reference number must be 12 digits.`, 'warning');
       return;
     }
 
@@ -950,6 +1154,7 @@ export class Sales implements OnInit {
     this.salesData.selectedDiscount = '';
     this.medicineData.salesData = [];
     this.stockMap = {};
+    this.clearTransactionDocuments();
     this.isPay.set(false);
     this.isDiscount.set(false);
     this.saveSales();
@@ -1009,8 +1214,50 @@ export class Sales implements OnInit {
 
   private getCartItemKey(item: any): string {
     const branchId = Number(item?.branch_id ?? 0);
-    const inventoryId = Number(item?.inventory_id ?? item?.medicine_id ?? 0);
-    return `${branchId}:${inventoryId}`;
+    const medicineId = Number(item?.medicine_id ?? 0);
+    return `${branchId}:${medicineId}`;
+  }
+
+  private mergeCatalogMedicines(items: any[]): any[] {
+    const grouped = new Map<string, any>();
+
+    for (const item of items ?? []) {
+      const key = this.getCartItemKey(item);
+      const existing = grouped.get(key);
+      const expiryDates = item?.expiry_date ? [item.expiry_date] : [];
+
+      if (!existing) {
+        grouped.set(key, {
+          ...item,
+          stocks: Number(item?.stocks ?? 0),
+          original_stock: Number(item?.stocks ?? 0),
+          expiry_dates: expiryDates,
+        });
+        continue;
+      }
+
+      existing.stocks = Number(existing.stocks ?? 0) + Number(item?.stocks ?? 0);
+      existing.original_stock = Number(existing.original_stock ?? 0) + Number(item?.stocks ?? 0);
+      if (item?.expiry_date && !existing.expiry_dates.includes(item.expiry_date)) {
+        existing.expiry_dates.push(item.expiry_date);
+        existing.expiry_dates.sort();
+      }
+      existing.expiry_date = existing.expiry_dates[0] ?? existing.expiry_date;
+    }
+
+    return Array.from(grouped.values());
+  }
+
+  expiryDateSummary(item: any): string {
+    const dates = Array.isArray(item?.expiry_dates) && item.expiry_dates.length
+      ? item.expiry_dates
+      : (item?.expiry_date ? [item.expiry_date] : []);
+
+    if (!dates.length) {
+      return 'N/A';
+    }
+
+    return dates.map((date: string) => this.extras.formatDate(date)).join(', ');
   }
 
   private groupSalesByBranch(items: any[]): Record<string, any[]> {
@@ -1074,21 +1321,33 @@ export class Sales implements OnInit {
     const lines: string[] = [];
     const divider = '='.repeat(width);
     const sectionDivider = '-'.repeat(width);
-    const companyName = this.safeReceiptText(this.userData.data?.data?.company_name || 'KMV Pharmacy');
+    const companyName = this.safeReceiptText(this.userData.data?.data?.company_name || 'Sto. Rosario Drug Store');
     const branchName = this.safeReceiptText(receipt?.branch?.branch_name || 'Assigned Branch');
+    const branchAddress = this.safeReceiptText(receipt?.branch?.branch_address || this.userData.data?.data?.branch_address || '');
+    const branchContact = this.safeReceiptText(receipt?.branch?.branch_contact || this.userData.data?.data?.branch_contact || '');
     const cashierName = this.safeReceiptText(
       `${receipt?.user?.first_name || ''} ${receipt?.user?.last_name || ''}`.trim() || 'Unknown Cashier'
     );
     const items = Array.isArray(receipt?.items) ? receipt.items : [];
     const transactionType = this.safeReceiptText(receipt?.transaction_type || 'regular').toUpperCase();
+    const pharmacistName = this.getReceiptPharmacistName(receipt);
 
     lines.push(this.centerReceiptText(companyName, width));
     lines.push(this.centerReceiptText(branchName, width));
+    if (branchAddress) {
+      lines.push(...this.wrapReceiptText(branchAddress, width));
+    }
+    if (branchContact) {
+      lines.push(this.centerReceiptText(`Contact: ${branchContact}`, width));
+    }
     lines.push(this.centerReceiptText('OFFICIAL SALES RECEIPT', width));
     lines.push(divider);
     lines.push(...this.buildReceiptKeyValueLines('Receipt No', receipt?.transaction_id ?? 'N/A', width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Date', this.formatReceiptDate(receipt?.created_at), width, 18));
     lines.push(...this.buildReceiptKeyValueLines('Cashier', cashierName, width, 18));
+    if (pharmacistName) {
+      lines.push(...this.buildReceiptKeyValueLines('Pharmacist', pharmacistName, width, 18));
+    }
     lines.push(...this.buildReceiptKeyValueLines('Payment', receipt?.payment_method || 'N/A', width, 18));
     if (receipt?.reference_number) {
       lines.push(...this.buildReceiptKeyValueLines('Reference', receipt.reference_number, width, 18));
@@ -1126,12 +1385,25 @@ export class Sales implements OnInit {
       const lineTotal = quantity * unitPrice;
 
       lines.push(...this.wrapReceiptText(medicineName, width));
+      const batchNumber = item?.batch_number || item?.batch?.batch_number || item?.batch_id || '';
+      if (batchNumber) {
+        lines.push(...this.buildReceiptKeyValueLines('Batch', batchNumber, width, 12));
+      }
+      const mfgDate = item?.mfg_date || item?.batch?.mfg_date;
+      if (mfgDate) {
+        lines.push(...this.buildReceiptKeyValueLines('Mfg', this.formatReceiptShortDate(mfgDate), width, 12));
+      }
+      const expiryDate = item?.expiry_date || item?.batch?.expiry_date;
+      if (expiryDate) {
+        lines.push(...this.buildReceiptKeyValueLines('Expiry', this.formatReceiptShortDate(expiryDate), width, 12));
+      }
       lines.push(this.buildReceiptItemLine(quantity, unitPrice, lineTotal, width));
     });
 
     lines.push(sectionDivider);
     lines.push(...this.buildReceiptKeyValueLines('Subtotal', this.formatReceiptCurrency(receipt?.sub_total), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Discount', this.formatReceiptCurrency(receipt?.discount), width, 20));
+    lines.push(...this.buildReceiptKeyValueLines('VAT 12%', this.formatReceiptCurrency(receipt?.vat_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Total', this.formatReceiptCurrency(receipt?.total_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Amount Paid', this.formatReceiptCurrency(receipt?.used_amount), width, 20));
     lines.push(...this.buildReceiptKeyValueLines('Change', this.formatReceiptCurrency(receipt?.change), width, 20));
@@ -1163,6 +1435,15 @@ export class Sales implements OnInit {
     const right = this.formatReceiptCurrency(total);
     const available = Math.max(1, width - right.length);
     return `${this.safeReceiptText(left).slice(0, available).padEnd(available, ' ')}${right}`;
+  }
+
+  private getReceiptPharmacistName(receipt: any): string {
+    return this.safeReceiptText(
+      receipt?.pharmacist_signature ||
+      receipt?.regulated_details?.prescription_details?.pharmacist_signature ||
+      receipt?.regulated_details?.pharmacist_signature ||
+      ''
+    );
   }
 
   private buildReceiptKeyValueLines(label: string, value: string | number, width: number, valueColumn: number): string[] {
@@ -1243,6 +1524,10 @@ export class Sales implements OnInit {
 
   private formatReceiptDate(value: string): string {
     return value ? this.extras.formatDateWithTime(value) : 'Date Unavailable';
+  }
+
+  private formatReceiptShortDate(value: string): string {
+    return value ? this.extras.formatDate(value) : 'N/A';
   }
 
   private updateCategoryOptions(items: any[], reset = false) {

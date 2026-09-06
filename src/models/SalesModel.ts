@@ -1,6 +1,7 @@
 export interface SalesModel {
   items?: any;
   discount?: number;
+  vat_amount?: number;
   total_amount?: number;
   sub_total?: number;
   scpwd_id_number?: string;

@@ -2,9 +2,12 @@
   <header class="sticky top-0 z-30 border-b border-white/60 bg-white/80 backdrop-blur-xl">
     <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
       <div class="flex items-center gap-3">
-        <img src="pharmacy-mark.svg" alt="Pharmacy Web logo" class="h-11 w-11 rounded-2xl bg-emerald-50 p-2 shadow-sm">
+        <img src="pharmacy-mark.svg" alt="Sto. Rosario Drug Store logo" class="h-11 w-11 rounded-2xl bg-emerald-50 p-2 shadow-sm">
         <div>
-          <p class="text-lg font-bold tracking-tight text-slate-950">Pharmacy Web</p>
+          <p class="text-base font-bold leading-tight tracking-normal text-slate-950 sm:text-lg">
+            <span class="block">Sto. Rosario</span>
+            <span class="block">Drug Store</span>
+          </p>
           <p class="text-xs uppercase tracking-[0.22em] text-slate-500">Medicine Catalog</p>
         </div>
       </div>
@@ -74,6 +77,11 @@
           @for(item of catalogData.data; track item.inventory_id){
           <article class="catalog-card flex h-full min-h-[24rem] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
             <div class="flex flex-1 flex-col p-5">
+              <div class="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Branch</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">{{extras.toTitleCaseSafe(item.branch_name)}}</p>
+                <p class="mt-1 text-xs text-slate-600">{{extras.toTitleCaseSafe(item.branch_address || 'Address not available')}}</p>
+              </div>
               <div class="flex flex-nowrap items-center gap-2 overflow-hidden">
                 @if(item.needs_protection){
                 <span class="whitespace-nowrap rounded-full border border-sky-100 bg-sky-50/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">Prescription</span>
@@ -112,9 +120,7 @@
             </div>
 
             <div class="catalog-card-branch border-t border-slate-100 bg-white/85 px-5 py-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Branch</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{extras.toTitleCaseSafe(item.branch_name)}}</p>
-              <p class="mt-1 text-sm text-slate-500">{{extras.toTitleCaseSafe(item.branch_address || 'Address not available')}}</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Branch Contact</p>
               <p class="mt-2 text-xs text-slate-400">{{item.branch_contact || 'Contact not available'}}</p>
               <button
                 type="button"
@@ -127,7 +133,7 @@
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">SMS Ordering Contact</p>
                 <div class="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
                   <ion-icon name="chatbubble-ellipses-outline" class="text-emerald-600"></ion-icon>
-                  <span>09171194119</span>
+                  <span>09703339264</span>
                 </div>
                 <p class="mt-1 text-xs text-slate-500">Use this number when sending the medicine order template.</p>
               </div>
@@ -173,10 +179,13 @@
     <section class="flex min-h-0 flex-col">
       <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-6 sm:px-8">
         <div class="flex items-start gap-4">
-          <img src="pharmacy-mark.svg" alt="Pharmacy Web logo" class="h-14 w-14 rounded-2xl bg-emerald-50 p-2.5 shadow-sm">
+          <img src="pharmacy-mark.svg" alt="Sto. Rosario Drug Store logo" class="h-14 w-14 rounded-2xl bg-emerald-50 p-2.5 shadow-sm">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Account Access</p>
-            <h2 class="mt-2 text-2xl font-bold text-slate-950">Pharmacy Web</h2>
+            <h2 class="mt-2 text-xl font-bold leading-tight text-slate-950 sm:text-2xl">
+              <span class="block">Sto. Rosario</span>
+              <span class="block">Drug Store</span>
+            </h2>
             <p class="mt-2 text-sm leading-6 text-slate-500">
               {{authMode === 'login'
                 ? 'Sign in with your approved account to continue.'
